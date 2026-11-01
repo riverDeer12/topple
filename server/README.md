@@ -36,72 +36,45 @@ Instaliraj redom, sa zadanim postavkama:
 4. **IIS Application Request Routing 3.0 (ARR)**: https://www.iis.net/downloads/microsoft/application-request-routing
 5. **NSSM** (pokreće Node kao Windows servis): https://nssm.cc/download. Raspakiraj i kopiraj `win64\nssm.exe` u `C:\Windows\System32`.
 
-Zatvori i ponovno otvori PowerShell, pa provjeri:
+Nakon instalacije zatvori PowerShell i otvori ga ponovno (kao Administrator), da vidi nove programe.
+
+## 3. Instalacija jednom skriptom
 
 ```powershell
-node -v
-git --version
-nssm version
+Invoke-WebRequest https://raw.githubusercontent.com/riverDeer12/topple/main/server/install.ps1 -OutFile $env:TEMP\topple-install.ps1
+powershell -ExecutionPolicy Bypass -File $env:TEMP\topple-install.ps1
 ```
 
-`node -v` mora pokazati v22.5 ili noviju verziju.
+Skripta `server/install.ps1` napravi sve ovo i nakon svakog koraka provjeri da radi:
 
-**Uključi proxy u ARR-u** (bez toga IIS neće prosljeđivati `/api/`):
-IIS Manager → klikni naziv servera (na vrhu lijevo) → **Application Request Routing Cache** → desno **Server Proxy Settings…** → označi **Enable proxy** → **Apply**.
+1. provjeri da su instalirani svi programi iz 2. koraka
+2. uključi proxy u ARR-u (potreban za prosljeđivanje `/api/`)
+3. preuzme kod s GitHuba u `C:\inetpub\wwwroot\topple`
+4. napravi mapu `C:\inetpub\topple-data` za bazu, zapise i sigurnosne kopije, izvan mape koju IIS poslužuje
+5. postavi API kao Windows servis `topple`, koji se sam pokreće nakon restarta servera
+6. napravi IIS app pool i stranicu `topple`: mapa `C:\inetpub\wwwroot\topple\web`, port 80, host `topple.rdd.software`
+7. napravi zakazani zadatak **Topple update**, koji svake 2 minute instalira novu verziju (vidi „Ažuriranje”)
+8. napravi zakazani zadatak **Topple backup** za dnevnu sigurnosnu kopiju baze u 4:30
 
-## 3. Kod i mapa za bazu
+Skriptu je sigurno pokrenuti više puta, jer preskače ono što je već napravljeno. Drugačije mape zadaju se parametrima, npr. `-AppDir D:\web\topple -DataDir D:\topple-data`.
 
-```powershell
-git clone https://github.com/riverDeer12/topple.git C:\topple
-New-Item -ItemType Directory -Force C:\topple-data
-```
-
-Baza će biti u `C:\topple-data\topple.db`, odvojeno od koda, pa je ažuriranje koda ne dira.
-
-## 4. API kao Windows servis
-
-```powershell
-nssm install topple "C:\Program Files\nodejs\node.exe" "C:\topple\server\server.js"
-nssm set topple AppDirectory C:\topple
-nssm set topple AppEnvironmentExtra PORT=8787 DB_PATH=C:\topple-data\topple.db ALLOWED_ORIGIN=https://topple.rdd.software,https://riverdeer12.github.io
-nssm set topple AppStdout C:\topple-data\api.log
-nssm set topple AppStderr C:\topple-data\api.log
-nssm set topple Start SERVICE_AUTO_START
-Start-Service topple
-Invoke-RestMethod http://127.0.0.1:8787/api/health
-```
-
-Zadnja naredba mora vratiti `ok: True`. Servis se sam pokreće nakon restarta servera. Zapisi su u `C:\topple-data\api.log`.
-
-API sluša samo na `127.0.0.1`, pa izvana nije dostupan mimo IIS-a i port 8787 ne treba otvarati u vatrozidu.
-
-## 5. IIS stranica
-
-1. IIS Manager → **Sites** → desni klik → **Add Website…**
-   - **Site name:** `topple`
-   - **Physical path:** `C:\topple\web`
-   - **Binding:** Type `http`, IP address `All Unassigned`, Port `80`, Host name `topple.rdd.software`
-   - **OK**
-2. Otvori http://topple.rdd.software u pregledniku na serveru ili na svom računalu. Moraš vidjeti igru.
-3. Otvori http://topple.rdd.software/api/health. Moraš vidjeti `{"ok":true,...}`.
-
-Datoteka `C:\topple\web\web.config` već sadrži sva pravila:
+Pravila za IIS su u `web/web.config` i dolaze s kodom:
 - prosljeđivanje `/api/` na API
-- preusmjeravanje HTTP-a na HTTPS (počinje vrijediti kad postoji HTTPS binding)
-- `index.html` kao početnu stranicu
-- isključeno predmemoriranje, da igrači odmah dobiju nove verzije
+- preusmjeravanje HTTP-a na HTTPS
+- `index.html` kao početna stranica
+- isključeno predmemoriranje, da igrači odmah dobiju novu verziju
 
-Ako IIS javi grešku **500.19**, nije instaliran URL Rewrite (2. korak).
+## 4. HTTPS certifikat (win-acme, besplatno)
 
-## 6. HTTPS certifikat (win-acme, besplatno)
+Dok certifikat ne postoji, stranica preusmjerava na HTTPS koji još ne radi. Zato ovaj korak napravi odmah nakon instalacije.
 
 1. Preuzmi **win-acme** (x64, pluggable): https://www.win-acme.com, i raspakiraj u `C:\win-acme`.
 2. Pokreni `C:\win-acme\wacs.exe` kao Administrator.
-3. Odaberi **N** (create certificate, default settings) → odaberi stranicu `topple` → potvrdi `topple.rdd.software` → upiši e-mail i prihvati uvjete.
+3. Odaberi **N** (create certificate, default settings) → odaberi stranicu `topple.rdd.software` → upiši e-mail i prihvati uvjete.
 
 win-acme sam doda HTTPS binding u IIS i napravi zakazani zadatak koji obnavlja certifikat prije isteka.
 
-## 7. Provjera
+## 5. Provjera
 
 - **https://topple.rdd.software** otvara igru.
 - **https://topple.rdd.software/api/health** vraća `{"ok":true,...}`.
@@ -109,31 +82,36 @@ win-acme sam doda HTTPS binding u IIS i napravi zakazani zadatak koji obnavlja c
 
 Igra sama prepozna da je otvorena s `topple.rdd.software` i spoji se na API na istoj adresi (`web/config.js`), pa ništa ne treba upisivati.
 
-## Ažuriranje
+## Ažuriranje: automatski
 
-Kad se promjene spoje u `main` na GitHubu, na serveru u PowerShellu kao Administrator:
+Svaka nova verzija spojena u `main` na GitHubu sama dođe na server unutar 2 minute. Zakazani zadatak **Topple update** pokreće `server/update.ps1`, koja:
+
+1. provjeri ima li na GitHubu novija verzija; ako nema, odmah završi
+2. preuzme je u `C:\inetpub\wwwroot\topple`; igra se time odmah ažurira, jer je IIS poslužuje izravno iz te mape
+3. ponovno pokrene API i provjeri da radi
+
+Zapis svih ažuriranja: `C:\inetpub\topple-data\update.log`. Ručno ažuriranje (PowerShell kao Administrator):
 
 ```powershell
-C:\topple\server\deploy.ps1
+powershell -ExecutionPolicy Bypass -File C:\inetpub\wwwroot\topple\server\update.ps1
 ```
 
-Skripta povuče novi kod, ponovno pokrene API i provjeri da radi. Igra se ažurira odmah, jer IIS poslužuje datoteke izravno iz `C:\topple\web`.
-
-Ako PowerShell ne dopušta pokretanje skripti, jednom pokreni `Set-ExecutionPolicy RemoteSigned`.
+Kod na serveru se ne uređuje ručno: svaka izmjena u `C:\inetpub\wwwroot\topple` bit će prebrisana verzijom s GitHuba. Baza je u `C:\inetpub\topple-data` i ažuriranje je ne dira.
 
 ## Sigurnosna kopija
 
-Cijela baza je jedna datoteka. Kopija dok API radi (čuva po jednu kopiju za svaki dan u tjednu, `backup-pon.db` … `backup-ned.db`):
+Zadatak **Topple backup** svaki dan u 4:30 kopira bazu u `C:\inetpub\topple-data`. Čuva se po jedna kopija za svaki dan u tjednu (`backup-pon.db` … `backup-ned.db`). Ručna kopija:
 
 ```powershell
-node C:\topple\server\backup.js C:\topple-data\topple.db
+node C:\inetpub\wwwroot\topple\server\backup.js C:\inetpub\topple-data\topple.db
 ```
 
-Svakodnevna automatska kopija u 4:30:
+## Zapisi i problemi
 
-```powershell
-schtasks /Create /TN "Topple backup" /SC DAILY /ST 04:30 /RU SYSTEM /TR "\"C:\Program Files\nodejs\node.exe\" C:\topple\server\backup.js C:\topple-data\topple.db"
-```
+- API: `C:\inetpub\topple-data\api.log`
+- ažuriranja: `C:\inetpub\topple-data\update.log`
+- **500.19** u IIS-u: nije instaliran URL Rewrite.
+- **502.3** na `/api/`: API servis ne radi (`Get-Service topple`, pa `Start-Service topple`) ili ARR proxy nije uključen.
 
 ## Postavke API-ja
 
@@ -145,7 +123,7 @@ schtasks /Create /TN "Topple backup" /SC DAILY /ST 04:30 /RU SYSTEM /TR "\"C:\Pr
 | `ALLOWED_ORIGIN` | `*` | s kojih drugih adresa igra smije zvati API, odvojeno zarezom |
 | `TZ_GAME` | `Europe/Zagreb` | vremenska zona za dnevnu zagonetku |
 
-Promjena postavki: `nssm edit topple` (kartica Environment), pa `Restart-Service topple`.
+Promjena postavki: `nssm edit topple` (kartica Environment), pa `Restart-Service topple`. Zadane vrijednosti postavlja `install.ps1`.
 
 ## API
 
