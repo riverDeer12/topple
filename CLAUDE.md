@@ -41,6 +41,7 @@ Tekst u igri (UI) je na hrvatskom.
   `node tools/generate-levels.js --only 18` u više procesa, zatim `npm run generate`. Nađene razine se spremaju u `tools/.cache/` (nije u gitu).
 - Teške razine (cilj 7+) traže se i do 45 minuta po razini.
 - Dnevna zagonetka i beskonačna zagonetka #n moraju biti iste za sve igrače i server: ne mijenjaj `gen.js` (redoslijed nasumičnih brojeva, specove, `GAME`) bez ponovnog generiranja `puzzles.js`, jer bi se igra i server razišli.
+- Stare adrese (GitHub Pages: `*.github.io`, `rdd.software/topple`) automatski preusmjeravaju na `https://topple.rdd.software` i u adresi (`#import=`) nose napredak iz localStoragea; nova adresa ga spoji (`mergeImport` u `index.html`, uvijek bolji rezultat), a `sync()` nakon prijave pošalje rješenja serveru.
 - Server mora ostati bez npm ovisnosti. Svaki rezultat se provjerava ponovnim igranjem poteza (`replay`).
 - `index.html` mora raditi otvoren izravno iz datoteke i preko GitHub Pagesa, bez build koraka i bez npm ovisnosti u pregledniku.
 - Testiranje u pregledniku: `npm run serve`, pa otvori http://localhost:8080.
