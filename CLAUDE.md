@@ -2,13 +2,14 @@
 
 Klizna slagalica s gravitacijom. Trenutno je igrivi web prototip (`web/`), cilj je iOS igra (SwiftUI + SpriteKit).
 Vlasnik projekta piše na hrvatskom; odgovaraj na hrvatskom, a kod, komentare i commit poruke piši na engleskom.
-Tekst u igri (UI) je na hrvatskom.
+Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talijanski, njemački); vidi `web/i18n.js`.
 
 ## Struktura
 
 - `web/index.html` — početna stranica: ljestvice uživo, pravila, vrste blokova, načini igre i mogućnosti. Sav tekst čita iz `content.js`, brojke iz podataka igre.
 - `web/igra.html` — igra: render, povlačenje prstom, animacije, izbornik, prijava, ljestvica, načini igre (razine, dnevna, beskonačno).
-- `web/content.js` — jedini izvor teksta o igri (pravila, vrste blokova, načini igre, mogućnosti) za početnu stranicu i „Kako se igra” u igri.
+- `web/content.js` — jedini izvor teksta o igri (pravila, vrste blokova, načini igre, mogućnosti) za početnu stranicu i „Kako se igra” u igri, na svim jezicima.
+- `web/i18n.js` — prijevodi sučelja (ključevi `t('...')`, `data-i18n` u HTML-u), nazivi poglavlja, smiješna imena gostiju i množina po jeziku.
 - `web/theme.css` — zajedničke boje (svijetla i tamna tema) i stilovi blokova.
 - `web/audio.js` — sintetizirani zvukovi drveta i glazba (Bach, Preludij u C-duru BWV 846), bez audio datoteka.
 - `web/gen.js` — deterministički generator zagonetki (mulberry32 + seed). Koriste ga igra, worker (`gen-worker.js`), server i alati.
@@ -41,6 +42,8 @@ Tekst u igri (UI) je na hrvatskom.
 - Vlasnik je trajno dopustio: kad je promjena gotova i testovi prolaze, otvori pull request prema `main` i spoji ga bez pitanja. Spajanje na `main` objavljuje igru (GitHub Pages i server topple.rdd.software unutar 2 minute).
 - Svaka promjena pravila ide u `core.js`, dobiva test u `tools/test-core.js` i mora proći `npm test` i `npm run verify`. Ako promjena pravila mijenja rješenja, ponovno generiraj razine (`npm run generate`).
 - Nove vrste blokova: dodaj tip u `core.js` (`settle`, `moves`), stil u `theme.css`, spec u generatoru, te naziv i kratak opis u `TYPES` u `content.js`. Opis se igraču prikaže kad prvi put naiđe na taj blok, a stoji i na početnoj stranici i na „Kako se igra” (gumb „?”).
+- Svaki novi tekst u sučelju ide u `i18n.js` na sva četiri jezika (nikad izravno u HTML/JS); poruke servera imaju `code` i prevode se u igri (`srv.<code>`). `npm test` pada ako nekom jeziku nedostaje ključ ili opis.
+- Font naslova je Fredoka (podržava č ć đ š ž ä ö ü ß à è ì ò ù); ne vraćaj Lilita One.
 - Svaka nova mogućnost, način igre ili promjena pravila mora se upisati u `content.js` (`RULES`, `MODES`, `FEATURES`), jer iz njega se pune početna stranica i „Kako se igra”. Brojke (razine, poglavlja, zagonetke) ne upisuj ručno, nego ih računaj iz podataka (`stats`).
 - Generator troši nasumične brojeve za nove tipove samo kad ih spec traži, pa dodavanje novih specova ne mijenja postojeće razine.
 - Razine 1–10 koriste stari LCG (zadržan da te razine ostanu iste). Od 11. razine svaka ima svoj seed (mulberry32), pa se mogu tražiti paralelno:

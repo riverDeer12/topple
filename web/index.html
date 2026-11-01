@@ -6,7 +6,7 @@
 <title>Topple</title>
 <meta name="description" content="Topple je klizna slagalica s gravitacijom: izvedi crveni blok kroz izlaz u što manje poteza. Dnevna zagonetka, beskonačni način i ljestvica.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Lexend:wght@400;500;600&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lexend:wght@400;500;600&family=DM+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="theme.css">
 <style>
 /* Home page: hero with a real board, leaderboards, then everything the game has. All text comes from content.js. */
@@ -15,18 +15,21 @@ body { margin: 0; background: var(--page); color: var(--ink); font-family: var(-
 a { color: inherit; }
 .wrap { max-width: 1040px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left, 0px)); box-sizing: border-box; }
 nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; gap: 12px; }
-.logo { font: 400 1.7rem var(--display); text-decoration: none; letter-spacing: .01em; }
+.logo { font: 600 1.7rem var(--display); text-decoration: none; letter-spacing: .01em; }
 .logo span, h1 span { color: var(--hero); }
 nav .links { display: flex; gap: 18px; font-size: .9rem; font-weight: 500; }
 nav .links a { text-decoration: none; color: var(--muted); }
 nav .links a:hover { color: var(--ink); }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; border-radius: 999px; font: 400 1.15rem var(--display); letter-spacing: .02em; padding: 12px 26px; }
+.navr { display: flex; align-items: center; gap: 10px; }
+.langsel { font: 600 .8rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 7px 10px; cursor: pointer; }
+.langsel:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; border-radius: 999px; font: 600 1.15rem var(--display); letter-spacing: .02em; padding: 12px 26px; }
 .btn.go { background: var(--hero); color: #fff; box-shadow: inset 0 -4px 0 var(--hero-edge); }
 .btn.alt { background: var(--panel); color: var(--ink); border: 1px solid var(--panel-line); }
 .btn:focus-visible, nav a:focus-visible, .tab:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 
 .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; padding: 28px 0 56px; }
-h1 { font: 400 clamp(2.6rem, 6vw, 4.2rem) var(--display); line-height: 1; margin: 0 0 14px; letter-spacing: .01em; }
+h1 { font: 600 clamp(2.6rem, 6vw, 4.2rem) var(--display); line-height: 1; margin: 0 0 14px; letter-spacing: .01em; }
 .lead { font-size: 1.12rem; color: var(--muted); margin: 0 0 24px; max-width: 46ch; }
 .cta { display: flex; gap: 12px; flex-wrap: wrap; }
 .facts { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 30px; }
@@ -42,11 +45,11 @@ h1 { font: 400 clamp(2.6rem, 6vw, 4.2rem) var(--display); line-height: 1; margin
 .demo .blk { position: absolute; }
 
 section { padding: 48px 0; border-top: 1px solid var(--panel-line); }
-h2 { font: 400 clamp(1.7rem, 3.5vw, 2.3rem) var(--display); margin: 0 0 8px; letter-spacing: .01em; }
+h2 { font: 600 clamp(1.7rem, 3.5vw, 2.3rem) var(--display); margin: 0 0 8px; letter-spacing: .01em; }
 .sub { color: var(--muted); margin: 0 0 26px; max-width: 60ch; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .card { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 16px; padding: 18px 18px 16px; }
-.card h3 { font: 400 1.2rem var(--display); margin: 0 0 6px; letter-spacing: .01em; }
+.card h3 { font: 600 1.2rem var(--display); margin: 0 0 6px; letter-spacing: .01em; }
 .card p { margin: 0; color: var(--muted); font-size: .93rem; }
 
 .boards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -63,7 +66,7 @@ h2 { font: 400 clamp(1.7rem, 3.5vw, 2.3rem) var(--display); margin: 0 0 8px; let
 
 .types { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
 .type { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: center; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 16px; padding: 14px; }
-.type b { display: block; font: 400 1.1rem var(--display); letter-spacing: .01em; }
+.type b { display: block; font: 600 1.1rem var(--display); letter-spacing: .01em; }
 .type p { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
 .rules { counter-reset: r; }
 .rules .card h3::before { counter-increment: r; content: counter(r) ". "; color: var(--hero); }
@@ -85,52 +88,52 @@ footer { border-top: 1px solid var(--panel-line); padding: 22px 0 32px; color: v
   <nav>
     <a class="logo" href="./">Top<span>ple</span></a>
     <div class="links">
-      <a href="#ljestvica">Ljestvica</a>
-      <a href="#kako">Kako se igra</a>
-      <a href="#blokovi">Blokovi</a>
-      <a href="#nacini">Načini igre</a>
+      <a href="#ljestvica" data-i18n="home.navBoard">Ljestvica</a>
+      <a href="#kako" data-i18n="home.navHow">Kako se igra</a>
+      <a href="#blokovi" data-i18n="home.navBlocks">Blokovi</a>
+      <a href="#nacini" data-i18n="home.navModes">Načini igre</a>
     </div>
-    <a class="btn go" href="igra.html" style="padding:8px 18px;font-size:1rem">Igraj</a>
+    <span class="navr"><span id="langNav"></span><a class="btn go" href="igra.html" style="padding:8px 18px;font-size:1rem" data-i18n="home.play">Igraj</a></span>
   </nav>
 
   <header class="hero">
     <div>
       <h1>Top<span>ple</span></h1>
-      <p class="lead">Klizna slagalica s gravitacijom. Pomakni blok, sve iznad njega padne, a ti moraš predvidjeti lanac koji slijedi. Izvedi crveni blok kroz izlaz u što manje poteza.</p>
+      <p class="lead" data-i18n="home.lead"></p>
       <div class="cta">
-        <a class="btn go" href="igra.html">Igraj besplatno</a>
-        <a class="btn alt" href="#ljestvica">Ljestvica</a>
+        <a class="btn go" href="igra.html" data-i18n="home.playFree">Igraj besplatno</a>
+        <a class="btn alt" href="#ljestvica" data-i18n="home.boardBtn">Ljestvica</a>
       </div>
       <div class="facts" id="facts"></div>
     </div>
-    <div class="demo" id="demo" role="img" aria-label="Primjer ploče iz igre"></div>
+    <div class="demo" id="demo" role="img" data-i18n-aria="aria.demo"></div>
   </header>
 </div>
 
 <section id="ljestvica">
   <div class="wrap">
-    <h2>Ljestvica</h2>
-    <p class="sub" id="lbSub">Najbolji igrači danas, u beskonačnom nizu i u razinama.</p>
-    <p class="sub" style="margin-top:-18px">Na ljestvici su samo prijavljeni igrači: prijavi se Googleom, e-mailom ili korisničkim imenom.</p>
+    <h2 data-i18n="home.boardTitle">Ljestvica</h2>
+    <p class="sub" id="lbSub" data-i18n="home.boardSub"></p>
+    <p class="sub" style="margin-top:-18px" data-i18n="home.boardOnly"></p>
     <div class="boards">
-      <div class="card lb"><h3>Dnevna zagonetka <small id="lbDate"></small></h3><ol id="lbDaily"></ol></div>
-      <div class="card lb"><h3>Beskonačno <small>riješeno</small></h3><ol id="lbEndless"></ol></div>
-      <div class="card lb"><h3>Razine <small>zvjezdice</small></h3><ol id="lbCampaign"></ol></div>
+      <div class="card lb"><h3><span data-i18n="home.lbDaily">Dnevna zagonetka</span> <small id="lbDate"></small></h3><ol id="lbDaily"></ol></div>
+      <div class="card lb"><h3><span data-i18n="home.lbEndless">Beskonačno</span> <small data-i18n="home.lbEndlessSmall">riješeno</small></h3><ol id="lbEndless"></ol></div>
+      <div class="card lb"><h3><span data-i18n="home.lbCampaign">Razine</span> <small data-i18n="home.lbCampaignSmall">zvjezdice</small></h3><ol id="lbCampaign"></ol></div>
     </div>
   </div>
 </section>
 
 <section id="kako">
   <div class="wrap">
-    <h2>Kako se igra</h2>
-    <p class="sub">Pravila stanu u četiri rečenice, ali svaki potez može pokrenuti lanac koji treba predvidjeti.</p>
+    <h2 data-i18n="home.howTitle">Kako se igra</h2>
+    <p class="sub" data-i18n="home.howSub"></p>
     <div class="cards rules" id="rules"></div>
   </div>
 </section>
 
 <section id="blokovi">
   <div class="wrap">
-    <h2>Vrste blokova</h2>
+    <h2 data-i18n="home.typesTitle">Vrste blokova</h2>
     <p class="sub" id="typesSub"></p>
     <div class="types" id="types"></div>
   </div>
@@ -138,37 +141,42 @@ footer { border-top: 1px solid var(--panel-line); padding: 22px 0 32px; color: v
 
 <section id="nacini">
   <div class="wrap">
-    <h2>Načini igre</h2>
-    <p class="sub">Igraj razine redom, vrati se svaki dan po novu zagonetku ili idi koliko daleko možeš.</p>
+    <h2 data-i18n="home.modesTitle">Načini igre</h2>
+    <p class="sub" data-i18n="home.modesSub"></p>
     <div class="cards" id="modes"></div>
   </div>
 </section>
 
 <section id="mogucnosti">
   <div class="wrap">
-    <h2>Što još igra ima</h2>
-    <p class="sub">Igra se u pregledniku, bez instalacije i bez reklama.</p>
+    <h2 data-i18n="home.featTitle">Što još igra ima</h2>
+    <p class="sub" data-i18n="home.featSub"></p>
     <div class="cards" id="features"></div>
   </div>
 </section>
 
 <div class="wrap final">
-  <h2>Spreman za prvi potez?</h2>
-  <p class="sub" style="margin:0 auto 22px">Prva razina traje desetak sekundi. Zadnja malo dulje.</p>
-  <a class="btn go" href="igra.html">Igraj</a>
+  <h2 data-i18n="home.finalTitle">Spreman za prvi potez?</h2>
+  <p class="sub" style="margin:0 auto 22px" data-i18n="home.finalSub"></p>
+  <a class="btn go" href="igra.html" data-i18n="home.play">Igraj</a>
 </div>
 <div class="wrap"><footer><span>Topple · rdd.software</span><span id="foot"></span></footer></div>
 
 <script src="config.js"></script>
 <script src="levels.js"></script>
 <script src="puzzles.js"></script>
+<script src="i18n.js"></script>
 <script src="content.js"></script>
 <script>
 // The old GitHub Pages copies send players to the game, which moves their progress to the new address.
 if (/(^|\.)github\.io$/.test(location.hostname) || /^(www\.)?rdd\.software$/.test(location.hostname)) location.replace('igra.html');
 
 const $ = id => document.getElementById(id);
-const K = ToppleContent;
+const K = ToppleContent, t = ToppleI18n.t, P = ToppleI18n.plural;
+ToppleI18n.apply();
+document.title = 'Topple';
+document.querySelector('meta[name=description]').content = t('home.desc');
+$('langNav').appendChild(ToppleI18n.picker());
 const API = (window.TOPPLE_API || '').replace(/\/+$/, '');
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const card = ([h, p]) => `<div class="card"><h3>${esc(h)}</h3><p>${esc(p)}</p></div>`;
@@ -179,8 +187,8 @@ $('rules').innerHTML = K.RULES.map(card).join('');
 $('modes').innerHTML = K.MODES.map(card).join('');
 $('features').innerHTML = K.FEATURES.map(card).join('');
 $('types').innerHTML = K.TYPE_ORDER.map(t => `<div class="type">${swatch(t)}<div><b>${esc(K.TYPES[t][0])}</b><p>${esc(K.TYPES[t][1])}</p></div></div>`).join('');
-$('typesSub').textContent = `${K.stats.types} vrsta blokova, svaka sa svojim pravilom. Igra ih uvodi jednu po jednu i objasni svaku kad je prvi put sretneš.`;
-const facts = [[K.stats.levels, 'razina'], [K.stats.types, 'vrsta blokova'], ['1', 'zagonetka dnevno'], ['∞', 'beskonačno']];
+$('typesSub').textContent = t('home.typesSub', { n: K.stats.types });
+const facts = [[K.stats.levels, t('home.factLevels')], [K.stats.types, t('home.factTypes')], ['1', t('home.factDaily')], ['∞', t('home.factEndless')]];
 $('facts').innerHTML = facts.map(([n, l]) => `<div><b>${esc(n)}</b><small>${esc(l)}</small></div>`).join('');
 
 // Demo board: a real level from the game, drawn with the game's block styles.
@@ -198,7 +206,7 @@ $('facts').innerHTML = facts.map(([n, l]) => `<div><b>${esc(n)}</b><small>${esc(
 })();
 
 // Leaderboards and player count from the API (same address as the game).
-const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('hr-HR', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 let token = null;
 try { const u = JSON.parse(localStorage.getItem('topple-user') || 'null'); token = u && u.token; } catch (e) {}
@@ -210,28 +218,26 @@ async function get(path) {
 function fill(id, r, val) {
   const ol = $(id), rows = r.rows.slice(0, 10);
   if (r.mine && !rows.some(x => x.me)) rows.push(r.mine);
-  if (!rows.length) { ol.innerHTML = '<li class="empty">Još nitko. Budi prvi!</li>'; return; }
+  if (!rows.length) { ol.innerHTML = `<li class="empty">${esc(t('home.lbEmpty'))}</li>`; return; }
   ol.innerHTML = rows.map(x => `<li class="${x.me ? 'me' : ''}${x.rank <= 3 ? ' top' : ''}"><span class="r">${x.rank}.</span><span>${esc(x.name)}</span><span class="v">${esc(val(x))}</span></li>`).join('');
 }
 async function boards() {
   const off = msg => ['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = `<li class="empty">${msg}</li>`; });
-  if (!API) { off('Ljestvica radi na topple.rdd.software.'); return; }
+  if (!API) { off(t('home.lbOffline')); return; }
   try {
     const [d, e, c, s] = await Promise.all([get('/api/leaderboard?mode=daily'), get('/api/leaderboard?mode=endless'), get('/api/leaderboard?mode=campaign'), get('/api/stats')]);
     $('lbDate').textContent = fmtDate(d.date);
     fill('lbDaily', d, x => `${x.moves} · ${fmtTime(x.timeMs)}`);
     fill('lbEndless', e, x => `#${x.solved} · ★${x.stars}`);
     fill('lbCampaign', c, x => `★${x.stars}`);
-    const igrac = n => n % 10 === 1 && n % 100 !== 11 ? 'igrač' : 'igrača';
-    $('lbSub').textContent = `${s.players} ${igrac(s.players)} na ljestvici. ` + (s.dailyToday
-      ? `Današnju zagonetku ${s.dailyToday === 1 ? 'riješio je 1 igrač' : `riješilo je ${s.dailyToday} ${igrac(s.dailyToday)}`}.`
-      : 'Današnju zagonetku još nitko nije riješio.');
-    $('facts').insertAdjacentHTML('beforeend', `<div><b>${s.players}</b><small>igrača</small></div>`);
-  } catch (err) { off('Ljestvica trenutno nije dostupna.'); }
+    $('lbSub').textContent = t('home.stats', { players: s.players, playersWord: P.players(s.players) }) + ' ' + (!s.dailyToday ? t('home.statsNone')
+      : s.dailyToday === 1 ? t('home.statsOne') : t('home.statsMany', { n: s.dailyToday, playersWord: P.players(s.dailyToday) }));
+    $('facts').insertAdjacentHTML('beforeend', `<div><b>${s.players}</b><small>${esc(t('home.factPlayers'))}</small></div>`);
+  } catch (err) { off(t('home.lbDown')); }
 }
-['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = '<li class="empty">Učitavam…</li>'; });
+['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = `<li class="empty">${esc(t('home.loading'))}</li>`; });
 boards();
-$('foot').textContent = `${K.stats.levels} razina · ${K.stats.chapters} poglavlja · ${K.stats.types} vrsta blokova`;
+$('foot').textContent = t('home.foot', { levels: K.stats.levels, chapters: K.stats.chapters, types: K.stats.types });
 </script>
 </body>
 </html>

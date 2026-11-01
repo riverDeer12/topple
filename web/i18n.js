@@ -1,0 +1,332 @@
+// Languages of the game and the home page: Croatian (default), English, Italian, German.
+// t('key', {var}) returns the text in the current language; {var} placeholders are filled in.
+// Static HTML uses data-i18n (text), data-i18n-ph (placeholder) and data-i18n-aria (aria-label).
+// Texts about rules, blocks, modes and features are in content.js, also per language.
+const ToppleI18n = (() => {
+  const LANGS = { hr: 'Hrvatski', en: 'English', it: 'Italiano', de: 'Deutsch' };
+  const LOCALE = { hr: 'hr-HR', en: 'en-GB', it: 'it-IT', de: 'de-DE' };
+
+  const S = {
+    hr: {
+      'lvl.level': 'Razina {n} od {total}', 'lvl.daily': 'Dnevna · {date}', 'lvl.endless': 'Beskonačno #{n}',
+      'stat.moves': 'Potezi', 'stat.par': 'Cilj',
+      'btn.undo': 'Vrati', 'btn.reset': 'Ponovi', 'btn.menu': 'Izbornik',
+      'menu.daily': 'Dnevna zagonetka', 'menu.endless': 'Beskonačno', 'menu.levels': 'Razine', 'menu.board': 'Ljestvica', 'menu.boardSub': 'Najbolji igrači',
+      'menu.sfx': 'Zvukovi', 'menu.music': 'Glazba', 'menu.help': 'Kako se igra', 'menu.home': 'Početna stranica i ljestvica', 'menu.back': 'Natrag na igru', 'menu.lang': 'Jezik',
+      'sub.dailyNew': '{date} · nova', 'sub.dailyDone': '{date} · riješeno u {n} {moves}', 'sub.endless': 'Zagonetka #{n} · ★ {s}', 'sub.endlessGuest': ' · gost do #{n}',
+      'sub.levels': '{done} od {total} riješeno · ★ {s}/{max}',
+      'who.signed': 'Igraš kao', 'who.account': 'račun', 'who.guest': 'Gost', 'who.login': 'prijavi se',
+      'login.title': 'Dobro došli!', 'login.intro': 'Prijavi se za ljestvicu i nastavi igrati na svim svojim uređajima.', 'login.offline': 'Prijava i ljestvica rade na topple.rdd.software.',
+      'login.tabLogin': 'Prijava', 'login.tabRegister': 'Novi račun', 'login.or': 'ili',
+      'ph.login': 'Korisničko ime ili e-mail', 'ph.name': 'Korisničko ime', 'ph.email': 'E-mail (neobavezno)', 'ph.password': 'Lozinka', 'ph.passwordNew': 'Lozinka (najmanje 6 znakova)',
+      'login.submit': 'Prijavi se', 'login.create': 'Napravi račun', 'login.skip': 'Igraj bez prijave',
+      'acc.title': 'Račun', 'ph.emailAcc': 'E-mail', 'ph.current': 'Trenutna lozinka', 'ph.newOpt': 'Nova lozinka (neobavezno)', 'acc.save': 'Spremi',
+      'acc.logout': 'Odjava s ovog uređaja', 'acc.back': 'Natrag', 'acc.loading': 'Učitavam…', 'acc.signedAs': 'Tvoj račun: {name}.',
+      'acc.ways': 'Prijava na drugim uređajima: {ways}.', 'acc.wayPassword': 'korisničko ime i lozinka', 'acc.wayEmail': 'e-mail i lozinka',
+      'acc.onlyDevice': 'Za sada samo ovaj uređaj zna tvoj račun. Dodaj lozinku ili poveži Google da se možeš prijaviti i drugdje.',
+      'acc.saved': 'Spremljeno.', 'acc.noChanges': 'Nema promjena.', 'acc.confirmLogout': 'Odjaviti se s ovog uređaja? Napredak ostaje spremljen na računu.',
+      'lb.title': 'Ljestvica', 'lb.daily': 'Dnevna', 'lb.endless': 'Beskonačno', 'lb.campaign': 'Razine',
+      'lb.subDaily': 'Dnevna zagonetka, {date}. Najmanje poteza, pa najbrže.', 'lb.subEndless': 'Najviše riješenih zagonetki u beskonačnom načinu.', 'lb.subCampaign': 'Najviše zvjezdica u razinama.',
+      'lb.offline': 'Ljestvica još nije spojena na server.', 'lb.loading': 'Učitavam…', 'lb.empty': 'Još nitko nije na ljestvici. Budi prvi!',
+      'lb.guest': 'Na ljestvici su samo prijavljeni igrači.', 'lb.guestBtn': 'Prijavi se i natječi se', 'lb.close': 'Zatvori', 'lb.needAccount': 'Na ljestvicu ulaze samo prijavljeni igrači.',
+      'win.perfect': 'Savršeno!', 'win.out': 'Izašao je!', 'win.exact': '{n} {moves}, točno koliko treba.', 'win.more': '{n} {moves}. Može i u {opt}.', 'win.time': ' Vrijeme {t}.',
+      'win.guest': ' Prijavi se da rezultat uđe na ljestvicu.', 'win.board': 'Ljestvica', 'win.nextPuzzle': 'Sljedeća zagonetka', 'win.allLevels': 'Sve razine', 'win.nextLevel': 'Sljedeća razina',
+      'win.retry': 'Pokušaj u manje poteza', 'win.menu': 'Izbornik',
+      'rank.daily': 'Danas si {r}. na ljestvici.', 'rank.endless': 'Na ljestvici beskonačnog si {r}.', 'rank.campaign': 'Na ljestvici razina si {r}.',
+      'intro.new1': 'Novi blok', 'intro.newN': 'Novi blokovi', 'intro.ok': 'Razumijem', 'help.title': 'Kako se igra', 'help.modes': 'Načini igre', 'help.blocks': 'Blokovi',
+      'lv.title': 'Razine', 'lv.close': 'Zatvori', 'chapter': 'Poglavlje {n}',
+      'hint.daily': 'Ista zagonetka za sve igrače danas. Manje poteza je bolje.', 'hint.generating': 'Slažem novu zagonetku…',
+      'hint.0': 'Povuci blok lijevo ili desno. Sve iznad njega padne. Dovedi crveni do izlaza.', 'hint.1': 'Ponekad prvo treba maknuti blok koji nije na putu.',
+      'hint.2': 'Kameni blokovi se ne miču i ne padaju.', 'hint.5': 'Novo: led. Kad ga gurneš, klizi dok ne udari u nešto.',
+      'hint.10': 'Novo: teški blok (T). Kad padne na ispucali blok, razbije ga.', 'hint.11': 'Teški blok razbija samo kad pada. Ako već leži na ispucalom, ništa se ne događa.',
+      'hint.13': 'Novo: balon. Ne pada nego se diže dok ne udari u nešto iznad sebe.', 'hint.16': 'Sve zajedno: kamen, led, teški, ispucali i baloni.',
+      'guest.endlessDone': 'Kao gost možeš riješiti prvih {n} beskonačnih zagonetki, a sve su već riješene.', 'guest.levels': 'Kao gost igraš prvih {n} razina.',
+      'guest.levelsDone': 'Kao gost igraš prvih {n} razina i sve su već riješene. Bravo!',
+      'guest.benefits': 'Prijavljeni igrači imaju sve razine, beskonačni niz bez ograničenja, mjesto na ljestvici i napredak na svim uređajima.',
+      'err.name': 'Korisničko ime mora imati 2–16 znakova: slova, brojke, razmak, _ . -', 'err.password': 'Lozinka mora imati najmanje 6 znakova.',
+      'err.loginEmpty': 'Upiši korisničko ime ili e-mail i lozinku.', 'err.serverLogin': 'Server nije dostupan. Pokušaj kasnije ili igraj bez prijave.', 'err.server': 'Server nije dostupan.',
+      'aria.arrows': ', strelicama lijevo i desno', 'aria.help': 'Kako se igra', 'aria.demo': 'Primjer ploče iz igre',
+      'srv.daily_expired': 'Dnevna zagonetka je istekla.', 'srv.email_invalid': 'E-mail adresa nije ispravna.', 'srv.google_failed': 'Google prijava nije uspjela.',
+      'srv.name_invalid': 'Korisničko ime mora imati 2–16 znakova: slova, brojke, razmak, _ . -', 'srv.bad_login': 'Pogrešno korisničko ime, e-mail ili lozinka.',
+      'srv.too_many': 'Previše pokušaja, pokušaj kasnije.', 'srv.too_many_15': 'Previše pokušaja, pokušaj za 15 minuta.', 'srv.google_off': 'Prijava s Googleom nije postavljena.',
+      'srv.endless_order': 'Prvo riješi prethodne zagonetke.', 'srv.bad_solution': 'Rješenje nije ispravno.', 'srv.google_taken': 'Taj Google račun je već povezan s drugim igračem.',
+      'srv.email_taken': 'Taj e-mail već ima račun. Prijavi se.', 'srv.email_in_use': 'Taj e-mail već koristi drugi račun.', 'srv.name_taken': 'To korisničko ime je zauzeto.',
+      'srv.current_password': 'Trenutna lozinka nije točna.', 'srv.password_short': 'Lozinka mora imati najmanje 6 znakova.', 'srv.not_signed_in': 'Nisi prijavljen.',
+      // home page
+      'home.desc': 'Topple je klizna slagalica s gravitacijom: izvedi crveni blok kroz izlaz u što manje poteza. Dnevna zagonetka, beskonačni način i ljestvica.',
+      'home.navBoard': 'Ljestvica', 'home.navHow': 'Kako se igra', 'home.navBlocks': 'Blokovi', 'home.navModes': 'Načini igre', 'home.play': 'Igraj',
+      'home.lead': 'Klizna slagalica s gravitacijom. Pomakni blok, sve iznad njega padne, a ti moraš predvidjeti lanac koji slijedi. Izvedi crveni blok kroz izlaz u što manje poteza.',
+      'home.playFree': 'Igraj besplatno', 'home.boardBtn': 'Ljestvica',
+      'home.factLevels': 'razina', 'home.factTypes': 'vrsta blokova', 'home.factDaily': 'zagonetka dnevno', 'home.factEndless': 'beskonačno', 'home.factPlayers': 'igrača',
+      'home.boardTitle': 'Ljestvica', 'home.boardSub': 'Najbolji igrači danas, u beskonačnom nizu i u razinama.',
+      'home.boardOnly': 'Na ljestvici su samo prijavljeni igrači: prijavi se Googleom, e-mailom ili korisničkim imenom.',
+      'home.lbDaily': 'Dnevna zagonetka', 'home.lbEndless': 'Beskonačno', 'home.lbEndlessSmall': 'riješeno', 'home.lbCampaign': 'Razine', 'home.lbCampaignSmall': 'zvjezdice',
+      'home.lbEmpty': 'Još nitko. Budi prvi!', 'home.lbOffline': 'Ljestvica radi na topple.rdd.software.', 'home.lbDown': 'Ljestvica trenutno nije dostupna.', 'home.loading': 'Učitavam…',
+      'home.stats': '{players} {playersWord} na ljestvici.', 'home.statsNone': 'Današnju zagonetku još nitko nije riješio.', 'home.statsOne': 'Današnju zagonetku riješio je 1 igrač.',
+      'home.statsMany': 'Današnju zagonetku riješilo je {n} {playersWord}.',
+      'home.howTitle': 'Kako se igra', 'home.howSub': 'Pravila stanu u četiri rečenice, ali svaki potez može pokrenuti lanac koji treba predvidjeti.',
+      'home.typesTitle': 'Vrste blokova', 'home.typesSub': '{n} vrsta blokova, svaka sa svojim pravilom. Igra ih uvodi jednu po jednu i objasni svaku kad je prvi put sretneš.',
+      'home.modesTitle': 'Načini igre', 'home.modesSub': 'Igraj razine redom, vrati se svaki dan po novu zagonetku ili idi koliko daleko možeš.',
+      'home.featTitle': 'Što još igra ima', 'home.featSub': 'Igra se u pregledniku, bez instalacije i bez reklama.',
+      'home.finalTitle': 'Spreman za prvi potez?', 'home.finalSub': 'Prva razina traje desetak sekundi. Zadnja malo dulje.',
+      'home.foot': '{levels} razina · {chapters} poglavlja · {types} vrsta blokova',
+    },
+    en: {
+      'lvl.level': 'Level {n} of {total}', 'lvl.daily': 'Daily · {date}', 'lvl.endless': 'Endless #{n}',
+      'stat.moves': 'Moves', 'stat.par': 'Target',
+      'btn.undo': 'Undo', 'btn.reset': 'Restart', 'btn.menu': 'Menu',
+      'menu.daily': 'Daily puzzle', 'menu.endless': 'Endless', 'menu.levels': 'Levels', 'menu.board': 'Leaderboard', 'menu.boardSub': 'Top players',
+      'menu.sfx': 'Sounds', 'menu.music': 'Music', 'menu.help': 'How to play', 'menu.home': 'Home page and leaderboard', 'menu.back': 'Back to the game', 'menu.lang': 'Language',
+      'sub.dailyNew': '{date} · new', 'sub.dailyDone': '{date} · solved in {n} {moves}', 'sub.endless': 'Puzzle #{n} · ★ {s}', 'sub.endlessGuest': ' · guests up to #{n}',
+      'sub.levels': '{done} of {total} solved · ★ {s}/{max}',
+      'who.signed': 'Playing as', 'who.account': 'account', 'who.guest': 'Guest', 'who.login': 'sign in',
+      'login.title': 'Welcome!', 'login.intro': 'Sign in for the leaderboard and keep playing on all your devices.', 'login.offline': 'Sign-in and the leaderboard work on topple.rdd.software.',
+      'login.tabLogin': 'Sign in', 'login.tabRegister': 'New account', 'login.or': 'or',
+      'ph.login': 'Username or e-mail', 'ph.name': 'Username', 'ph.email': 'E-mail (optional)', 'ph.password': 'Password', 'ph.passwordNew': 'Password (at least 6 characters)',
+      'login.submit': 'Sign in', 'login.create': 'Create account', 'login.skip': 'Play without an account',
+      'acc.title': 'Account', 'ph.emailAcc': 'E-mail', 'ph.current': 'Current password', 'ph.newOpt': 'New password (optional)', 'acc.save': 'Save',
+      'acc.logout': 'Sign out on this device', 'acc.back': 'Back', 'acc.loading': 'Loading…', 'acc.signedAs': 'Your account: {name}.',
+      'acc.ways': 'Sign in on other devices with: {ways}.', 'acc.wayPassword': 'username and password', 'acc.wayEmail': 'e-mail and password',
+      'acc.onlyDevice': 'So far only this device knows your account. Add a password or link Google to sign in elsewhere too.',
+      'acc.saved': 'Saved.', 'acc.noChanges': 'Nothing changed.', 'acc.confirmLogout': 'Sign out on this device? Your progress stays saved in your account.',
+      'lb.title': 'Leaderboard', 'lb.daily': 'Daily', 'lb.endless': 'Endless', 'lb.campaign': 'Levels',
+      'lb.subDaily': 'Daily puzzle, {date}. Fewest moves, then fastest.', 'lb.subEndless': 'Most puzzles solved in endless mode.', 'lb.subCampaign': 'Most stars in levels.',
+      'lb.offline': 'The leaderboard is not connected to a server yet.', 'lb.loading': 'Loading…', 'lb.empty': 'Nobody on the leaderboard yet. Be the first!',
+      'lb.guest': 'Only signed-in players are on the leaderboard.', 'lb.guestBtn': 'Sign in and compete', 'lb.close': 'Close', 'lb.needAccount': 'Only signed-in players make the leaderboard.',
+      'win.perfect': 'Perfect!', 'win.out': 'It’s out!', 'win.exact': '{n} {moves}, exactly the target.', 'win.more': '{n} {moves}. It can be done in {opt}.', 'win.time': ' Time {t}.',
+      'win.guest': ' Sign in to put your result on the leaderboard.', 'win.board': 'Leaderboard', 'win.nextPuzzle': 'Next puzzle', 'win.allLevels': 'All levels', 'win.nextLevel': 'Next level',
+      'win.retry': 'Try in fewer moves', 'win.menu': 'Menu',
+      'rank.daily': 'You are #{r} on today’s leaderboard.', 'rank.endless': 'You are #{r} on the endless leaderboard.', 'rank.campaign': 'You are #{r} on the levels leaderboard.',
+      'intro.new1': 'New block', 'intro.newN': 'New blocks', 'intro.ok': 'Got it', 'help.title': 'How to play', 'help.modes': 'Game modes', 'help.blocks': 'Blocks',
+      'lv.title': 'Levels', 'lv.close': 'Close', 'chapter': 'Chapter {n}',
+      'hint.daily': 'The same puzzle for every player today. Fewer moves is better.', 'hint.generating': 'Building a new puzzle…',
+      'hint.0': 'Drag a block left or right. Everything above it falls. Get the red block to the exit.', 'hint.1': 'Sometimes you first need to move a block that is not in the way.',
+      'hint.2': 'Stone blocks never move and never fall.', 'hint.5': 'New: ice. Once pushed, it slides until it hits something.',
+      'hint.10': 'New: heavy block (T). When it falls onto a cracked block, it breaks it.', 'hint.11': 'A heavy block only breaks things while falling. Resting on a cracked block does nothing.',
+      'hint.13': 'New: balloon. It does not fall, it rises until it hits something above.', 'hint.16': 'All together: stone, ice, heavy, cracked and balloons.',
+      'guest.endlessDone': 'As a guest you can solve the first {n} endless puzzles, and they are all solved.', 'guest.levels': 'As a guest you can play the first {n} levels.',
+      'guest.levelsDone': 'As a guest you can play the first {n} levels, and they are all solved. Well done!',
+      'guest.benefits': 'Signed-in players get all levels, unlimited endless mode, a place on the leaderboard and progress on all devices.',
+      'err.name': 'Usernames need 2–16 characters: letters, digits, space, _ . -', 'err.password': 'Passwords need at least 6 characters.',
+      'err.loginEmpty': 'Enter your username or e-mail and password.', 'err.serverLogin': 'The server is not reachable. Try later or play without an account.', 'err.server': 'The server is not reachable.',
+      'aria.arrows': ', move with left and right arrows', 'aria.help': 'How to play', 'aria.demo': 'Example board from the game',
+      'srv.daily_expired': 'This daily puzzle has expired.', 'srv.email_invalid': 'That e-mail address is not valid.', 'srv.google_failed': 'Google sign-in failed.',
+      'srv.name_invalid': 'Usernames need 2–16 characters: letters, digits, space, _ . -', 'srv.bad_login': 'Wrong username, e-mail or password.',
+      'srv.too_many': 'Too many attempts, try again later.', 'srv.too_many_15': 'Too many attempts, try again in 15 minutes.', 'srv.google_off': 'Google sign-in is not set up.',
+      'srv.endless_order': 'Solve the previous puzzles first.', 'srv.bad_solution': 'That solution is not valid.', 'srv.google_taken': 'That Google account is already linked to another player.',
+      'srv.email_taken': 'That e-mail already has an account. Sign in.', 'srv.email_in_use': 'That e-mail is used by another account.', 'srv.name_taken': 'That username is taken.',
+      'srv.current_password': 'The current password is wrong.', 'srv.password_short': 'Passwords need at least 6 characters.', 'srv.not_signed_in': 'You are not signed in.',
+      'home.desc': 'Topple is a sliding puzzle with gravity: get the red block out in as few moves as possible. Daily puzzle, endless mode and a leaderboard.',
+      'home.navBoard': 'Leaderboard', 'home.navHow': 'How to play', 'home.navBlocks': 'Blocks', 'home.navModes': 'Game modes', 'home.play': 'Play',
+      'home.lead': 'A sliding puzzle with gravity. Move a block and everything above it falls, so you have to foresee the chain that follows. Get the red block out in as few moves as possible.',
+      'home.playFree': 'Play for free', 'home.boardBtn': 'Leaderboard',
+      'home.factLevels': 'levels', 'home.factTypes': 'block types', 'home.factDaily': 'puzzle a day', 'home.factEndless': 'endless', 'home.factPlayers': 'players',
+      'home.boardTitle': 'Leaderboard', 'home.boardSub': 'The best players today, in endless mode and in levels.',
+      'home.boardOnly': 'Only signed-in players are on the leaderboard: sign in with Google, e-mail or a username.',
+      'home.lbDaily': 'Daily puzzle', 'home.lbEndless': 'Endless', 'home.lbEndlessSmall': 'solved', 'home.lbCampaign': 'Levels', 'home.lbCampaignSmall': 'stars',
+      'home.lbEmpty': 'Nobody yet. Be the first!', 'home.lbOffline': 'The leaderboard works on topple.rdd.software.', 'home.lbDown': 'The leaderboard is not available right now.', 'home.loading': 'Loading…',
+      'home.stats': '{players} {playersWord} on the leaderboard.', 'home.statsNone': 'Nobody has solved today’s puzzle yet.', 'home.statsOne': '1 player has solved today’s puzzle.',
+      'home.statsMany': '{n} {playersWord} have solved today’s puzzle.',
+      'home.howTitle': 'How to play', 'home.howSub': 'The rules fit in four sentences, but every move can start a chain you need to foresee.',
+      'home.typesTitle': 'Block types', 'home.typesSub': '{n} block types, each with its own rule. The game introduces them one by one and explains each the first time you meet it.',
+      'home.modesTitle': 'Game modes', 'home.modesSub': 'Play the levels in order, come back every day for a new puzzle, or see how far you can go.',
+      'home.featTitle': 'What else is there', 'home.featSub': 'Plays in the browser, no install and no ads.',
+      'home.finalTitle': 'Ready for your first move?', 'home.finalSub': 'The first level takes ten seconds. The last one a little longer.',
+      'home.foot': '{levels} levels · {chapters} chapters · {types} block types',
+    },
+    it: {
+      'lvl.level': 'Livello {n} di {total}', 'lvl.daily': 'Giornaliero · {date}', 'lvl.endless': 'Infinito #{n}',
+      'stat.moves': 'Mosse', 'stat.par': 'Obiettivo',
+      'btn.undo': 'Annulla', 'btn.reset': 'Ricomincia', 'btn.menu': 'Menu',
+      'menu.daily': 'Rompicapo del giorno', 'menu.endless': 'Infinito', 'menu.levels': 'Livelli', 'menu.board': 'Classifica', 'menu.boardSub': 'I migliori giocatori',
+      'menu.sfx': 'Suoni', 'menu.music': 'Musica', 'menu.help': 'Come si gioca', 'menu.home': 'Pagina iniziale e classifica', 'menu.back': 'Torna al gioco', 'menu.lang': 'Lingua',
+      'sub.dailyNew': '{date} · nuovo', 'sub.dailyDone': '{date} · risolto in {n} {moves}', 'sub.endless': 'Rompicapo #{n} · ★ {s}', 'sub.endlessGuest': ' · ospiti fino al #{n}',
+      'sub.levels': '{done} di {total} risolti · ★ {s}/{max}',
+      'who.signed': 'Giochi come', 'who.account': 'account', 'who.guest': 'Ospite', 'who.login': 'accedi',
+      'login.title': 'Benvenuto!', 'login.intro': 'Accedi per la classifica e continua a giocare su tutti i tuoi dispositivi.', 'login.offline': 'Accesso e classifica funzionano su topple.rdd.software.',
+      'login.tabLogin': 'Accedi', 'login.tabRegister': 'Nuovo account', 'login.or': 'oppure',
+      'ph.login': 'Nome utente o e-mail', 'ph.name': 'Nome utente', 'ph.email': 'E-mail (facoltativa)', 'ph.password': 'Password', 'ph.passwordNew': 'Password (almeno 6 caratteri)',
+      'login.submit': 'Accedi', 'login.create': 'Crea account', 'login.skip': 'Gioca senza account',
+      'acc.title': 'Account', 'ph.emailAcc': 'E-mail', 'ph.current': 'Password attuale', 'ph.newOpt': 'Nuova password (facoltativa)', 'acc.save': 'Salva',
+      'acc.logout': 'Esci da questo dispositivo', 'acc.back': 'Indietro', 'acc.loading': 'Caricamento…', 'acc.signedAs': 'Il tuo account: {name}.',
+      'acc.ways': 'Accesso da altri dispositivi con: {ways}.', 'acc.wayPassword': 'nome utente e password', 'acc.wayEmail': 'e-mail e password',
+      'acc.onlyDevice': 'Per ora solo questo dispositivo conosce il tuo account. Aggiungi una password o collega Google per accedere anche altrove.',
+      'acc.saved': 'Salvato.', 'acc.noChanges': 'Nessuna modifica.', 'acc.confirmLogout': 'Uscire da questo dispositivo? I progressi restano salvati nel tuo account.',
+      'lb.title': 'Classifica', 'lb.daily': 'Giornaliero', 'lb.endless': 'Infinito', 'lb.campaign': 'Livelli',
+      'lb.subDaily': 'Rompicapo del giorno, {date}. Meno mosse, poi il più veloce.', 'lb.subEndless': 'Più rompicapi risolti in modalità infinita.', 'lb.subCampaign': 'Più stelle nei livelli.',
+      'lb.offline': 'La classifica non è ancora collegata a un server.', 'lb.loading': 'Caricamento…', 'lb.empty': 'Ancora nessuno in classifica. Sii il primo!',
+      'lb.guest': 'In classifica ci sono solo i giocatori registrati.', 'lb.guestBtn': 'Accedi e sfida gli altri', 'lb.close': 'Chiudi', 'lb.needAccount': 'In classifica entrano solo i giocatori registrati.',
+      'win.perfect': 'Perfetto!', 'win.out': 'È uscito!', 'win.exact': '{n} {moves}, proprio l’obiettivo.', 'win.more': '{n} {moves}. Si può fare in {opt}.', 'win.time': ' Tempo {t}.',
+      'win.guest': ' Accedi per mettere il risultato in classifica.', 'win.board': 'Classifica', 'win.nextPuzzle': 'Prossimo rompicapo', 'win.allLevels': 'Tutti i livelli', 'win.nextLevel': 'Livello successivo',
+      'win.retry': 'Prova con meno mosse', 'win.menu': 'Menu',
+      'rank.daily': 'Oggi sei {r}° in classifica.', 'rank.endless': 'Sei {r}° nella classifica infinita.', 'rank.campaign': 'Sei {r}° nella classifica dei livelli.',
+      'intro.new1': 'Nuovo blocco', 'intro.newN': 'Nuovi blocchi', 'intro.ok': 'Capito', 'help.title': 'Come si gioca', 'help.modes': 'Modalità di gioco', 'help.blocks': 'Blocchi',
+      'lv.title': 'Livelli', 'lv.close': 'Chiudi', 'chapter': 'Capitolo {n}',
+      'hint.daily': 'Lo stesso rompicapo per tutti oggi. Meno mosse è meglio.', 'hint.generating': 'Sto preparando un nuovo rompicapo…',
+      'hint.0': 'Trascina un blocco a sinistra o a destra. Tutto ciò che sta sopra cade. Porta il blocco rosso all’uscita.', 'hint.1': 'A volte bisogna prima spostare un blocco che non è d’intralcio.',
+      'hint.2': 'I blocchi di pietra non si muovono e non cadono.', 'hint.5': 'Novità: ghiaccio. Una volta spinto, scivola finché non urta qualcosa.',
+      'hint.10': 'Novità: blocco pesante (T). Se cade su un blocco crepato, lo rompe.', 'hint.11': 'Il blocco pesante rompe solo mentre cade. Se è già appoggiato su un blocco crepato, non succede nulla.',
+      'hint.13': 'Novità: palloncino. Non cade, sale finché non urta qualcosa sopra di sé.', 'hint.16': 'Tutti insieme: pietra, ghiaccio, pesanti, crepati e palloncini.',
+      'guest.endlessDone': 'Come ospite puoi risolvere i primi {n} rompicapi infiniti, e sono già tutti risolti.', 'guest.levels': 'Come ospite giochi i primi {n} livelli.',
+      'guest.levelsDone': 'Come ospite giochi i primi {n} livelli, e sono già tutti risolti. Bravo!',
+      'guest.benefits': 'I giocatori registrati hanno tutti i livelli, la modalità infinita senza limiti, un posto in classifica e i progressi su tutti i dispositivi.',
+      'err.name': 'Il nome utente deve avere 2–16 caratteri: lettere, cifre, spazio, _ . -', 'err.password': 'La password deve avere almeno 6 caratteri.',
+      'err.loginEmpty': 'Inserisci nome utente o e-mail e password.', 'err.serverLogin': 'Il server non è raggiungibile. Riprova più tardi o gioca senza account.', 'err.server': 'Il server non è raggiungibile.',
+      'aria.arrows': ', si sposta con le frecce sinistra e destra', 'aria.help': 'Come si gioca', 'aria.demo': 'Esempio di tavola dal gioco',
+      'srv.daily_expired': 'Questo rompicapo del giorno è scaduto.', 'srv.email_invalid': 'L’indirizzo e-mail non è valido.', 'srv.google_failed': 'Accesso con Google non riuscito.',
+      'srv.name_invalid': 'Il nome utente deve avere 2–16 caratteri: lettere, cifre, spazio, _ . -', 'srv.bad_login': 'Nome utente, e-mail o password errati.',
+      'srv.too_many': 'Troppi tentativi, riprova più tardi.', 'srv.too_many_15': 'Troppi tentativi, riprova tra 15 minuti.', 'srv.google_off': 'L’accesso con Google non è configurato.',
+      'srv.endless_order': 'Risolvi prima i rompicapi precedenti.', 'srv.bad_solution': 'La soluzione non è valida.', 'srv.google_taken': 'Questo account Google è già collegato a un altro giocatore.',
+      'srv.email_taken': 'Questa e-mail ha già un account. Accedi.', 'srv.email_in_use': 'Questa e-mail è usata da un altro account.', 'srv.name_taken': 'Questo nome utente è già preso.',
+      'srv.current_password': 'La password attuale non è corretta.', 'srv.password_short': 'La password deve avere almeno 6 caratteri.', 'srv.not_signed_in': 'Non hai effettuato l’accesso.',
+      'home.desc': 'Topple è un rompicapo a blocchi scorrevoli con la gravità: porta fuori il blocco rosso con meno mosse possibili. Rompicapo del giorno, modalità infinita e classifica.',
+      'home.navBoard': 'Classifica', 'home.navHow': 'Come si gioca', 'home.navBlocks': 'Blocchi', 'home.navModes': 'Modalità', 'home.play': 'Gioca',
+      'home.lead': 'Un rompicapo a blocchi scorrevoli con la gravità. Sposta un blocco e tutto ciò che sta sopra cade: devi prevedere la reazione a catena. Porta fuori il blocco rosso con meno mosse possibili.',
+      'home.playFree': 'Gioca gratis', 'home.boardBtn': 'Classifica',
+      'home.factLevels': 'livelli', 'home.factTypes': 'tipi di blocchi', 'home.factDaily': 'rompicapo al giorno', 'home.factEndless': 'infinito', 'home.factPlayers': 'giocatori',
+      'home.boardTitle': 'Classifica', 'home.boardSub': 'I migliori di oggi, della modalità infinita e dei livelli.',
+      'home.boardOnly': 'In classifica ci sono solo i giocatori registrati: accedi con Google, e-mail o nome utente.',
+      'home.lbDaily': 'Rompicapo del giorno', 'home.lbEndless': 'Infinito', 'home.lbEndlessSmall': 'risolti', 'home.lbCampaign': 'Livelli', 'home.lbCampaignSmall': 'stelle',
+      'home.lbEmpty': 'Ancora nessuno. Sii il primo!', 'home.lbOffline': 'La classifica funziona su topple.rdd.software.', 'home.lbDown': 'La classifica al momento non è disponibile.', 'home.loading': 'Caricamento…',
+      'home.stats': '{players} {playersWord} in classifica.', 'home.statsNone': 'Nessuno ha ancora risolto il rompicapo di oggi.', 'home.statsOne': '1 giocatore ha risolto il rompicapo di oggi.',
+      'home.statsMany': '{n} {playersWord} hanno risolto il rompicapo di oggi.',
+      'home.howTitle': 'Come si gioca', 'home.howSub': 'Le regole stanno in quattro frasi, ma ogni mossa può scatenare una catena da prevedere.',
+      'home.typesTitle': 'Tipi di blocchi', 'home.typesSub': '{n} tipi di blocchi, ognuno con la sua regola. Il gioco li introduce uno alla volta e spiega ciascuno la prima volta che lo incontri.',
+      'home.modesTitle': 'Modalità di gioco', 'home.modesSub': 'Gioca i livelli in ordine, torna ogni giorno per un nuovo rompicapo o vedi fin dove arrivi.',
+      'home.featTitle': 'Cos’altro c’è', 'home.featSub': 'Si gioca nel browser, senza installazione e senza pubblicità.',
+      'home.finalTitle': 'Pronto per la prima mossa?', 'home.finalSub': 'Il primo livello dura dieci secondi. L’ultimo un po’ di più.',
+      'home.foot': '{levels} livelli · {chapters} capitoli · {types} tipi di blocchi',
+    },
+    de: {
+      'lvl.level': 'Level {n} von {total}', 'lvl.daily': 'Täglich · {date}', 'lvl.endless': 'Endlos #{n}',
+      'stat.moves': 'Züge', 'stat.par': 'Ziel',
+      'btn.undo': 'Zurück', 'btn.reset': 'Neu', 'btn.menu': 'Menü',
+      'menu.daily': 'Tagesrätsel', 'menu.endless': 'Endlos', 'menu.levels': 'Level', 'menu.board': 'Rangliste', 'menu.boardSub': 'Die besten Spieler',
+      'menu.sfx': 'Geräusche', 'menu.music': 'Musik', 'menu.help': 'Spielanleitung', 'menu.home': 'Startseite und Rangliste', 'menu.back': 'Zurück zum Spiel', 'menu.lang': 'Sprache',
+      'sub.dailyNew': '{date} · neu', 'sub.dailyDone': '{date} · gelöst in {n} {moves}', 'sub.endless': 'Rätsel #{n} · ★ {s}', 'sub.endlessGuest': ' · Gäste bis #{n}',
+      'sub.levels': '{done} von {total} gelöst · ★ {s}/{max}',
+      'who.signed': 'Du spielst als', 'who.account': 'Konto', 'who.guest': 'Gast', 'who.login': 'anmelden',
+      'login.title': 'Willkommen!', 'login.intro': 'Melde dich für die Rangliste an und spiel auf all deinen Geräten weiter.', 'login.offline': 'Anmeldung und Rangliste funktionieren auf topple.rdd.software.',
+      'login.tabLogin': 'Anmelden', 'login.tabRegister': 'Neues Konto', 'login.or': 'oder',
+      'ph.login': 'Benutzername oder E-Mail', 'ph.name': 'Benutzername', 'ph.email': 'E-Mail (optional)', 'ph.password': 'Passwort', 'ph.passwordNew': 'Passwort (mindestens 6 Zeichen)',
+      'login.submit': 'Anmelden', 'login.create': 'Konto erstellen', 'login.skip': 'Ohne Konto spielen',
+      'acc.title': 'Konto', 'ph.emailAcc': 'E-Mail', 'ph.current': 'Aktuelles Passwort', 'ph.newOpt': 'Neues Passwort (optional)', 'acc.save': 'Speichern',
+      'acc.logout': 'Auf diesem Gerät abmelden', 'acc.back': 'Zurück', 'acc.loading': 'Wird geladen…', 'acc.signedAs': 'Dein Konto: {name}.',
+      'acc.ways': 'Anmeldung auf anderen Geräten mit: {ways}.', 'acc.wayPassword': 'Benutzername und Passwort', 'acc.wayEmail': 'E-Mail und Passwort',
+      'acc.onlyDevice': 'Bisher kennt nur dieses Gerät dein Konto. Füge ein Passwort hinzu oder verknüpfe Google, um dich auch anderswo anzumelden.',
+      'acc.saved': 'Gespeichert.', 'acc.noChanges': 'Keine Änderungen.', 'acc.confirmLogout': 'Auf diesem Gerät abmelden? Dein Fortschritt bleibt im Konto gespeichert.',
+      'lb.title': 'Rangliste', 'lb.daily': 'Täglich', 'lb.endless': 'Endlos', 'lb.campaign': 'Level',
+      'lb.subDaily': 'Tagesrätsel, {date}. Wenigste Züge, dann die schnellste Zeit.', 'lb.subEndless': 'Die meisten gelösten Rätsel im Endlosmodus.', 'lb.subCampaign': 'Die meisten Sterne in den Leveln.',
+      'lb.offline': 'Die Rangliste ist noch mit keinem Server verbunden.', 'lb.loading': 'Wird geladen…', 'lb.empty': 'Noch niemand in der Rangliste. Sei der Erste!',
+      'lb.guest': 'In der Rangliste stehen nur angemeldete Spieler.', 'lb.guestBtn': 'Anmelden und mitspielen', 'lb.close': 'Schließen', 'lb.needAccount': 'In die Rangliste kommen nur angemeldete Spieler.',
+      'win.perfect': 'Perfekt!', 'win.out': 'Draußen!', 'win.exact': '{n} {moves}, genau das Ziel.', 'win.more': '{n} {moves}. Es geht auch in {opt}.', 'win.time': ' Zeit {t}.',
+      'win.guest': ' Melde dich an, damit dein Ergebnis in die Rangliste kommt.', 'win.board': 'Rangliste', 'win.nextPuzzle': 'Nächstes Rätsel', 'win.allLevels': 'Alle Level', 'win.nextLevel': 'Nächstes Level',
+      'win.retry': 'Mit weniger Zügen versuchen', 'win.menu': 'Menü',
+      'rank.daily': 'Heute bist du auf Platz {r}.', 'rank.endless': 'Im Endlosmodus bist du auf Platz {r}.', 'rank.campaign': 'In den Leveln bist du auf Platz {r}.',
+      'intro.new1': 'Neuer Block', 'intro.newN': 'Neue Blöcke', 'intro.ok': 'Verstanden', 'help.title': 'Spielanleitung', 'help.modes': 'Spielmodi', 'help.blocks': 'Blöcke',
+      'lv.title': 'Level', 'lv.close': 'Schließen', 'chapter': 'Kapitel {n}',
+      'hint.daily': 'Heute dasselbe Rätsel für alle. Weniger Züge sind besser.', 'hint.generating': 'Ein neues Rätsel wird gebaut…',
+      'hint.0': 'Zieh einen Block nach links oder rechts. Alles darüber fällt. Bring den roten Block zum Ausgang.', 'hint.1': 'Manchmal muss man zuerst einen Block bewegen, der gar nicht im Weg ist.',
+      'hint.2': 'Steinblöcke bewegen sich nie und fallen nie.', 'hint.5': 'Neu: Eis. Einmal angestoßen, rutscht es, bis es auf etwas trifft.',
+      'hint.10': 'Neu: schwerer Block (T). Fällt er auf einen rissigen Block, zerbricht er ihn.', 'hint.11': 'Der schwere Block zerbricht nur im Fallen. Liegt er schon auf einem rissigen Block, passiert nichts.',
+      'hint.13': 'Neu: Ballon. Er fällt nicht, sondern steigt, bis er oben auf etwas trifft.', 'hint.16': 'Alles zusammen: Stein, Eis, schwere, rissige Blöcke und Ballons.',
+      'guest.endlessDone': 'Als Gast kannst du die ersten {n} Endlos-Rätsel lösen, und alle sind schon gelöst.', 'guest.levels': 'Als Gast spielst du die ersten {n} Level.',
+      'guest.levelsDone': 'Als Gast spielst du die ersten {n} Level, und alle sind schon gelöst. Super!',
+      'guest.benefits': 'Angemeldete Spieler haben alle Level, den Endlosmodus ohne Grenze, einen Platz in der Rangliste und ihren Fortschritt auf allen Geräten.',
+      'err.name': 'Benutzernamen brauchen 2–16 Zeichen: Buchstaben, Ziffern, Leerzeichen, _ . -', 'err.password': 'Passwörter brauchen mindestens 6 Zeichen.',
+      'err.loginEmpty': 'Gib Benutzername oder E-Mail und Passwort ein.', 'err.serverLogin': 'Der Server ist nicht erreichbar. Versuch es später oder spiel ohne Konto.', 'err.server': 'Der Server ist nicht erreichbar.',
+      'aria.arrows': ', mit Pfeiltasten links und rechts bewegen', 'aria.help': 'Spielanleitung', 'aria.demo': 'Beispielbrett aus dem Spiel',
+      'srv.daily_expired': 'Dieses Tagesrätsel ist abgelaufen.', 'srv.email_invalid': 'Diese E-Mail-Adresse ist ungültig.', 'srv.google_failed': 'Die Anmeldung mit Google ist fehlgeschlagen.',
+      'srv.name_invalid': 'Benutzernamen brauchen 2–16 Zeichen: Buchstaben, Ziffern, Leerzeichen, _ . -', 'srv.bad_login': 'Falscher Benutzername, falsche E-Mail oder falsches Passwort.',
+      'srv.too_many': 'Zu viele Versuche, versuch es später.', 'srv.too_many_15': 'Zu viele Versuche, versuch es in 15 Minuten.', 'srv.google_off': 'Die Anmeldung mit Google ist nicht eingerichtet.',
+      'srv.endless_order': 'Löse zuerst die vorherigen Rätsel.', 'srv.bad_solution': 'Die Lösung ist ungültig.', 'srv.google_taken': 'Dieses Google-Konto ist schon mit einem anderen Spieler verknüpft.',
+      'srv.email_taken': 'Zu dieser E-Mail gibt es schon ein Konto. Melde dich an.', 'srv.email_in_use': 'Diese E-Mail wird von einem anderen Konto benutzt.', 'srv.name_taken': 'Dieser Benutzername ist vergeben.',
+      'srv.current_password': 'Das aktuelle Passwort ist falsch.', 'srv.password_short': 'Passwörter brauchen mindestens 6 Zeichen.', 'srv.not_signed_in': 'Du bist nicht angemeldet.',
+      'home.desc': 'Topple ist ein Schiebepuzzle mit Schwerkraft: Bring den roten Block mit möglichst wenigen Zügen hinaus. Tagesrätsel, Endlosmodus und Rangliste.',
+      'home.navBoard': 'Rangliste', 'home.navHow': 'Spielanleitung', 'home.navBlocks': 'Blöcke', 'home.navModes': 'Spielmodi', 'home.play': 'Spielen',
+      'home.lead': 'Ein Schiebepuzzle mit Schwerkraft. Verschieb einen Block, und alles darüber fällt: Du musst die Kettenreaktion vorhersehen. Bring den roten Block mit möglichst wenigen Zügen hinaus.',
+      'home.playFree': 'Kostenlos spielen', 'home.boardBtn': 'Rangliste',
+      'home.factLevels': 'Level', 'home.factTypes': 'Blockarten', 'home.factDaily': 'Rätsel pro Tag', 'home.factEndless': 'endlos', 'home.factPlayers': 'Spieler',
+      'home.boardTitle': 'Rangliste', 'home.boardSub': 'Die Besten von heute, im Endlosmodus und in den Leveln.',
+      'home.boardOnly': 'In der Rangliste stehen nur angemeldete Spieler: Melde dich mit Google, E-Mail oder Benutzernamen an.',
+      'home.lbDaily': 'Tagesrätsel', 'home.lbEndless': 'Endlos', 'home.lbEndlessSmall': 'gelöst', 'home.lbCampaign': 'Level', 'home.lbCampaignSmall': 'Sterne',
+      'home.lbEmpty': 'Noch niemand. Sei der Erste!', 'home.lbOffline': 'Die Rangliste funktioniert auf topple.rdd.software.', 'home.lbDown': 'Die Rangliste ist gerade nicht verfügbar.', 'home.loading': 'Wird geladen…',
+      'home.stats': '{players} {playersWord} in der Rangliste.', 'home.statsNone': 'Das heutige Rätsel hat noch niemand gelöst.', 'home.statsOne': '1 Spieler hat das heutige Rätsel gelöst.',
+      'home.statsMany': '{n} {playersWord} haben das heutige Rätsel gelöst.',
+      'home.howTitle': 'Spielanleitung', 'home.howSub': 'Die Regeln passen in vier Sätze, aber jeder Zug kann eine Kette auslösen, die du vorhersehen musst.',
+      'home.typesTitle': 'Blockarten', 'home.typesSub': '{n} Blockarten, jede mit eigener Regel. Das Spiel führt sie nacheinander ein und erklärt jede, wenn du ihr zum ersten Mal begegnest.',
+      'home.modesTitle': 'Spielmodi', 'home.modesSub': 'Spiel die Level der Reihe nach, komm jeden Tag für ein neues Rätsel wieder oder schau, wie weit du kommst.',
+      'home.featTitle': 'Was es sonst noch gibt', 'home.featSub': 'Läuft im Browser, ohne Installation und ohne Werbung.',
+      'home.finalTitle': 'Bereit für den ersten Zug?', 'home.finalSub': 'Das erste Level dauert zehn Sekunden. Das letzte etwas länger.',
+      'home.foot': '{levels} Level · {chapters} Kapitel · {types} Blockarten',
+    },
+  };
+
+  // Plural words and the playful guest names differ by language.
+  const PLURAL = {
+    hr: { moves: n => (n % 10 === 1 && n % 100 !== 11 ? 'potez' : 'poteza'), players: n => (n % 10 === 1 && n % 100 !== 11 ? 'igrač' : 'igrača') },
+    en: { moves: n => (n === 1 ? 'move' : 'moves'), players: n => (n === 1 ? 'player' : 'players') },
+    it: { moves: n => (n === 1 ? 'mossa' : 'mosse'), players: n => (n === 1 ? 'giocatore' : 'giocatori') },
+    de: { moves: n => (n === 1 ? 'Zug' : 'Züge'), players: () => 'Spieler' },
+  };
+  const CHAPTERS = {
+    hr: ['Prvi koraci', 'Teško i lagano', 'Sve zajedno', 'Lančane reakcije', 'Majstor gravitacije', 'Velika slagalica'],
+    en: ['First steps', 'Heavy and light', 'All together', 'Chain reactions', 'Gravity master', 'The big puzzle'],
+    it: ['Primi passi', 'Pesante e leggero', 'Tutti insieme', 'Reazioni a catena', 'Maestro della gravità', 'Il grande rompicapo'],
+    de: ['Erste Schritte', 'Schwer und leicht', 'Alles zusammen', 'Kettenreaktionen', 'Meister der Schwerkraft', 'Das große Rätsel'],
+  };
+  const NAMES = {
+    hr: { order: 'an', adj: ['Pospani', 'Hrabri', 'Ljutiti', 'Skliski', 'Veseli', 'Sramežljivi', 'Brzi', 'Lijeni', 'Zbunjeni', 'Pametni', 'Gladni', 'Ponosni', 'Tihi', 'Mudri', 'Nespretni', 'Znatiželjni'],
+      noun: ['Pingvin', 'Balon', 'Jež', 'Puž', 'Medvjed', 'Krumpir', 'Kolač', 'Slon', 'Rakun', 'Hrčak', 'Gušter', 'Tost', 'Mrav', 'Kamenčić'] },
+    en: { order: 'an', adj: ['Sleepy', 'Brave', 'Grumpy', 'Slippery', 'Jolly', 'Shy', 'Speedy', 'Lazy', 'Puzzled', 'Clever', 'Hungry', 'Proud', 'Quiet', 'Wise', 'Clumsy', 'Curious'],
+      noun: ['Penguin', 'Balloon', 'Hedgehog', 'Snail', 'Bear', 'Potato', 'Muffin', 'Elephant', 'Raccoon', 'Hamster', 'Lizard', 'Toast', 'Ant', 'Pebble'] },
+    it: { order: 'na', adj: ['Assonnato', 'Coraggioso', 'Brontolone', 'Scivoloso', 'Allegro', 'Timido', 'Veloce', 'Pigro', 'Confuso', 'Furbo', 'Affamato', 'Fiero', 'Silenzioso', 'Saggio', 'Goffo', 'Curioso'],
+      noun: ['Pinguino', 'Palloncino', 'Riccio', 'Orso', 'Procione', 'Criceto', 'Geco', 'Sasso', 'Panino', 'Elefante', 'Gatto', 'Biscotto', 'Ghiro', 'Tostapane'] },
+    de: { order: 'an', adj: ['Müder', 'Mutiger', 'Mürrischer', 'Rutschiger', 'Fröhlicher', 'Schüchterner', 'Flinker', 'Fauler', 'Verwirrter', 'Schlauer', 'Hungriger', 'Stolzer', 'Stiller', 'Weiser', 'Tollpatschiger', 'Neugieriger'],
+      noun: ['Pinguin', 'Ballon', 'Igel', 'Bär', 'Waschbär', 'Hamster', 'Toast', 'Kiesel', 'Keks', 'Elefant', 'Dachs', 'Frosch', 'Gecko', 'Maulwurf'] },
+  };
+
+  const get = () => { try { return localStorage.getItem('topple-lang'); } catch (e) { return null; } };
+  function detect() {
+    const saved = get();
+    if (saved && S[saved]) return saved;
+    const prefs = (typeof navigator !== 'undefined' && (navigator.languages || [navigator.language])) || [];
+    for (const p of prefs) {
+      const l = String(p || '').slice(0, 2).toLowerCase();
+      if (S[l]) return l;
+      if (['bs', 'sr', 'sl', 'me'].includes(l)) return 'hr';
+    }
+    return prefs.length ? 'en' : 'hr';
+  }
+  const lang = typeof window === 'undefined' ? 'hr' : detect();
+  function t(key, vars = {}) {
+    const s = (S[lang] && S[lang][key]) ?? S.hr[key] ?? key;
+    return s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
+  }
+  function apply(root = document) {
+    document.documentElement.lang = lang;
+    root.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    root.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+    root.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  }
+  function setLang(l) { try { localStorage.setItem('topple-lang', l); } catch (e) {} location.reload(); }
+  function guestName() {
+    const n = NAMES[lang], pick = a => a[Math.floor(Math.random() * a.length)];
+    const num = 10 + Math.floor(Math.random() * 90);
+    return n.order === 'na' ? `${pick(n.noun)} ${pick(n.adj)} ${num}` : `${pick(n.adj)} ${pick(n.noun)} ${num}`;
+  }
+  // A small language picker (select element) for menus and the home page.
+  function picker() {
+    const sel = document.createElement('select');
+    sel.className = 'langsel';
+    sel.setAttribute('aria-label', t('menu.lang'));
+    for (const [k, v] of Object.entries(LANGS)) sel.add(new Option(v, k, false, k === lang));
+    sel.onchange = () => setLang(sel.value);
+    return sel;
+  }
+  return {
+    lang, LANGS, S, t, apply, setLang, picker, guestName,
+    locale: LOCALE[lang], plural: PLURAL[lang], chapters: CHAPTERS[lang], CHAPTERS,
+  };
+})();
+if (typeof module !== 'undefined') module.exports = ToppleI18n;
