@@ -23,6 +23,12 @@
   --ice-edge: #7FB8C4;
   --stone: #4D6560;
   --stone-line: #3C524D;
+  --iron: #5E636B;
+  --iron-edge: #3A3E45;
+  --clay: #E9B796;
+  --clay-edge: #BE8664;
+  --balloon: #B99BE8;
+  --balloon-edge: #8A69C2;
   --gold: #E8B33B;
   --panel: #F6F8F6;
   --panel-line: #CBD6D1;
@@ -38,6 +44,7 @@
     --hero: #EA5C44; --hero-edge: #A4321D;
     --ice: #A9D9E2; --ice-edge: #6AA3AF;
     --stone: #415853; --stone-line: #33463F;
+    --iron: #6A7079; --iron-edge: #3E434A; --clay: #DCA684; --clay-edge: #A06C4C; --balloon: #AC8DDF; --balloon-edge: #7656AD;
     --gold: #F0BE4B; --panel: #1A2523; --panel-line: #2E3E3A;
     color-scheme: dark;
   }
@@ -49,9 +56,11 @@
   --hero: #EA5C44; --hero-edge: #A4321D;
   --ice: #A9D9E2; --ice-edge: #6AA3AF;
   --stone: #415853; --stone-line: #33463F;
+  --iron: #6A7079; --iron-edge: #3E434A; --clay: #DCA684; --clay-edge: #A06C4C; --balloon: #AC8DDF; --balloon-edge: #7656AD;
   --gold: #F0BE4B; --panel: #1A2523; --panel-line: #2E3E3A;
   color-scheme: dark;
 }
+[hidden] { display: none !important; }
 html, body { height: 100%; margin: 0; }
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; }
 body {
@@ -98,6 +107,24 @@ h1 span { color: var(--hero); }
 .blk.i .face { background: linear-gradient(135deg, rgba(255,255,255,.7) 0 18%, transparent 18% 30%, rgba(255,255,255,.35) 30% 36%, transparent 36%), var(--ice);
   box-shadow: inset 0 -5px 0 var(--ice-edge), inset 0 0 0 2px rgba(255,255,255,.4); }
 .blk.f .face { border-radius: 6px; background: repeating-linear-gradient(-45deg, var(--stone) 0 6px, var(--stone-line) 6px 9px); box-shadow: inset 0 0 0 2px var(--stone-line); }
+.blk.h .face { border-radius: 7px; background:
+    radial-gradient(circle at 9px 9px, rgba(255,255,255,.35) 0 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 9px) 9px, rgba(255,255,255,.35) 0 2.5px, transparent 3px),
+    linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--iron);
+  box-shadow: inset 0 -6px 0 var(--iron-edge), inset 0 2px 0 rgba(255,255,255,.2); }
+.blk.h .face::after { content: "T"; position: absolute; inset: 0 0 5px; display: grid; place-items: center; font: 400 1rem var(--display); color: rgba(255,255,255,.55); }
+.blk.k .face { background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 30' preserveAspectRatio='none'%3E%3Cpath d='M4 3l7 9-3 6 6 9M22 2l-3 8 7 5-2 7M34 4l-5 7 6 5' fill='none' stroke='%23000' stroke-opacity='.28' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 0 0 / 40px 100% repeat-x,
+    var(--clay);
+  box-shadow: inset 0 -5px 0 var(--clay-edge), inset 0 2px 0 rgba(255,255,255,.35); }
+.blk.b .face { border-radius: 999px; transform-origin: 50% 0;
+  background: radial-gradient(ellipse 30% 40% at 25% 30%, rgba(255,255,255,.55), transparent 70%), var(--balloon);
+  box-shadow: inset 0 -5px 0 var(--balloon-edge); }
+.blk.b .face::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 8px; height: 6px; margin-left: -4px; background: var(--balloon-edge); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.blk.gone { visibility: hidden; pointer-events: none; }
+.blk.breaking { visibility: visible; pointer-events: none; }
+.blk.breaking .face { animation: shatter .3s ease-in forwards; }
+@keyframes shatter { 0% { transform: none; opacity: 1; } 30% { transform: scale(1.08, .7); } 100% { transform: scale(1.25, .2) translateY(30%); opacity: 0; } }
 .blk.mv { cursor: grab; }
 .blk.mv:active { cursor: grabbing; }
 .blk.mv:focus-visible .face { box-shadow: 0 0 0 3px var(--gold); }
@@ -138,7 +165,7 @@ button.link { background: none; border: 0; color: var(--muted); font: 500 .85rem
 .lv small { font: 500 .55rem var(--mono); color: var(--gold); letter-spacing: .05em; min-height: 1em; }
 .lv:disabled { opacity: .35; cursor: default; }
 .lv.cur { border-color: var(--hero); box-shadow: inset 0 0 0 1px var(--hero); }
-@media (prefers-reduced-motion: reduce) { .exit svg, .stars svg.on { animation: none; } .blk.land .face { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .exit svg, .stars svg.on { animation: none; } .blk.land .face { animation: none; } .blk.breaking .face { animation-duration: .05s; } }
 </style>
 </head>
 <body>
@@ -191,6 +218,10 @@ const HINTS = {
   1: 'Ponekad prvo treba maknuti blok koji nije na putu.',
   2: 'Kameni blokovi se ne miču i ne padaju.',
   5: 'Novo: led. Kad ga gurneš, klizi dok ne udari u nešto.',
+  10: 'Novo: teški blok (T). Kad padne na ispucali blok, razbije ga.',
+  11: 'Teški blok razbija samo kad pada. Ako već leži na ispucalom, ništa se ne događa.',
+  13: 'Novo: balon. Ne pada nego se diže dok ne udari u nešto iznad sebe.',
+  16: 'Sve zajedno: kamen, led, teški, ispucali i baloni.',
 };
 const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>';
 const $ = id => document.getElementById(id);
@@ -224,6 +255,7 @@ function layout() {
   cell = Math.max(28, Math.floor(Math.min((availW - PAD * 2) / W, (availH - PAD * 2) / H, 64)));
   board.style.width = cell * W + PAD * 2 + 'px';
   board.style.height = cell * H + PAD * 2 + 'px';
+  board.querySelector('.cellbg').style.backgroundSize = `${cell}px ${cell}px`;
   const L = LEVELS[lvl];
   const ex = board.querySelector('.exit');
   ex.style.top = PAD + L.exit * cell + 'px'; ex.style.height = cell + 'px';
@@ -239,6 +271,8 @@ function place(ms, only) {
     if (only && !only.includes(i)) return;
     el.style.transition = ms ? `transform ${ms}ms cubic-bezier(.3,.7,.4,1)` : 'none';
     el.style.transform = pos(blocks[i]);
+    el.classList.remove('breaking');
+    el.classList.toggle('gone', !!blocks[i].g);
   });
 }
 
@@ -258,7 +292,7 @@ function load(i, keep) {
     if (b.t !== 'f') {
       el.tabIndex = 0;
       el.setAttribute('role', 'button');
-      el.setAttribute('aria-label', { r: 'Crveni blok', n: 'Blok', i: 'Ledeni blok' }[b.t] + ', strelicama lijevo i desno');
+      el.setAttribute('aria-label', { r: 'Crveni blok', n: 'Blok', i: 'Ledeni blok', h: 'Teški blok', k: 'Ispucali blok', b: 'Balon' }[b.t] + ', strelicama lijevo i desno');
       el.addEventListener('pointerdown', e => grab(e, k));
       el.addEventListener('keydown', e => onKey(e, k));
     }
@@ -278,7 +312,7 @@ function update() {
 }
 
 function grab(e, k) {
-  if (busy || won_) return;
+  if (busy || won_ || blocks[k].g) return;
   e.preventDefault();
   const el = els[k], b = blocks[k];
   const [l, r] = range(blocks, k);
@@ -306,7 +340,7 @@ function grab(e, k) {
   el.addEventListener('pointercancel', onUp);
 }
 function onKey(e, k) {
-  if (busy || won_) return;
+  if (busy || won_ || blocks[k].g) return;
   const dir = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
   if (!dir) return;
   e.preventDefault();
@@ -327,25 +361,40 @@ function commit(k, d, travel) {
   setTimeout(() => fall(), slideMs);
 }
 function fall() {
-  const before = blocks.map(b => b.y);
-  settle(blocks);
+  const before = blocks.map(b => b.y), events = [];
+  settle(blocks, events);
   let maxMs = 0;
-  const landed = [];
+  const landed = [], fallMs = {};
   els.forEach((el, i) => {
     const dist = blocks[i].y - before[i];
     if (!dist) return;
-    const ms = reduced ? 80 : Math.round(150 * Math.sqrt(dist));
+    const up = dist < 0;
+    const ms = reduced ? 80 : Math.round((up ? 190 : 150) * Math.sqrt(Math.abs(dist)));
+    fallMs[i] = ms;
     maxMs = Math.max(maxMs, ms);
-    el.style.transition = `transform ${ms}ms cubic-bezier(.55,0,1,.6)`;
+    el.style.transition = `transform ${ms}ms ${up ? 'cubic-bezier(.35,.1,.5,1)' : 'cubic-bezier(.55,0,1,.6)'}`;
     el.style.transform = pos(blocks[i]);
     landed.push([i, ms]);
   });
   landed.forEach(([i, ms]) => setTimeout(() => {
     els[i].classList.remove('land'); void els[i].offsetWidth; els[i].classList.add('land');
   }, ms));
-  if (landed.length) setTimeout(() => { tone(110, .16, 'sine', .3); buzz(12); }, maxMs);
+  // A break happens when the heavy block reaches row e.y; with the falling ease,
+  // distance grows roughly with time squared, so time ~ sqrt(distance fraction).
+  events.forEach(e => {
+    const total = blocks[e.by].y - before[e.by];
+    const t = total > 0 ? (fallMs[e.by] || 0) * Math.sqrt((e.y - before[e.by]) / total) : 0;
+    setTimeout(() => {
+      els[e.broken].classList.add('gone', 'breaking');
+      tone(180, .12, 'square', .12); setTimeout(() => tone(95, .14, 'sawtooth', .08), 30);
+      buzz(25);
+    }, t);
+    maxMs = Math.max(maxMs, t + 300);
+  });
+  if (landed.length) setTimeout(() => { tone(110, .16, 'sine', .3); buzz(12); }, Math.max(...landed.map(l => l[1])));
   setTimeout(() => {
     busy = false;
+    els.forEach(el => el.classList.remove('breaking'));
     const ri = blocks.findIndex(b => b.t === 'r');
     els[ri].style.setProperty('--look', 0);
     if (won(blocks, LEVELS[lvl].exit)) win();
