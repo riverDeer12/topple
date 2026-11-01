@@ -160,6 +160,9 @@ button.ctl:focus-visible, button.go:focus-visible, .lv:focus-visible { outline: 
 button.go { font: 400 1.2rem var(--display); letter-spacing: .02em; background: var(--hero); color: #fff; border: 0; border-radius: 999px; padding: 12px 26px; cursor: pointer; box-shadow: inset 0 -4px 0 var(--hero-edge); }
 button.link { background: none; border: 0; color: var(--muted); font: 500 .85rem var(--body); cursor: pointer; padding: 4px; text-decoration: underline; text-underline-offset: 3px; }
 .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; }
+.chapters { width: 100%; max-height: min(62vh, 520px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 2px; box-sizing: border-box; }
+.chapter h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; font: 400 1rem var(--display); letter-spacing: .01em; text-align: left; }
+.chapter h3 small { font: 500 .72rem var(--mono); color: var(--muted); }
 .lv { aspect-ratio: 1; border-radius: 12px; border: 1px solid var(--panel-line); background: var(--page); color: var(--ink); font: 400 1.25rem var(--display);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; padding: 0; }
 .lv small { font: 500 .55rem var(--mono); color: var(--gold); letter-spacing: .05em; min-height: 1em; }
@@ -326,7 +329,7 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 <div class="overlay" id="lvBox" hidden>
   <div class="card">
     <h2>Razine</h2>
-    <div class="grid" id="lvGrid"></div>
+    <div class="chapters" id="lvGrid"></div>
     <button class="link" id="lvClose" type="button">Zatvori</button>
   </div>
 </div>
@@ -807,10 +810,25 @@ async function openBoard(mode = lbMode) {
 document.querySelectorAll('.tab').forEach(t => t.onclick = () => openBoard(t.dataset.m));
 $('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
 
+// Levels are grouped in chapters of 10 (names for chapters 1-10, ready for 100 levels).
+const CHAPTERS = ['Prvi koraci', 'Teško i lagano', 'Sve zajedno', 'Lančane reakcije', 'Majstor gravitacije',
+  'Velika slagalica', 'Poglavlje 7', 'Poglavlje 8', 'Poglavlje 9', 'Poglavlje 10'];
 function openLevels() {
-  $('lvGrid').innerHTML = LEVELS.map((L, i) =>
-    `<button class="lv${ctx && ctx.mode === 'campaign' && i === ctx.key ? ' cur' : ''}" type="button" data-i="${i}" ${unlocked(i) ? '' : 'disabled'}>${i + 1}<small>${best[i] ? '★'.repeat(best[i]) : ''}</small></button>`).join('');
+  const cur = ctx && ctx.mode === 'campaign' ? ctx.key : -1;
+  let html = '';
+  for (let c = 0; c * 10 < LEVELS.length; c++) {
+    const ids = LEVELS.slice(c * 10, c * 10 + 10).map((_, k) => c * 10 + k);
+    const stars = ids.reduce((a, i) => a + (best[i] || 0), 0);
+    html += `<section class="chapter"><h3>${c + 1}. ${CHAPTERS[c] || 'Poglavlje ' + (c + 1)}<small>★ ${stars}/${ids.length * 3}</small></h3><div class="grid">` +
+      ids.map(i => `<button class="lv${i === cur ? ' cur' : ''}" type="button" data-i="${i}" ${unlocked(i) ? '' : 'disabled'}>${i + 1}<small>${best[i] ? '★'.repeat(best[i]) : ''}</small></button>`).join('') +
+      '</div></section>';
+  }
+  $('lvGrid').innerHTML = html;
   showOnly('lvBox');
+  // Scroll to the current level, or to the first unsolved one.
+  let focus = cur >= 0 ? cur : LEVELS.findIndex((_, i) => !best[i]);
+  const el = $('lvGrid').querySelector(`[data-i="${focus < 0 ? LEVELS.length - 1 : focus}"]`);
+  if (el) el.scrollIntoView({ block: 'center' });
 }
 $('lvGrid').addEventListener('click', e => { const b = e.target.closest('.lv'); if (b && !b.disabled) openCampaign(+b.dataset.i); });
 $('lvClose').onclick = openMenu;
