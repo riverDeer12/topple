@@ -14,7 +14,7 @@ Server ponovno odigra svako poslano rješenje istim `web/core.js` kao igra. Rezu
 ```bash
 git clone https://github.com/riverDeer12/topple.git
 cd topple
-PORT=8787 ALLOWED_ORIGIN=https://riverdeer12.github.io node server/server.js
+PORT=8787 ALLOWED_ORIGIN=https://topple.rdd.software node server/server.js
 ```
 
 Provjera: `curl http://localhost:8787/api/health` vraća `{"ok":true,...}`.
@@ -25,7 +25,7 @@ Postavke (varijable okruženja):
 |---|---|---|
 | `PORT` | `8787` | port na kojem API sluša |
 | `DB_PATH` | `server/topple.db` | datoteka baze |
-| `ALLOWED_ORIGIN` | `*` | s koje adrese igra smije zvati API, npr. `https://riverdeer12.github.io` |
+| `ALLOWED_ORIGIN` | `*` | s kojih adresa igra smije zvati API, odvojeno zarezom, npr. `https://topple.rdd.software,http://localhost:8080` |
 | `TZ_GAME` | `Europe/Zagreb` | vremenska zona za dnevnu zagonetku |
 
 ## Stalno pokretanje (systemd)
@@ -41,7 +41,7 @@ After=network.target
 WorkingDirectory=/srv/topple
 ExecStart=/usr/bin/node server/server.js
 Environment=PORT=8787
-Environment=ALLOWED_ORIGIN=https://riverdeer12.github.io
+Environment=ALLOWED_ORIGIN=https://topple.rdd.software
 Restart=always
 User=www-data
 
@@ -55,11 +55,13 @@ sudo systemctl enable --now topple
 
 ## HTTPS preko nginxa
 
-Igra na GitHub Pagesu radi na `https://`, pa i API mora biti na `https://` (preglednik inače blokira pozive).
+Igra je na GitHub Pagesu na `https://topple.rdd.software`, a API na tvom serveru na `https://api.topple.rdd.software`. API mora biti na `https://`, jer preglednik inače blokira pozive.
+
+DNS: `topple` je CNAME na `riverdeer12.github.io.`, a `api.topple` je A zapis na IP servera.
 
 ```nginx
 server {
-  server_name topple.tvojadomena.hr;
+  server_name api.topple.rdd.software;
   location /api/ {
     proxy_pass http://127.0.0.1:8787;
     proxy_set_header X-Forwarded-For $remote_addr;
@@ -67,14 +69,14 @@ server {
 }
 ```
 
-Certifikat: `sudo certbot --nginx -d topple.tvojadomena.hr`.
+Certifikat: `sudo certbot --nginx -d api.topple.rdd.software`.
 
 ## Spajanje igre na server
 
 U `web/config.js` upiši adresu servera i pushaj na `main`:
 
 ```js
-window.TOPPLE_API = 'https://topple.tvojadomena.hr';
+window.TOPPLE_API = 'https://api.topple.rdd.software';
 ```
 
 Dok je adresa prazna, igra radi bez servera: prijava je samo lokalna, a ljestvica pokazuje da nije spojena.

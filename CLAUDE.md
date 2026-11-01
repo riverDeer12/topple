@@ -47,6 +47,6 @@ Tekst u igri (UI) je na hrvatskom.
 
 ## Sljedeći koraci (vidi docs/DESIGN.md)
 
-1. Postaviti API na server i upisati adresu u `web/config.js`.
+1. Postaviti API na server (`https://api.topple.rdd.software`) i upisati adresu u `web/config.js`. Igra je na GitHub Pagesu na `https://topple.rdd.software`.
 2. Više razina (cilj 40–60) i testiranje na mobitelu.
 3. Prijenos na iOS: Swift paket s logikom iz `core.js`, SpriteKit scena, haptika, Game Center.

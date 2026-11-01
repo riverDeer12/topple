@@ -3,7 +3,8 @@
 // Every submitted solution is replayed with web/core.js before it is stored,
 // so a score can only be recorded by actually solving the puzzle.
 //
-// Env: PORT (8787), DB_PATH (server/topple.db), ALLOWED_ORIGIN (*), TZ_GAME (Europe/Zagreb)
+// Env: PORT (8787), DB_PATH (server/topple.db), TZ_GAME (Europe/Zagreb),
+//      ALLOWED_ORIGIN (* or a comma-separated list, e.g. https://topple.rdd.software,http://localhost:8080)
 const http = require('http');
 const path = require('path');
 const crypto = require('crypto');
@@ -14,7 +15,9 @@ const LEVELS = require('../web/levels.js');
 const PUZZLES = require('../web/puzzles.js');
 
 const PORT = Number(process.env.PORT || 8787);
-const ORIGIN = process.env.ALLOWED_ORIGIN || '*';
+const ORIGINS = (process.env.ALLOWED_ORIGIN || '*').split(',').map(s => s.trim().replace(/\/+$/, '')).filter(Boolean);
+// Echo the caller's origin when it is on the list (CORS allows only one value per response).
+const corsOrigin = req => ORIGINS.includes('*') ? '*' : (ORIGINS.includes(req.headers.origin) ? req.headers.origin : ORIGINS[0]);
 const TZ = process.env.TZ_GAME || 'Europe/Zagreb';
 const db = new DatabaseSync(process.env.DB_PATH || path.join(__dirname, 'topple.db'));
 
@@ -85,7 +88,8 @@ function replay(level, moves) {
 function send(res, status, body) {
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': ORIGIN,
+    'Access-Control-Allow-Origin': corsOrigin(res.req),
+    'Vary': 'Origin',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Cache-Control': 'no-store',
