@@ -19,7 +19,17 @@ const only = onlyAt >= 0 ? new Set(args.splice(onlyAt, 2)[1].split(',').map(n =>
 const BASE = Number(args[0] || 12345);
 const INDEPENDENT_FROM = 10;
 let seed = BASE;
-const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+// Legacy LCG for levels 1-10. seed * 1103515245 exceeds 2^53, so it loses
+// precision and falls into a cycle of ~10k numbers; kept only so those levels
+// stay the same. Independent levels use mulberry32 instead.
+const lcg = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+const mulberry32 = () => {
+  seed = (seed + 0x6D2B79F5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+let rnd = lcg;
 const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
 
 // Difficulty curve. opt = required optimal moves (max = accept a range).
@@ -99,7 +109,7 @@ function needs(start, exitRow, opt, t) {
 
 const CACHE = path.join(__dirname, '.cache');
 fs.mkdirSync(CACHE, { recursive: true });
-const cacheFile = (i, s, seedIn) => path.join(CACHE, `level-${i + 1}-${seedIn}-${Buffer.from(JSON.stringify(s)).toString('base64url').slice(0, 40)}.json`);
+const cacheFile = (i, s, seedIn) => path.join(CACHE, `level-${i + 1}-${i >= INDEPENDENT_FROM ? 'm' : ''}${seedIn}-${Buffer.from(JSON.stringify(s)).toString('base64url').slice(0, 40)}.json`);
 
 function search(s) {
   let tries = 0;
@@ -120,7 +130,7 @@ function search(s) {
 const out = [];
 for (let i = 0; i < SPECS.length; i++) {
   const s = SPECS[i];
-  if (i >= INDEPENDENT_FROM) seed = (BASE + i * 7919) % 2147483648;
+  if (i >= INDEPENDENT_FROM) { seed = (BASE + i * 7919) % 2147483648; rnd = mulberry32; }
   const seedIn = seed, file = cacheFile(i, s, seedIn);
   if (fs.existsSync(file)) {
     const c = JSON.parse(fs.readFileSync(file, 'utf8'));
