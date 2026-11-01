@@ -99,9 +99,10 @@ const SPECS = [
   { opt: 10, max: 12, n: 9, fixed: 1, ice: 2 },
   { opt: 10, max: 12, n: 8, fixed: 2, ice: 1, heavy: 2, fragile: 3 },
   { opt: 11, max: 13, n: 8, fixed: 1, ice: 2, balloon: 2 },
-  { opt: 11, max: 13, n: 8, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
-  { opt: 11, max: 14, n: 9, fixed: 2, ice: 2 },
-  { opt: 12, max: 15, n: 8, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 2 },
+  // 58-60 were widened after an hour without a match at the narrower targets.
+  { opt: 10, max: 14, n: 8, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
+  { opt: 11, max: 15, n: 9, fixed: 2, ice: 2 },
+  { opt: 11, max: 16, n: 8, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
 ];
 
 const make = spec => G.make(spec, ri);
