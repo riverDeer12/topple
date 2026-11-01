@@ -193,6 +193,17 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 .lb li.me { background: color-mix(in srgb, var(--gold) 18%, transparent); border-radius: 8px; }
 .lb .empty { display: block; text-align: center; color: var(--muted); border: 0; padding: 18px 6px; }
 .card.wide { width: min(400px, 100%); }
+.types { display: flex; flex-direction: column; gap: 12px; width: 100%; text-align: left; max-height: min(55vh, 420px); overflow-y: auto; }
+.type { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: center; }
+.type b { display: block; font: 400 1.05rem var(--display); letter-spacing: .01em; }
+.type p { margin: 2px 0 0; font-size: .85rem; line-height: 1.35; }
+.blk.sw { position: relative; width: 76px; height: 34px; transform: none; }
+.blk.sw .eye { max-width: 9px; }
+.rules { display: flex; flex-direction: column; gap: 10px; }
+.rules h3, .types h3 { font: 400 1.05rem var(--display); letter-spacing: .01em; margin: 4px 0 0; }
+.rules p { margin: 0; font-size: .85rem; line-height: 1.4; }
+.help { font: 400 1.1rem var(--display); width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--panel-line); background: var(--panel); color: var(--ink); cursor: pointer; padding: 0; align-self: center; }
+.help:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .exit svg, .stars svg.on { animation: none; } .blk.land .face { animation: none; } .blk.breaking .face { animation-duration: .05s; } }
 </style>
 </head>
@@ -207,6 +218,7 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
     <div class="stats">
       <div class="stat"><b id="mv">0</b><small>Potezi</small></div>
       <div class="stat"><b id="par">2</b><small>Cilj</small></div>
+      <button class="help" id="help" type="button" aria-label="Kako se igra">?</button>
     </div>
   </header>
   <main class="stage" id="stage">
@@ -246,6 +258,7 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
       <button class="tog" id="tSfx" type="button" aria-pressed="true">Zvukovi</button>
       <button class="tog" id="tMusic" type="button" aria-pressed="true">Glazba</button>
     </div>
+    <button class="link" id="mTypes" type="button">Kako se igra</button>
     <button class="link" id="menuClose" type="button">Natrag na igru</button>
   </div>
 </div>
@@ -286,6 +299,28 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
     <button class="go" id="next" type="button">Sljedeća razina</button>
     <button class="link" id="retry" type="button">Pokušaj u manje poteza</button>
     <button class="link" id="winMenu" type="button">Izbornik</button>
+  </div>
+</div>
+<div class="overlay" id="introBox" hidden>
+  <div class="card wide">
+    <h2 id="introTitle">Novi blok</h2>
+    <div class="types">
+      <div class="rules" id="introRules" hidden>
+        <h3>Cilj</h3>
+        <p>Izvedi crveni blok kroz izlaz, strelicu na desnom rubu ploče. Crveni mora biti u istom redu kao strelica i dotaknuti desni rub.</p>
+        <h3>Potez</h3>
+        <p>Povuci blok prstom ili mišem lijevo ili desno. Klizi za koliko god slobodnih polja želiš, ali nikad gore ili dolje. Na tipkovnici odaberi blok tipkom Tab i miči ga strelicama.</p>
+        <h3>Gravitacija</h3>
+        <p>Nakon svakog poteza sve što nema oslonac padne. Blok stoji ako je ispod barem jednog njegovog dijela nešto. Jedan potez može pokrenuti cijeli lanac padova.</p>
+        <h3>Zvjezdice</h3>
+        <p>Cilj je najmanji mogući broj poteza. Riješiš li u tom broju, dobiješ 3 zvjezdice, s najviše 2 poteza više 2, inače 1. „Vrati” poništava zadnji potez, a „Ponovi” kreće ispočetka.</p>
+        <h3>Načini igre</h3>
+        <p><b>Razine</b> se otključavaju redom i uvode nove blokove. <b>Dnevna zagonetka</b> je ista za sve igrače taj dan: na ljestvici pobjeđuje manje poteza, pa brže vrijeme. <b>Beskonačno</b> je niz zagonetki koje postaju sve teže.</p>
+        <h3>Blokovi</h3>
+      </div>
+      <div class="types" id="introList" style="overflow:visible;max-height:none"></div>
+    </div>
+    <button class="go" id="introOk" type="button">Razumijem</button>
   </div>
 </div>
 <div class="overlay" id="lvBox" hidden>
@@ -346,7 +381,7 @@ const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('hr-HR', { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => n % 10 === 1 && n % 100 !== 11 ? 'potez' : 'poteza';
-const showOnly = id => ['menuBox', 'loginBox', 'lbBox', 'winBox', 'lvBox'].forEach(b => { $(b).hidden = b !== id; });
+const showOnly = id => ['menuBox', 'loginBox', 'lbBox', 'winBox', 'lvBox', 'introBox'].forEach(b => { $(b).hidden = b !== id; });
 
 // --- layout & rendering ------------------------------------------------------
 function layout() {
@@ -407,7 +442,55 @@ function show(c) {
   update();
   layout();
   store.set('last', { mode: c.mode, key: c.key });
+  maybeIntro(c.level);
 }
+
+// --- block types: short explanation the first time a type shows up ---------------
+const TYPES = {
+  r: ['Crveni blok', 'Njega moraš izvesti. Dovedi ga do strelice na desnom rubu, u isti red.'],
+  n: ['Obični blok', 'Klizi lijevo ili desno za koliko god polja želiš. Kad ispod njega nema ničega, padne.'],
+  f: ['Kamen', 'Jedini se nikad ne miče: ne možeš ga gurnuti i ne pada. Služi kao čvrsti oslonac.'],
+  i: ['Led', 'Kad ga gurneš, klizi sve do prve prepreke. Ne može stati na pola puta.'],
+  h: ['Teški blok', 'Ako padne na ispucali blok, razbije ga i pada dalje. Ako samo leži na njemu, ništa se ne događa.'],
+  k: ['Ispucali blok', 'Miče se i pada kao obični, ali ga teški blok u padu razbije i on nestane.'],
+  b: ['Balon', 'Ne pada nego se diže, dok ne udari u nešto iznad sebe. Drugi blokovi mogu stajati na njemu.'],
+};
+const TYPE_ORDER = ['r', 'n', 'f', 'i', 'h', 'k', 'b'];
+let seen = store.get('seen', null);
+if (!seen) { // first run of this version: types from levels already beaten count as seen
+  const s = new Set(['r', 'n']);
+  for (const i of Object.keys(best)) for (const b of LEVELS[i].blocks) s.add(b[3]);
+  seen = [...s]; store.set('seen', seen);
+}
+function showTypes(types, title, rules = false) {
+  $('introTitle').textContent = title;
+  $('introRules').hidden = !rules;
+  document.querySelector('#introBox .types').scrollTop = 0;
+  $('introList').innerHTML = '';
+  for (const t of types) {
+    const row = document.createElement('div');
+    row.className = 'type';
+    row.innerHTML = `<div class="blk sw ${t}"><div class="face"></div>${t === 'r' ? '<div class="eyes"><span class="eye"></span><span class="eye"></span></div>' : ''}</div><div><b></b><p></p></div>`;
+    row.querySelector('b').textContent = TYPES[t][0];
+    row.querySelector('p').textContent = TYPES[t][1];
+    $('introList').appendChild(row);
+  }
+  showOnly('introBox');
+  $('introOk').focus({ preventScroll: true });
+}
+let introBack = null; // what the "Razumijem" button returns to
+let started = false;  // the board loaded behind the start menu must not use up its intro
+function maybeIntro(level) {
+  if (!started) return;
+  const fresh = TYPE_ORDER.filter(t => !seen.includes(t) && level.blocks.some(b => b[3] === t));
+  if (!fresh.length) return;
+  seen.push(...fresh); store.set('seen', seen);
+  introBack = null;
+  showTypes(fresh, fresh.length === 1 ? 'Novi blok' : 'Novi blokovi');
+}
+$('introOk').onclick = () => (introBack ? introBack() : showOnly(null));
+$('mTypes').onclick = () => { introBack = openMenu; showTypes(TYPE_ORDER, 'Kako se igra', true); };
+$('help').onclick = () => { if (busy) return; introBack = won_ ? () => showOnly('winBox') : null; showTypes(TYPE_ORDER, 'Kako se igra', true); };
 function update() {
   $('mv').textContent = hist.length;
   $('undo').disabled = !hist.length || won_;
@@ -689,7 +772,7 @@ $('mDaily').onclick = openDaily;
 $('mEndless').onclick = openEndless;
 $('mLevels').onclick = openLevels;
 $('mBoard').onclick = () => openBoard('daily');
-$('menuClose').onclick = () => showOnly(null);
+$('menuClose').onclick = () => { showOnly(null); if (ctx) maybeIntro(ctx.level); };
 $('menu').onclick = () => { if (!busy) openMenu(); };
 $('winMenu').onclick = openMenu;
 $('undo').onclick = () => {
@@ -723,6 +806,7 @@ function start() {
   if (last && last.mode === 'campaign' && LEVELS[last.key]) i = last.key;
   openCampaign(i);
   if (!user && !store.get('asked', false)) openLogin(); else openMenu();
+  started = true;
   sync();
 }
 start();

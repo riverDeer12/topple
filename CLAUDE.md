@@ -35,7 +35,7 @@ Tekst u igri (UI) je na hrvatskom.
 ## Konvencije
 
 - Svaka promjena pravila ide u `core.js`, dobiva test u `tools/test-core.js` i mora proći `npm test` i `npm run verify`. Ako promjena pravila mijenja rješenja, ponovno generiraj razine (`npm run generate`).
-- Nove vrste blokova: dodaj tip u `core.js` (`settle`, `moves`), stil u `index.html`, spec u generatoru.
+- Nove vrste blokova: dodaj tip u `core.js` (`settle`, `moves`), stil u `index.html`, spec u generatoru, te naziv i kratak opis u `TYPES` u `index.html`. Opis se igraču prikaže kad prvi put naiđe na taj blok, a stoji i na stranici „Kako se igra” (gumb „?”).
 - Generator troši nasumične brojeve za nove tipove samo kad ih spec traži, pa dodavanje novih specova ne mijenja postojeće razine.
 - Razine 1–10 koriste stari LCG (zadržan da te razine ostanu iste). Od 11. razine svaka ima svoj seed (mulberry32), pa se mogu tražiti paralelno:
   `node tools/generate-levels.js --only 18` u više procesa, zatim `npm run generate`. Nađene razine se spremaju u `tools/.cache/` (nije u gitu).
