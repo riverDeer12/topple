@@ -19,14 +19,14 @@ Klasična klizna slagalica, ali s gravitacijom: kad pomakneš blok, sve što je 
 | Crveni | kao obični, mora doći do izlaza | gotovo |
 | Kamen | ne miče se, ne pada, služi kao platforma | gotovo |
 | Led | klizi do prve prepreke | gotovo |
-| Teški | kad padne, razbije krhki blok ispod sebe | plan |
-| Krhki | razbija ga teški blok | plan |
-| Balon | ne pada nego se diže | plan |
+| Teški | kad padne bar jedan red na krhki blok, razbije ga i pada dalje | gotovo |
+| Krhki | ispucali blok, razbija ga teški blok u padu | gotovo |
+| Balon | ne pada nego se diže dok ne udari u nešto iznad | gotovo |
 | Rotacija | gumb koji okreće mrežu za 90° i mijenja smjer gravitacije | ideja |
 
 ## Razine
 
-Razine se ne dizajniraju ručno. Generator slaže nasumične ploče, BFS solver za svaku izračuna minimalan broj poteza, a zadržavaju se ploče koje odgovaraju krivulji težine. Trenutno 10 razina, cilj od 2 do 9 poteza. Kamen se uvodi na 3. razini, led na 6.
+Razine se ne dizajniraju ručno. Generator slaže nasumične ploče, BFS solver za svaku izračuna minimalan broj poteza, a zadržavaju se ploče koje odgovaraju krivulji težine. Trenutno 20 razina. Kamen se uvodi na 3. razini, led na 6., teški i krhki na 11., baloni na 14., a od 17. su sve mehanike zajedno. Za razine s teškim blokom ili balonom generator provjerava da je mehanika stvarno potrebna: ako se ti blokovi zamijene običnima, optimalan broj poteza mora biti drukčiji.
 
 ## Monetizacija (za iOS verziju)
 

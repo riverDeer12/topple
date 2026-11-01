@@ -4,6 +4,7 @@
   "private": true,
   "description": "Klizna slagalica s gravitacijom. Web prototip, kasnije iOS.",
   "scripts": {
+    "test": "node tools/test-core.js",
     "verify": "node tools/verify-levels.js",
     "generate": "node tools/generate-levels.js && node tools/verify-levels.js",
     "serve": "npx --yes http-server web -p 8080 -c-1"
