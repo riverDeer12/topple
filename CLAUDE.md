@@ -34,6 +34,7 @@ Tekst u igri (UI) je na hrvatskom.
 
 ## Konvencije
 
+- Vlasnik je trajno dopustio: kad je promjena gotova i testovi prolaze, otvori pull request prema `main` i spoji ga bez pitanja. Spajanje na `main` objavljuje igru (GitHub Pages i server topple.rdd.software unutar 2 minute).
 - Svaka promjena pravila ide u `core.js`, dobiva test u `tools/test-core.js` i mora proći `npm test` i `npm run verify`. Ako promjena pravila mijenja rješenja, ponovno generiraj razine (`npm run generate`).
 - Nove vrste blokova: dodaj tip u `core.js` (`settle`, `moves`), stil u `index.html`, spec u generatoru, te naziv i kratak opis u `TYPES` u `index.html`. Opis se igraču prikaže kad prvi put naiđe na taj blok, a stoji i na stranici „Kako se igra” (gumb „?”).
 - Generator troši nasumične brojeve za nove tipove samo kad ih spec traži, pa dodavanje novih specova ne mijenja postojeće razine.
