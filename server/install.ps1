@@ -14,7 +14,8 @@ param(
   [string]$AppDir   = 'C:\inetpub\wwwroot\topple',  # git checkout; IIS serves $AppDir\web
   [string]$DataDir  = 'C:\inetpub\topple-data',     # database, logs, backups (not web-served)
   [string]$Repo     = 'https://github.com/riverDeer12/topple.git',
-  [int]$Port        = 8787
+  [int]$Port        = 8787,
+  [string]$GoogleClientId = ''                       # optional, enables "Sign in with Google" (see README)
 )
 $ErrorActionPreference = 'Stop'
 function Step($msg) { Write-Host "`n== $msg" -ForegroundColor Cyan }
@@ -69,7 +70,9 @@ if (-not (Get-Service topple -ErrorAction SilentlyContinue)) {
   & $nssm install topple $node (Join-Path $AppDir 'server\server.js') | Out-Null
 }
 & $nssm set topple AppDirectory $AppDir | Out-Null
-& $nssm set topple AppEnvironmentExtra "PORT=$Port" "DB_PATH=$(Join-Path $DataDir 'topple.db')" "ALLOWED_ORIGIN=https://$HostName,https://riverdeer12.github.io" | Out-Null
+$envVars = @("PORT=$Port", "DB_PATH=$(Join-Path $DataDir 'topple.db')", "ALLOWED_ORIGIN=https://$HostName,https://riverdeer12.github.io")
+if ($GoogleClientId) { $envVars += "GOOGLE_CLIENT_ID=$GoogleClientId" }
+& $nssm set topple AppEnvironmentExtra @envVars | Out-Null
 & $nssm set topple AppStdout (Join-Path $DataDir 'api.log') | Out-Null
 & $nssm set topple AppStderr (Join-Path $DataDir 'api.log') | Out-Null
 & $nssm set topple AppRotateFiles 1 | Out-Null

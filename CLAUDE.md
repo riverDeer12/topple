@@ -48,6 +48,7 @@ Tekst u igri (UI) je na hrvatskom.
 - Teške razine (cilj 7+) traže se i do 45 minuta po razini.
 - Dnevna zagonetka i beskonačna zagonetka #n moraju biti iste za sve igrače i server: ne mijenjaj `gen.js` (redoslijed nasumičnih brojeva, specove, `GAME`) bez ponovnog generiranja `puzzles.js`, jer bi se igra i server razišli.
 - Stare adrese (GitHub Pages: `*.github.io`, `rdd.software/topple`) automatski preusmjeravaju na `https://topple.rdd.software` i u adresi (`#import=`) nose napredak iz localStoragea; nova adresa ga spoji (`mergeImport` u `igra.html`, uvijek bolji rezultat; početna stranica na staroj adresi šalje na `igra.html`), a `sync()` nakon prijave pošalje rješenja serveru.
+- Računi: korisničko ime ili e-mail + lozinka (scrypt), Google (provjera ID tokena u `server.js`, `GOOGLE_CLIENT_ID`), sesija po uređaju (tablica `sessions`). Gosti igraju bez računa uz ograničenja `GUEST` iz `content.js` (smiješno ime, prvih 20 razina, 10 beskonačnih); na ljestvicu mogu samo prijavljeni (server prima rezultate samo uz token).
 - Server mora ostati bez npm ovisnosti. Svaki rezultat se provjerava ponovnim igranjem poteza (`replay`).
 - `index.html` i `igra.html` moraju raditi otvoreni izravno iz datoteke i preko GitHub Pagesa, bez build koraka i bez npm ovisnosti u pregledniku.
 - Testiranje u pregledniku: `npm run serve`, pa otvori http://localhost:8080.

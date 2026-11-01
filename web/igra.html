@@ -80,6 +80,7 @@ button.link, a.link { background: none; border: 0; color: var(--muted); font: 50
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; padding: 0; }
 .lv small { font: 500 .55rem var(--mono); color: var(--gold); letter-spacing: .05em; min-height: 1em; }
 .lv:disabled { opacity: .35; cursor: default; }
+.lv.lock { opacity: .5; }
 .lv.cur { border-color: var(--hero); box-shadow: inset 0 0 0 1px var(--hero); }
 
 /* Menu, login, leaderboard */
@@ -109,6 +110,11 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 .lb li.me { background: color-mix(in srgb, var(--gold) 18%, transparent); border-radius: 8px; }
 .lb .empty { display: block; text-align: center; color: var(--muted); border: 0; padding: 18px 6px; }
 .card.wide { width: min(400px, 100%); }
+.form { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.form input.nick { text-align: left; }
+.gbtn { display: flex; justify-content: center; min-height: 44px; width: 100%; }
+.or { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--muted); font-size: .8rem; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--panel-line); }
 .types { display: flex; flex-direction: column; gap: 12px; width: 100%; text-align: left; max-height: min(55vh, 420px); overflow-y: auto; }
 .type { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: center; }
 .type b { display: block; font: 400 1.05rem var(--display); letter-spacing: .01em; }
@@ -181,13 +187,39 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 <div class="overlay" id="loginBox" hidden>
   <div class="card">
     <h2>Dobro došli!</h2>
-    <p>Odaberi nadimak za ljestvicu. Ovaj uređaj ostaje prijavljen.</p>
-    <form id="loginForm" style="display:contents">
-      <input class="nick" id="nick" maxlength="16" autocomplete="nickname" placeholder="Nadimak" aria-label="Nadimak" required>
+    <p id="loginIntro">Prijavi se za ljestvicu i nastavi igrati na svim svojim uređajima.</p>
+    <div class="tabs" role="tablist" id="loginTabs">
+      <button class="tab" role="tab" data-t="login" type="button">Prijava</button>
+      <button class="tab" role="tab" data-t="register" type="button">Novi račun</button>
+    </div>
+    <div class="gbtn" id="gBtn" hidden></div>
+    <div class="or" id="gOr" hidden>ili</div>
+    <form id="loginForm" class="form">
+      <input class="nick" id="lLogin" autocomplete="username" placeholder="Korisničko ime ili e-mail" aria-label="Korisničko ime ili e-mail">
+      <input class="nick" id="lName" autocomplete="username" maxlength="16" placeholder="Korisničko ime" aria-label="Korisničko ime">
+      <input class="nick" id="lEmail" type="email" autocomplete="email" placeholder="E-mail (neobavezno)" aria-label="E-mail, neobavezno">
+      <input class="nick" id="lPass" type="password" autocomplete="current-password" placeholder="Lozinka" aria-label="Lozinka">
       <div class="err" id="loginErr" role="alert"></div>
       <button class="go" id="loginGo" type="submit">Prijavi se</button>
     </form>
     <button class="link" id="loginSkip" type="button">Igraj bez prijave</button>
+  </div>
+</div>
+
+<div class="overlay" id="accBox" hidden>
+  <div class="card">
+    <h2>Račun</h2>
+    <p id="accInfo"></p>
+    <form id="accForm" class="form">
+      <input class="nick" id="aEmail" type="email" autocomplete="email" placeholder="E-mail" aria-label="E-mail">
+      <input class="nick" id="aCur" type="password" autocomplete="current-password" placeholder="Trenutna lozinka" aria-label="Trenutna lozinka">
+      <input class="nick" id="aPass" type="password" autocomplete="new-password" placeholder="Nova lozinka" aria-label="Nova lozinka">
+      <div class="err" id="accErr" role="alert"></div>
+      <button class="go" id="accGo" type="submit">Spremi</button>
+    </form>
+    <div class="gbtn" id="gLink" hidden></div>
+    <button class="link" id="accLogout" type="button">Odjava s ovog uređaja</button>
+    <button class="link" id="accClose" type="button">Natrag</button>
   </div>
 </div>
 
@@ -322,13 +354,32 @@ const saveAll = () => { store.set('best', best); store.set('progress', prog); st
 let ctx = null, blocks = [], hist = [], moveLog = [], els = [], cell = 40, busy = false, won_ = false, t0 = 0;
 
 function starsFor(m, opt) { return m <= opt ? 3 : m <= opt + 2 ? 2 : 1; }
-function unlocked(i) { return i === 0 || best[i - 1] > 0; }
+// Guests (no account) play with limits; signed-in players get everything.
+const signedInNow = () => !!(user && user.token);
+const GUEST = ToppleContent.GUEST;
+function unlocked(i) { return (i === 0 || best[i - 1] > 0) && (signedInNow() || i < GUEST.levels); }
+const ADJ = ['Pospani', 'Hrabri', 'Ljutiti', 'Skliski', 'Veseli', 'Sramežljivi', 'Brzi', 'Lijeni', 'Zbunjeni', 'Pametni', 'Gladni', 'Ponosni', 'Tihi', 'Mudri', 'Nespretni', 'Znatiželjni'];
+const NOUN = ['Pingvin', 'Balon', 'Jež', 'Puž', 'Medvjed', 'Krumpir', 'Kolač', 'Slon', 'Rakun', 'Hrčak', 'Gušter', 'Tost', 'Mrav', 'Kamenčić'];
+function guestName() {
+  let n = store.get('guestName', '');
+  if (!n) {
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    n = `${pick(ADJ)} ${pick(NOUN)} ${10 + Math.floor(Math.random() * 90)}`;
+    store.set('guestName', n);
+  }
+  return n;
+}
+// Explains what needs an account and offers to sign in.
+function needAccount(what) {
+  openLogin();
+  $('loginIntro').textContent = `${what} Prijavljeni igrači imaju sve razine, beskonačni niz bez ograničenja, mjesto na ljestvici i napredak na svim uređajima.`;
+}
 const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('hr-HR', { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => n % 10 === 1 && n % 100 !== 11 ? 'potez' : 'poteza';
-const showOnly = id => ['menuBox', 'loginBox', 'lbBox', 'winBox', 'lvBox', 'introBox'].forEach(b => { $(b).hidden = b !== id; });
+const showOnly = id => ['menuBox', 'loginBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox'].forEach(b => { $(b).hidden = b !== id; });
 
 // --- layout & rendering ------------------------------------------------------
 function layout() {
@@ -466,7 +517,10 @@ async function openPuzzle(mode, key) {
   if (level) show({ mode, key, level });
 }
 const openDaily = () => openPuzzle('daily', today());
-const openEndless = () => openPuzzle('endless', prog.endless.next);
+const openEndless = () => {
+  if (!signedInNow() && prog.endless.next > GUEST.endless) return needAccount(`Kao gost možeš riješiti prvih ${GUEST.endless} beskonačnih zagonetki, a sve su već riješene.`);
+  openPuzzle('endless', prog.endless.next);
+};
 
 // --- input ---------------------------------------------------------------------
 function grab(e, k) {
@@ -594,7 +648,8 @@ function win() {
     $('stars').innerHTML = [0, 1, 2].map(j => STAR.replace('<svg', `<svg class="${j < s ? 'on' : ''}"`)).join('');
     $('winTitle').textContent = s === 3 ? 'Savršeno!' : 'Izašao je!';
     $('winText').textContent = (s === 3 ? `${m} ${potez(m)}, točno koliko treba.` : `${m} ${potez(m)}. Može i u ${opt}.`)
-      + (c.mode === 'daily' ? ` Vrijeme ${fmtTime(timeMs)}.` : '');
+      + (c.mode === 'daily' ? ` Vrijeme ${fmtTime(timeMs)}.` : '')
+      + (!signedInNow() && c.mode !== 'campaign' ? ' Prijavi se da rezultat uđe na ljestvicu.' : '');
     $('retry').hidden = s === 3;
     $('next').textContent = c.mode === 'daily' ? 'Ljestvica' : c.mode === 'endless' ? 'Sljedeća zagonetka'
       : c.key === LEVELS.length - 1 ? 'Sve razine' : 'Sljedeća razina';
@@ -635,7 +690,14 @@ function sync() {
         const loc = prog.daily[d];
         if (loc && (!me.daily[d] || loc.moves <= me.daily[d])) await post('daily', d, { date: d });
       }
-    } catch (e) {}
+      // Progress from other devices: keep the better of server and local.
+      let changed = false;
+      for (const [lvl, st] of Object.entries(me.campaign)) if ((best[lvl - 1] || 0) < st) { best[lvl - 1] = st; changed = true; }
+      if (me.endless.next > prog.endless.next) { prog.endless.next = me.endless.next; changed = true; }
+      if (me.endless.stars > prog.endless.stars) { prog.endless.stars = me.endless.stars; changed = true; }
+      for (const [d, m] of Object.entries(me.daily)) if (!prog.daily[d] || prog.daily[d].moves > m) { prog.daily[d] = { moves: m, timeMs: prog.daily[d] ? prog.daily[d].timeMs : 0 }; changed = true; }
+      if (changed) { saveAll(); if (!$('menuBox').hidden) openMenu(); }
+    } catch (e) { if (e.status === 401) { user = null; store.set('user', null); } } // session ended elsewhere
     return last;
   })();
   return syncing.finally(() => { syncing = null; });
@@ -645,44 +707,133 @@ function sync() {
 function openMenu() {
   const t = today(), d = prog.daily[t];
   $('mDailySub').textContent = fmtDate(t) + (d ? ` · riješeno u ${d.moves} ${potez(d.moves)}` : ' · nova');
-  $('mEndlessSub').textContent = `Zagonetka #${prog.endless.next} · ★ ${prog.endless.stars}`;
+  $('mEndlessSub').textContent = `Zagonetka #${prog.endless.next} · ★ ${prog.endless.stars}` + (!signedInNow() ? ` · gost do #${GUEST.endless}` : '');
   const stars = Object.values(best).reduce((a, b) => a + b, 0);
   $('mLevelsSub').textContent = `${Object.keys(best).length} od ${LEVELS.length} riješeno · ★ ${stars}/${LEVELS.length * 3}`;
-  $('who').innerHTML = user ? `Igraš kao <b></b> · <button class="link" id="logout" type="button">odjava</button>` : `<button class="link" id="login" type="button">Prijavi se za ljestvicu</button>`;
-  if (user) $('who').querySelector('b').textContent = user.name;
+  $('who').innerHTML = signedInNow() ? `Igraš kao <b></b> · <button class="link" id="account" type="button">račun</button>`
+    : `Gost <b></b> · <button class="link" id="login" type="button">prijavi se</button>`;
+  $('who').querySelector('b').textContent = signedInNow() ? user.name : guestName();
   $('menuClose').hidden = !ctx;
   showOnly('menuBox');
 }
 $('who').addEventListener('click', e => {
   if (e.target.id === 'login') openLogin();
-  if (e.target.id === 'logout' && confirm('Odjaviti se s ovog uređaja? Bez prijave rezultati se ne šalju na ljestvicu.')) { user = null; store.set('user', null); openMenu(); }
+  if (e.target.id === 'account') openAccount();
 });
-function openLogin() {
+
+// --- sign-in: username or e-mail + password, or Google -------------------------------
+let loginTab = 'login', googleId = null, googleLoaded = null;
+const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u;
+async function loadConfig() { if (API) try { googleId = (await api('/api/config')).googleClientId; } catch (e) {} }
+function setLoginTab(t) {
+  loginTab = t;
+  document.querySelectorAll('#loginTabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.t === t)));
+  const reg = t === 'register';
+  $('lLogin').hidden = reg; $('lName').hidden = !reg; $('lEmail').hidden = !reg;
+  $('lPass').autocomplete = reg ? 'new-password' : 'current-password';
+  $('lPass').placeholder = reg ? 'Lozinka (najmanje 6 znakova)' : 'Lozinka';
+  $('loginGo').textContent = reg ? 'Napravi račun' : 'Prijavi se';
   $('loginErr').textContent = '';
-  if (!$('nick').value) $('nick').value = store.get('importedName', '') || '';
-  showOnly('loginBox'); $('nick').focus();
+}
+document.querySelectorAll('#loginTabs .tab').forEach(b => b.onclick = () => setLoginTab(b.dataset.t));
+// Google's button script loads only when the server has a client ID configured.
+function googleButton(el) {
+  el.hidden = !googleId;
+  if (!googleId) return;
+  googleLoaded = googleLoaded || new Promise(res => {
+    const sc = document.createElement('script');
+    sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true; sc.onload = res; sc.onerror = () => { el.hidden = true; };
+    document.head.appendChild(sc);
+  });
+  googleLoaded.then(() => {
+    google.accounts.id.initialize({ client_id: googleId, callback: r => onGoogle(r.credential) });
+    el.innerHTML = '';
+    google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', locale: 'hr', width: 260 });
+  });
+}
+function openLogin() {
+  const online = !!API;
+  $('loginIntro').textContent = online ? 'Prijavi se za ljestvicu i nastavi igrati na svim svojim uređajima.' : 'Prijava i ljestvica rade na topple.rdd.software.';
+  $('loginTabs').hidden = !online; $('loginForm').hidden = !online;
+  const imported = store.get('importedName', '');
+  setLoginTab(imported ? 'register' : loginTab);
+  if (imported && !$('lName').value) $('lName').value = imported;
+  showOnly('loginBox');
+  googleButton($('gBtn')); $('gOr').hidden = !googleId || !online;
+  if (online) (loginTab === 'register' ? $('lName') : $('lLogin')).focus();
+}
+function signedIn(r) {
+  user = { name: r.name, token: r.token }; store.set('user', user); store.set('asked', true); store.set('importedName', '');
+  $('lPass').value = '';
+  sync();
+  openMenu();
 }
 $('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const name = $('nick').value.trim().replace(/\s+/g, ' ');
-  if (!/^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u.test(name)) { $('loginErr').textContent = 'Nadimak mora imati 2–16 znakova: slova, brojke, razmak, _ . -'; return; }
-  if (!API) { user = { name }; store.set('user', user); store.set('asked', true); openMenu(); return; }
+  const pass = $('lPass').value, err = $('loginErr');
+  let path, body;
+  if (loginTab === 'register') {
+    const name = $('lName').value.trim().replace(/\s+/g, ' ');
+    if (!NAME_RE.test(name)) { err.textContent = 'Korisničko ime mora imati 2–16 znakova: slova, brojke, razmak, _ . -'; return; }
+    if (pass.length < 6) { err.textContent = 'Lozinka mora imati najmanje 6 znakova.'; return; }
+    path = '/api/register'; body = { name, password: pass, email: $('lEmail').value.trim() };
+  } else {
+    if (!$('lLogin').value.trim() || !pass) { err.textContent = 'Upiši korisničko ime ili e-mail i lozinku.'; return; }
+    path = '/api/login'; body = { login: $('lLogin').value.trim(), password: pass };
+  }
   $('loginGo').disabled = true;
-  try {
-    const r = await api('/api/register', { method: 'POST', body: JSON.stringify({ name }) });
-    user = { name: r.name, token: r.token }; store.set('user', user); store.set('asked', true);
-    sync();
-    openMenu();
-  } catch (err) {
-    $('loginErr').textContent = err.status ? err.message : 'Server nije dostupan. Pokušaj kasnije ili igraj bez prijave.';
-  } finally { $('loginGo').disabled = false; }
+  try { signedIn(await api(path, { method: 'POST', body: JSON.stringify(body) })); }
+  catch (x) { err.textContent = x.status ? x.message : 'Server nije dostupan. Pokušaj kasnije ili igraj bez prijave.'; }
+  finally { $('loginGo').disabled = false; }
 });
+async function onGoogle(credential) {
+  const linking = user && user.token;
+  try {
+    const r = await api('/api/google', { method: 'POST', body: JSON.stringify({ credential }) });
+    if (linking) openAccount(); else signedIn(r);
+  } catch (x) { (linking ? $('accErr') : $('loginErr')).textContent = x.status ? x.message : 'Server nije dostupan.'; }
+}
 $('loginSkip').onclick = () => { store.set('asked', true); openMenu(); };
+
+// --- account: add or change e-mail and password, link Google, sign out ------------------
+let account = null;
+async function openAccount() {
+  $('accErr').textContent = ''; $('aCur').value = ''; $('aPass').value = '';
+  showOnly('accBox');
+  $('accInfo').textContent = 'Učitavam…';
+  try { account = await api('/api/me'); } catch (e) { $('accInfo').textContent = 'Server nije dostupan.'; return; }
+  const ways = [account.hasPassword && 'korisničko ime i lozinka', account.email && account.hasPassword && 'e-mail i lozinka', account.google && 'Google'].filter(Boolean);
+  $('accInfo').textContent = `Prijavljen si kao ${account.name}. ` + (ways.length
+    ? `Prijava na drugim uređajima: ${ways.join(', ')}.`
+    : 'Za sada samo ovaj uređaj zna tvoj račun. Dodaj lozinku ili poveži Google da se možeš prijaviti i drugdje.');
+  $('aEmail').value = account.email || '';
+  $('aCur').hidden = !account.hasPassword;
+  $('aPass').placeholder = account.hasPassword ? 'Nova lozinka (neobavezno)' : 'Lozinka (najmanje 6 znakova)';
+  if (account.google) $('gLink').hidden = true; else googleButton($('gLink'));
+}
+$('accForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const body = {}, err = $('accErr');
+  if ($('aEmail').value.trim() !== (account && account.email || '')) body.email = $('aEmail').value.trim();
+  if ($('aPass').value) { body.password = $('aPass').value; body.currentPassword = $('aCur').value; }
+  if (!Object.keys(body).length) { err.textContent = 'Nema promjena.'; return; }
+  if (body.password && body.password.length < 6) { err.textContent = 'Lozinka mora imati najmanje 6 znakova.'; return; }
+  $('accGo').disabled = true;
+  try { await api('/api/account', { method: 'POST', body: JSON.stringify(body) }); await openAccount(); $('accErr').textContent = 'Spremljeno.'; }
+  catch (x) { err.textContent = x.status ? x.message : 'Server nije dostupan.'; }
+  finally { $('accGo').disabled = false; }
+});
+$('accLogout').onclick = async () => {
+  if (!confirm('Odjaviti se s ovog uređaja? Napredak ostaje spremljen na računu.')) return;
+  try { await api('/api/logout', { method: 'POST', body: '{}' }); } catch (e) {}
+  user = null; store.set('user', null); openMenu();
+};
+$('accClose').onclick = openMenu;
 
 let lbMode = 'daily';
 async function openBoard(mode = lbMode) {
   lbMode = mode;
-  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.m === mode)));
+  document.querySelectorAll('#lbBox .tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.m === mode)));
   $('lbSub').textContent = mode === 'daily' ? `Dnevna zagonetka, ${fmtDate(today())}. Najmanje poteza, pa najbrže.`
     : mode === 'endless' ? 'Najviše riješenih zagonetki u beskonačnom načinu.' : 'Najviše zvjezdica u razinama.';
   const list = $('lbList');
@@ -703,10 +854,11 @@ async function openBoard(mode = lbMode) {
       li.children[0].textContent = x.rank + '.'; li.children[1].textContent = x.name; li.children[2].textContent = val(x);
       list.appendChild(li);
     }
-    if (!user || !user.token) list.insertAdjacentHTML('beforeend', '<li class="empty">Prijavi se u izborniku da se i ti nađeš ovdje.</li>');
+    if (!signedInNow()) list.insertAdjacentHTML('beforeend', '<li class="empty">Na ljestvici su samo prijavljeni igrači. <button class="link" type="button" data-login>Prijavi se</button> i natječi se.</li>');
   } catch (e) { list.innerHTML = '<li class="empty">Server nije dostupan.</li>'; }
 }
-document.querySelectorAll('.tab').forEach(t => t.onclick = () => openBoard(t.dataset.m));
+document.querySelectorAll('#lbBox .tab').forEach(t => t.onclick = () => openBoard(t.dataset.m));
+$('lbList').addEventListener('click', e => { if (e.target.closest('[data-login]')) needAccount('Na ljestvicu ulaze samo prijavljeni igrači.'); });
 $('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
 
 // Levels are grouped in chapters of 10 (names for chapters 1-10, ready for 100 levels).
@@ -719,7 +871,10 @@ function openLevels() {
     const ids = LEVELS.slice(c * 10, c * 10 + 10).map((_, k) => c * 10 + k);
     const stars = ids.reduce((a, i) => a + (best[i] || 0), 0);
     html += `<section class="chapter"><h3>${c + 1}. ${CHAPTERS[c] || 'Poglavlje ' + (c + 1)}<small>★ ${stars}/${ids.length * 3}</small></h3><div class="grid">` +
-      ids.map(i => `<button class="lv${i === cur ? ' cur' : ''}" type="button" data-i="${i}" ${unlocked(i) ? '' : 'disabled'}>${i + 1}<small>${best[i] ? '★'.repeat(best[i]) : ''}</small></button>`).join('') +
+      ids.map(i => {
+        const lock = !signedInNow() && i >= GUEST.levels;
+        return `<button class="lv${i === cur ? ' cur' : ''}${lock ? ' lock' : ''}" type="button" data-i="${i}" ${unlocked(i) || lock ? '' : 'disabled'}>${i + 1}<small>${lock ? '🔒' : best[i] ? '★'.repeat(best[i]) : ''}</small></button>`;
+      }).join('') +
       '</div></section>';
   }
   $('lvGrid').innerHTML = html;
@@ -729,7 +884,12 @@ function openLevels() {
   const el = $('lvGrid').querySelector(`[data-i="${focus < 0 ? LEVELS.length - 1 : focus}"]`);
   if (el) el.scrollIntoView({ block: 'center' });
 }
-$('lvGrid').addEventListener('click', e => { const b = e.target.closest('.lv'); if (b && !b.disabled) openCampaign(+b.dataset.i); });
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('.lv');
+  if (!b || b.disabled) return;
+  if (b.classList.contains('lock')) return needAccount(`Kao gost igraš prvih ${GUEST.levels} razina.`);
+  openCampaign(+b.dataset.i);
+});
 $('lvClose').onclick = openMenu;
 
 $('mDaily').onclick = openDaily;
@@ -749,7 +909,9 @@ $('retry').onclick = () => show(ctx);
 $('next').onclick = () => {
   if (ctx.mode === 'daily') return openBoard('daily');
   if (ctx.mode === 'endless') return openEndless();
-  if (ctx.key === LEVELS.length - 1) openLevels(); else openCampaign(ctx.key + 1);
+  if (ctx.key === LEVELS.length - 1) openLevels();
+  else if (!unlocked(ctx.key + 1) && !signedInNow()) needAccount(`Kao gost igraš prvih ${GUEST.levels} razina i sve su već riješene. Bravo!`);
+  else openCampaign(ctx.key + 1);
 };
 function setToggle(id, on) { $(id).setAttribute('aria-pressed', String(on)); }
 $('tSfx').onclick = () => { settings.sfx = !settings.sfx; ToppleAudio.setSfx(settings.sfx); setToggle('tSfx', settings.sfx); store.set('settings', settings); fx.tap(); };
@@ -761,15 +923,17 @@ addEventListener('pointerdown', unlock, true);
 addEventListener('keydown', unlock, true);
 
 function start() {
+  // The Google button needs the client ID from the server; draw it once that arrives.
+  loadConfig().then(() => { if (!$('loginBox').hidden && API) { googleButton($('gBtn')); $('gOr').hidden = !googleId; } });
   ToppleAudio.init(settings); // music starts on the first tap or key press
   setToggle('tSfx', settings.sfx); setToggle('tMusic', settings.music);
   // Board behind the menu: continue where the player left off.
   const last = store.get('last', null);
   let i = 0;
   for (let k = 0; k < LEVELS.length; k++) if (unlocked(k)) i = k;
-  if (last && last.mode === 'campaign' && LEVELS[last.key]) i = last.key;
+  if (last && last.mode === 'campaign' && LEVELS[last.key] && unlocked(last.key)) i = last.key;
   openCampaign(i);
-  if (!user && !store.get('asked', false)) openLogin(); else openMenu();
+  if (!signedInNow() && !store.get('asked', false)) openLogin(); else openMenu();
   started = true;
   sync();
 }

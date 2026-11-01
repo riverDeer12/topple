@@ -113,6 +113,24 @@ node C:\inetpub\wwwroot\topple\server\backup.js C:\inetpub\topple-data\topple.db
 - **500.19** u IIS-u: nije instaliran URL Rewrite.
 - **502.3** na `/api/`: API servis ne radi (`Get-Service topple`, pa `Start-Service topple`) ili ARR proxy nije uključen.
 
+## Prijava s Googleom (neobavezno)
+
+Prijava korisničkim imenom ili e-mailom i lozinkom radi odmah. Za gumb „Prijava s Googleom” treba besplatni Google OAuth Client ID:
+
+1. Otvori https://console.cloud.google.com i napravi projekt (npr. „Topple”).
+2. **APIs & Services → OAuth consent screen:** User type **External**, naziv aplikacije „Topple”, tvoj e-mail, pa spremi. Pod **Publishing status** klikni **Publish app**.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID:**
+   - Application type: **Web application**
+   - Authorized JavaScript origins: `https://topple.rdd.software`
+   - **Create**, pa kopiraj **Client ID** (završava na `.apps.googleusercontent.com`).
+4. Na serveru (PowerShell kao Administrator) ponovno pokreni instalacijsku skriptu s tim ID-jem:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\inetpub\wwwroot\topple\server\install.ps1 -GoogleClientId "TVOJ-ID.apps.googleusercontent.com"
+```
+
+Skripta postavi `GOOGLE_CLIENT_ID` za API i ponovno ga pokrene. Gumb se u igri pojavi sam. Server mora moći dohvatiti `https://www.googleapis.com/oauth2/v3/certs` (Googleovi javni ključevi za provjeru prijave).
+
 ## Postavke API-ja
 
 | Varijabla | Zadano | Značenje |
@@ -122,6 +140,7 @@ node C:\inetpub\wwwroot\topple\server\backup.js C:\inetpub\topple-data\topple.db
 | `DB_PATH` | `server/topple.db` | datoteka baze |
 | `ALLOWED_ORIGIN` | `*` | s kojih drugih adresa igra smije zvati API, odvojeno zarezom |
 | `TZ_GAME` | `Europe/Zagreb` | vremenska zona za dnevnu zagonetku |
+| `GOOGLE_CLIENT_ID` | (prazno) | Google OAuth Client ID; prazno = bez gumba „Prijava s Googleom” |
 
 Promjena postavki: `nssm edit topple` (kartica Environment), pa `Restart-Service topple`. Zadane vrijednosti postavlja `install.ps1`.
 
@@ -130,7 +149,13 @@ Promjena postavki: `nssm edit topple` (kartica Environment), pa `Restart-Service
 | Metoda i adresa | Opis |
 |---|---|
 | `GET /api/health` | provjera rada |
-| `POST /api/register` `{name}` | novi račun za uređaj, vraća `{name, token}` |
+| `GET /api/config` | javne postavke (Google Client ID) |
+| `POST /api/register` `{name, password, email?}` | novi račun, vraća `{name, token}` |
+| `POST /api/login` `{login, password}` | prijava korisničkim imenom ili e-mailom |
+| `POST /api/google` `{credential}` | prijava ili registracija Googleom; s tokenom povezuje Google s računom |
+| `POST /api/account` `{email?, password?, currentPassword?}` | dodaj ili promijeni e-mail i lozinku |
+| `POST /api/logout` | odjava s ovog uređaja |
+| `GET /api/stats` | broj igrača i riješenih zagonetki |
 | `GET /api/me` | profil i napredak (zaglavlje `Authorization: Bearer <token>`) |
 | `POST /api/score` `{mode, level/date/n, moves, timeMs}` | rezultat; server provjerava poteze |
 | `GET /api/leaderboard?mode=daily&date=YYYY-MM-DD` | dnevna ljestvica (najmanje poteza, pa najbrže) |

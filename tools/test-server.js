@@ -5,7 +5,8 @@ const fs = require('fs');
 const assert = require('assert');
 const dbFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'topple-')), 'test.db');
 process.env.DB_PATH = dbFile;
-const { server } = require('../server/server.js');
+const { server, setGoogleForTests } = require('../server/server.js');
+const crypto = require('crypto');
 const C = require('../web/core.js');
 const G = require('../web/gen.js');
 const LEVELS = require('../web/levels.js');
@@ -38,12 +39,55 @@ function solution(level) {
   };
   const ok = (name) => console.log('ok   ' + name);
 
-  let r = await call('/api/register', { name: 'Ana' });
-  assert.strictEqual(r.status, 201); const ana = r.body.token; ok('register');
-  r = await call('/api/register', { name: 'ana' }); assert.strictEqual(r.status, 409); ok('nickname unique, case-insensitive');
-  r = await call('/api/register', { name: 'x' }); assert.strictEqual(r.status, 400); ok('nickname validated');
-  r = await call('/api/register', { name: 'Đuro Č' }); assert.strictEqual(r.status, 201); const duro = r.body.token; ok('Croatian letters allowed');
+  let r = await call('/api/register', { name: 'Ana', password: 'tajna123', email: 'Ana@Example.com' });
+  assert.strictEqual(r.status, 201); let ana = r.body.token; ok('register with password and e-mail');
+  r = await call('/api/register', { name: 'ana', password: 'tajna123' }); assert.strictEqual(r.status, 409); ok('username unique, case-insensitive');
+  r = await call('/api/register', { name: 'Ana2', password: 'tajna123', email: 'ana@example.com' }); assert.strictEqual(r.status, 409); ok('e-mail unique');
+  r = await call('/api/register', { name: 'x', password: 'tajna123' }); assert.strictEqual(r.status, 400); ok('username validated');
+  r = await call('/api/register', { name: 'Bez Lozinke' }); assert.strictEqual(r.status, 400); ok('password required');
+  r = await call('/api/register', { name: 'Đuro Č', password: 'lozinka1' }); assert.strictEqual(r.status, 201); const duro = r.body.token; ok('Croatian letters allowed');
   r = await call('/api/me'); assert.strictEqual(r.status, 401); ok('auth required');
+
+  r = await call('/api/login', { login: 'ana', password: 'tajna123' }); assert.strictEqual(r.status, 200); const ana2 = r.body.token;
+  r = await call('/api/login', { login: 'ANA@example.com', password: 'tajna123' }); assert.strictEqual(r.status, 200);
+  r = await call('/api/login', { login: 'Ana', password: 'kriva' }); assert.strictEqual(r.status, 401);
+  ok('login by username or e-mail, wrong password rejected');
+  r = await call('/api/me', null, ana2); assert.strictEqual(r.body.name, 'Ana'); assert.strictEqual(r.body.email, 'ana@example.com'); assert.strictEqual(r.body.hasPassword, true);
+  r = await call('/api/logout', {}, ana2); r = await call('/api/me', null, ana2); assert.strictEqual(r.status, 401);
+  r = await call('/api/me', null, ana); assert.strictEqual(r.status, 200); ok('sessions per device, logout ends only that one');
+
+  r = await call('/api/account', { password: 'nova1234', currentPassword: 'kriva' }, ana); assert.strictEqual(r.status, 401);
+  r = await call('/api/account', { password: 'nova1234', currentPassword: 'tajna123' }, ana); assert.strictEqual(r.status, 200);
+  r = await call('/api/login', { login: 'Ana', password: 'nova1234' }); assert.strictEqual(r.status, 200);
+  r = await call('/api/account', { email: 'duro@example.com' }, duro); assert.strictEqual(r.body.email, 'duro@example.com');
+  r = await call('/api/account', { email: 'ana@example.com' }, duro); assert.strictEqual(r.status, 409);
+  ok('account: change password (needs current one), set e-mail');
+
+  // Google sign-in with a locally generated key standing in for Google's.
+  const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  setGoogleForTests({ k1: publicKey }, 'test-client');
+  const jwt = (claims, aud = 'test-client') => {
+    const h = Buffer.from(JSON.stringify({ alg: 'RS256', kid: 'k1' })).toString('base64url');
+    const p = Buffer.from(JSON.stringify({ iss: 'https://accounts.google.com', aud, exp: Date.now() / 1000 + 600, ...claims })).toString('base64url');
+    return h + '.' + p + '.' + crypto.sign('RSA-SHA256', Buffer.from(h + '.' + p), privateKey).toString('base64url');
+  };
+  r = await call('/api/config'); assert.strictEqual(r.body.googleClientId, 'test-client');
+  r = await call('/api/google', { credential: jwt({ sub: 'g1', email: 'mia@gmail.com', email_verified: true, given_name: 'Mia' }) });
+  assert.strictEqual(r.status, 201); assert.strictEqual(r.body.name, 'Mia'); const mia = r.body.token;
+  r = await call('/api/google', { credential: jwt({ sub: 'g1', email: 'mia@gmail.com', email_verified: true }) });
+  assert.strictEqual(r.body.name, 'Mia'); assert.ok(r.body.token && !r.body.created);
+  r = await call('/api/google', { credential: jwt({ sub: 'g2', email: 'x@gmail.com', email_verified: true, given_name: 'Mia' }) });
+  assert.strictEqual(r.body.name, 'Mia2'); ok('Google: creates account, signs in again, unique name');
+  r = await call('/api/google', { credential: jwt({ sub: 'g3', email: 'duro@example.com', email_verified: true }) });
+  assert.strictEqual(r.body.name, 'Đuro Č'); ok('Google: verified e-mail joins the existing account');
+  r = await call('/api/google', { credential: jwt({ sub: 'g4' }, 'other-client') }); assert.strictEqual(r.status, 401);
+  r = await call('/api/google', { credential: jwt({ sub: 'g4' }).slice(0, -4) + 'AAAA' }); assert.strictEqual(r.status, 401);
+  ok('Google: wrong audience or bad signature rejected');
+  r = await call('/api/google', { credential: jwt({ sub: 'g5' }) }, ana); assert.strictEqual(r.body.linked, true);
+  r = await call('/api/me', null, ana); assert.strictEqual(r.body.google, true);
+  r = await call('/api/google', { credential: jwt({ sub: 'g1' }) }, ana); assert.strictEqual(r.status, 409);
+  ok('Google: link to the signed-in account, not one owned by someone else');
+  void mia;
 
   const sol1 = solution(LEVELS[0]);
   r = await call('/api/score', { mode: 'campaign', level: 1, moves: sol1 }, ana);
@@ -80,7 +124,7 @@ function solution(level) {
   assert.strictEqual(r.body.rows[0].stars, 3); assert.strictEqual(r.body.mine, null); ok('campaign leaderboard');
 
   r = await call('/api/stats');
-  assert.strictEqual(r.body.players, 2); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 6); ok('stats');
+  assert.strictEqual(r.body.players, 4); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 6); ok('stats');
 
   server.close();
   console.log('Svi testovi servera prolaze.');
