@@ -1,13 +1,24 @@
 // Generates levels by random placement + BFS solver, picking boards whose
 // optimal solution length matches each spec. Writes web/levels.js.
-// Run: npm run generate            (default seed)
-//      node tools/generate-levels.js 777   (custom seed)
+// Run: npm run generate                      (default seed)
+//      node tools/generate-levels.js 777          (custom seed)
+//      node tools/generate-levels.js --only 18,19 (search only these levels, 1-based;
+//                                                   run several in parallel, then a plain run)
+// Every found level is cached in tools/.cache/, keyed by spec and seed, so an
+// interrupted run keeps its progress and a plain run reuses the cache.
+// Levels 1-10 share one random stream (kept so they stay as they were); from
+// level 11 on each level has its own seed and can be searched independently.
 const fs = require('fs');
 const path = require('path');
 const C = require('../web/core.js');
 const { W, H } = C;
 
-let seed = Number(process.argv[2] || 12345);
+const args = process.argv.slice(2);
+const onlyAt = args.indexOf('--only');
+const only = onlyAt >= 0 ? new Set(args.splice(onlyAt, 2)[1].split(',').map(n => Number(n) - 1)) : null;
+const BASE = Number(args[0] || 12345);
+const INDEPENDENT_FROM = 10;
+let seed = BASE;
 const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
 const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
 
@@ -34,9 +45,9 @@ const SPECS = [
   { opt: 5, n: 6, fixed: 1, ice: 1, balloon: 2 },
   // Everything together.
   { opt: 6, n: 5, fixed: 1, ice: 0, heavy: 1, fragile: 1, balloon: 1 },
-  { opt: 7, n: 6, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
-  { opt: 8, n: 6, fixed: 2, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
-  { opt: 9, max: 11, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 2 },
+  { opt: 7, max: 8, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
+  { opt: 8, max: 9, n: 7, fixed: 2, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
+  { opt: 9, max: 12, n: 8, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 2 },
 ];
 
 function tryPlace(bs, b) {
@@ -86,25 +97,51 @@ function needs(start, exitRow, opt, t) {
   return C.solve(plain, exitRow, 60000) !== opt;
 }
 
-const out = [];
-for (const s of SPECS) {
-  let found = null, tries = 0;
-  while (!found && tries < 200000) {
+const CACHE = path.join(__dirname, '.cache');
+fs.mkdirSync(CACHE, { recursive: true });
+const cacheFile = (i, s, seedIn) => path.join(CACHE, `level-${i + 1}-${seedIn}-${Buffer.from(JSON.stringify(s)).toString('base64url').slice(0, 40)}.json`);
+
+function search(s) {
+  let tries = 0;
+  while (tries < 400000) {
     tries++;
     const L = make(s);
     if (!L) continue;
     const start = L.bs.map(b => ({ ...b }));
     const o = C.solve(L.bs.map(b => ({ ...b })), L.exitRow, 60000);
-    if (o >= s.opt && o <= (s.max || s.opt)) {
-      if (s.ice && !C.moves(start).some(m => start[m[0]].t === 'i')) continue;
-      if ((s.heavy && !needs(start, L.exitRow, o, 'h')) || (s.balloon && !needs(start, L.exitRow, o, 'b'))) continue;
-      found = { exit: L.exitRow, opt: o, blocks: start.map(b => [b.x, b.y, b.w, b.t]) };
-    }
+    if (o < s.opt || o > (s.max || s.opt)) continue;
+    if (s.ice && !C.moves(start).some(m => start[m[0]].t === 'i')) continue;
+    if ((s.heavy && !needs(start, L.exitRow, o, 'h')) || (s.balloon && !needs(start, L.exitRow, o, 'b'))) continue;
+    return { level: { exit: L.exitRow, opt: o, blocks: start.map(b => [b.x, b.y, b.w, b.t]) }, tries };
   }
-  if (!found) { console.error(`Nema razine za cilj ${s.opt} nakon ${tries} pokušaja.`); process.exit(1); }
-  console.log(`Razina ${out.length + 1}: cilj ${found.opt} (${tries} pokušaja)`);
-  out.push(found);
+  return { level: null, tries };
 }
+
+const out = [];
+for (let i = 0; i < SPECS.length; i++) {
+  const s = SPECS[i];
+  if (i >= INDEPENDENT_FROM) seed = (BASE + i * 7919) % 2147483648;
+  const seedIn = seed, file = cacheFile(i, s, seedIn);
+  if (fs.existsSync(file)) {
+    const c = JSON.parse(fs.readFileSync(file, 'utf8'));
+    seed = c.seedOut;
+    out.push(c.level);
+    console.log(`Razina ${i + 1}: cilj ${c.level.opt} (iz cachea)`);
+    continue;
+  }
+  if (only && !only.has(i)) {
+    if (i < INDEPENDENT_FROM) { console.error(`Razina ${i + 1} nije u cacheu, a o njoj ovise kasnije razine.`); process.exit(1); }
+    out.push(null);
+    continue;
+  }
+  const t0 = Date.now();
+  const { level, tries } = search(s);
+  if (!level) { console.error(`Nema razine ${i + 1} za cilj ${s.opt} nakon ${tries} pokušaja.`); process.exit(1); }
+  fs.writeFileSync(file, JSON.stringify({ seedOut: seed, level }));
+  console.log(`Razina ${i + 1}: cilj ${level.opt} (${tries} pokušaja, ${Math.round((Date.now() - t0) / 1000)} s)`);
+  out.push(level);
+}
+if (out.includes(null)) { console.log('Tražene razine su spremljene u cache. Pokreni bez --only za zapis u web/levels.js.'); process.exit(0); }
 
 const body = out.map(l => '  ' + JSON.stringify(l)).join(',\n');
 fs.writeFileSync(path.join(__dirname, '../web/levels.js'),
