@@ -262,40 +262,40 @@ async function route(req, res) {
 
   // New account: nickname + password, e-mail optional (then it can be used to sign in too).
   if (req.method === 'POST' && p === '/api/register') {
-    if (limited(req, 'reg', 10, 3600e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj kasnije.' });
+    if (limited(req, 'reg', 10, 3600e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj kasnije.', code: 'too_many' });
     const { name, password, email } = await readJson(req);
     const n = String(name || '').trim().replace(/\s+/g, ' ');
-    if (!NAME_RE.test(n)) return send(res, 400, { error: 'Korisničko ime mora imati 2–16 znakova: slova, brojke, razmak, _ . -' });
-    if (!validPassword(password)) return send(res, 400, { error: PW_ERR });
+    if (!NAME_RE.test(n)) return send(res, 400, { error: 'Korisničko ime mora imati 2–16 znakova: slova, brojke, razmak, _ . -', code: 'name_invalid' });
+    if (!validPassword(password)) return send(res, 400, { error: PW_ERR, code: 'password_short' });
     const e = cleanEmail(email);
-    if (e && !EMAIL_RE.test(e)) return send(res, 400, { error: 'E-mail adresa nije ispravna.' });
-    if (db.prepare('SELECT 1 FROM users WHERE name = ?').get(n)) return send(res, 409, { error: 'To korisničko ime je zauzeto.' });
-    if (e && db.prepare('SELECT 1 FROM users WHERE email = ?').get(e)) return send(res, 409, { error: 'Taj e-mail već ima račun. Prijavi se.' });
+    if (e && !EMAIL_RE.test(e)) return send(res, 400, { error: 'E-mail adresa nije ispravna.', code: 'email_invalid' });
+    if (db.prepare('SELECT 1 FROM users WHERE name = ?').get(n)) return send(res, 409, { error: 'To korisničko ime je zauzeto.', code: 'name_taken' });
+    if (e && db.prepare('SELECT 1 FROM users WHERE email = ?').get(e)) return send(res, 409, { error: 'Taj e-mail već ima račun. Prijavi se.', code: 'email_taken' });
     const id = createUser(n, { email: e || null, password_hash: hashPassword(password) });
     return send(res, 201, { name: n, token: newSession(id) });
   }
 
   // Sign in with username or e-mail and password.
   if (req.method === 'POST' && p === '/api/login') {
-    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.' });
+    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
     const { login, password } = await readJson(req);
     const l = String(login || '').trim();
     const u = l.includes('@') ? db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail(l)) : db.prepare('SELECT * FROM users WHERE name = ?').get(l);
-    if (!u || !checkPassword(password, u.password_hash)) return send(res, 401, { error: 'Pogrešno korisničko ime, e-mail ili lozinka.' });
+    if (!u || !checkPassword(password, u.password_hash)) return send(res, 401, { error: 'Pogrešno korisničko ime, e-mail ili lozinka.', code: 'bad_login' });
     return send(res, 200, { name: u.name, token: newSession(u.id) });
   }
 
   // Google: signs in, creates an account, or (when already signed in) links Google to this account.
   if (req.method === 'POST' && p === '/api/google') {
-    if (!GOOGLE_CLIENT_ID) return send(res, 503, { error: 'Prijava s Googleom nije postavljena.' });
-    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.' });
+    if (!GOOGLE_CLIENT_ID) return send(res, 503, { error: 'Prijava s Googleom nije postavljena.', code: 'google_off' });
+    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
     const { credential } = await readJson(req);
     const g = await verifyGoogle(credential);
-    if (!g) return send(res, 401, { error: 'Google prijava nije uspjela.' });
+    if (!g) return send(res, 401, { error: 'Google prijava nije uspjela.', code: 'google_failed' });
     const email = g.email_verified ? cleanEmail(g.email) : '';
     const me = userFrom(req), owner = db.prepare('SELECT * FROM users WHERE google_sub = ?').get(g.sub);
     if (me) {
-      if (owner && owner.id !== me.id) return send(res, 409, { error: 'Taj Google račun je već povezan s drugim igračem.' });
+      if (owner && owner.id !== me.id) return send(res, 409, { error: 'Taj Google račun je već povezan s drugim igračem.', code: 'google_taken' });
       db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').run(g.sub, me.id);
       if (email && !me.email && !db.prepare('SELECT 1 FROM users WHERE email = ?').get(email)) db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, me.id);
       return send(res, 200, { name: me.name, linked: true });
@@ -320,18 +320,18 @@ async function route(req, res) {
   // Account settings: add or change password and e-mail. Changing an existing password needs the current one.
   if (req.method === 'POST' && p === '/api/account') {
     const u = userFrom(req);
-    if (!u) return send(res, 401, { error: 'Nisi prijavljen.' });
-    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.' });
+    if (!u) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
+    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
     const { password, currentPassword, email } = await readJson(req);
     if (password !== undefined) {
-      if (!validPassword(password)) return send(res, 400, { error: PW_ERR });
-      if (u.password_hash && !checkPassword(currentPassword, u.password_hash)) return send(res, 401, { error: 'Trenutna lozinka nije točna.' });
+      if (!validPassword(password)) return send(res, 400, { error: PW_ERR, code: 'password_short' });
+      if (u.password_hash && !checkPassword(currentPassword, u.password_hash)) return send(res, 401, { error: 'Trenutna lozinka nije točna.', code: 'current_password' });
       db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hashPassword(password), u.id);
     }
     if (email !== undefined) {
       const e = cleanEmail(email);
-      if (e && !EMAIL_RE.test(e)) return send(res, 400, { error: 'E-mail adresa nije ispravna.' });
-      if (e && db.prepare('SELECT 1 FROM users WHERE email = ? AND id <> ?').get(e, u.id)) return send(res, 409, { error: 'Taj e-mail već koristi drugi račun.' });
+      if (e && !EMAIL_RE.test(e)) return send(res, 400, { error: 'E-mail adresa nije ispravna.', code: 'email_invalid' });
+      if (e && db.prepare('SELECT 1 FROM users WHERE email = ? AND id <> ?').get(e, u.id)) return send(res, 409, { error: 'Taj e-mail već koristi drugi račun.', code: 'email_in_use' });
       db.prepare('UPDATE users SET email = ? WHERE id = ?').run(e || null, u.id);
     }
     return send(res, 200, profile(db.prepare('SELECT * FROM users WHERE id = ?').get(u.id)));
@@ -339,25 +339,25 @@ async function route(req, res) {
 
   if (req.method === 'GET' && p === '/api/me') {
     const u = userFrom(req);
-    return u ? send(res, 200, profile(u)) : send(res, 401, { error: 'Nisi prijavljen.' });
+    return u ? send(res, 200, profile(u)) : send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
   }
 
   if (req.method === 'POST' && p === '/api/score') {
     const u = userFrom(req);
-    if (!u) return send(res, 401, { error: 'Nisi prijavljen.' });
-    if (limited(req, 'score', 120, 60e3)) return send(res, 429, { error: 'Previše zahtjeva.' });
+    if (!u) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
+    if (limited(req, 'score', 120, 60e3)) return send(res, 429, { error: 'Previše zahtjeva.', code: 'too_many' });
     const { mode, level, date, n, moves, timeMs } = await readJson(req);
     const now = Date.now(), t = Math.max(0, Math.min(Number(timeMs) || 0, 864e5));
     let key;
     if (mode === 'campaign') key = Number(level);
-    else if (mode === 'daily') { if (!validDate(date)) return send(res, 400, { error: 'Dnevna zagonetka je istekla.' }); key = date; }
+    else if (mode === 'daily') { if (!validDate(date)) return send(res, 400, { error: 'Dnevna zagonetka je istekla.', code: 'daily_expired' }); key = date; }
     else if (mode === 'endless') {
       key = Number(n);
-      if (!Number.isInteger(key) || key < 1 || key > u.endless_next) return send(res, 400, { error: 'Prvo riješi prethodne zagonetke.' });
-    } else return send(res, 400, { error: 'Nepoznat način igre.' });
+      if (!Number.isInteger(key) || key < 1 || key > u.endless_next) return send(res, 400, { error: 'Prvo riješi prethodne zagonetke.', code: 'endless_order' });
+    } else return send(res, 400, { error: 'Nepoznat način igre.', code: 'bad_mode' });
     const lv = puzzle(mode, key);
-    if (!lv) return send(res, 404, { error: 'Nema te zagonetke.' });
-    if (!replay(lv, moves)) return send(res, 422, { error: 'Rješenje nije ispravno.' });
+    if (!lv) return send(res, 404, { error: 'Nema te zagonetke.', code: 'no_puzzle' });
+    if (!replay(lv, moves)) return send(res, 422, { error: 'Rješenje nije ispravno.', code: 'bad_solution' });
     const m = moves.length, stars = starsFor(m, lv.opt);
     if (mode === 'campaign') {
       db.prepare(`INSERT INTO campaign (user_id, level, stars, moves, updated_at) VALUES (?, ?, ?, ?, ?)
@@ -382,17 +382,17 @@ async function route(req, res) {
 
   if (req.method === 'GET' && p === '/api/leaderboard') {
     const mode = url.searchParams.get('mode') || 'daily';
-    if (!['daily', 'endless', 'campaign'].includes(mode)) return send(res, 400, { error: 'Nepoznat način igre.' });
+    if (!['daily', 'endless', 'campaign'].includes(mode)) return send(res, 400, { error: 'Nepoznat način igre.', code: 'bad_mode' });
     const date = mode === 'daily' ? (url.searchParams.get('date') || G.today(TZ)) : null;
-    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return send(res, 400, { error: 'Neispravan datum.' });
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return send(res, 400, { error: 'Neispravan datum.', code: 'bad_date' });
     return send(res, 200, board(mode, date, userFrom(req)));
   }
 
-  send(res, 404, { error: 'Nema te adrese.' });
+  send(res, 404, { error: 'Nema te adrese.', code: 'not_found' });
 }
 
 const server = http.createServer((req, res) => {
-  route(req, res).catch(e => { console.error(e); if (!res.headersSent) send(res, 400, { error: 'Neispravan zahtjev.' }); });
+  route(req, res).catch(e => { console.error(e); if (!res.headersSent) send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' }); });
 });
 // Listens on localhost only by default: nginx in front of it handles the public HTTPS traffic.
 const HOST = process.env.HOST || '127.0.0.1';
