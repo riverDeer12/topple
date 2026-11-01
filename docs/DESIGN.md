@@ -28,6 +28,22 @@ Klasična klizna slagalica, ali s gravitacijom: kad pomakneš blok, sve što je 
 
 Razine se ne dizajniraju ručno. Generator slaže nasumične ploče, BFS solver za svaku izračuna minimalan broj poteza, a zadržavaju se ploče koje odgovaraju krivulji težine. Trenutno 20 razina. Kamen se uvodi na 3. razini, led na 6., teški i krhki na 11., baloni na 14., a od 17. su sve mehanike zajedno. Za razine s teškim blokom ili balonom generator provjerava da je mehanika stvarno potrebna: ako se ti blokovi zamijene običnima, optimalan broj poteza mora biti drukčiji.
 
+## Načini igre
+
+- **Razine:** 20 ručno odabranih razina s rastućom težinom.
+- **Dnevna zagonetka:** ista za sve igrače taj dan (Europe/Zagreb). Mehanike se mijenjaju po danu u tjednu, a nedjeljom je teža. Ljestvica: najmanje poteza, pa najbrže vrijeme.
+- **Beskonačno:** zajednički niz zagonetki koje postupno postaju teže i izmjenjuju mehanike. Ljestvica: najviše riješenih, pa zvjezdice.
+
+Zagonetke su unaprijed generirane u `web/puzzles.js`, jer bi generiranje na mobitelu trajalo predugo. Iza kraja datoteke ista se ploča generira iz seeda.
+
+## Računi i ljestvica
+
+Jedan račun po uređaju: igrač na prvom pokretanju odabere nadimak, a uređaj dobije tajni ključ. Igra se može igrati i bez prijave. Rješenja se čuvaju lokalno i šalju serveru kad je dostupan. Server ponovno odigra poteze i sprema samo ispravna rješenja.
+
+## Zvuk
+
+Svi zvukovi su sintetizirani u pregledniku (Web Audio): udarci i struganje drveta za pomicanje i slijetanje, pucanje za krhki blok, marimba za pobjedu. Pozadinska glazba je Bachov Preludij u C-duru (BWV 846), djelo u javnom vlasništvu, u izvedbi mekog klavirskog zvuka.
+
 ## Monetizacija (za iOS verziju)
 
 - Besplatno s prvim paketom razina.

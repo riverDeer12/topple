@@ -11,7 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const C = require('../web/core.js');
-const { W, H } = C;
+const G = require('../web/gen.js');
 
 const args = process.argv.slice(2);
 const onlyAt = args.indexOf('--only');
@@ -60,72 +60,14 @@ const SPECS = [
   { opt: 9, max: 12, n: 8, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 2 },
 ];
 
-function tryPlace(bs, b) {
-  const g = C.grid(bs);
-  for (let k = 0; k < b.w; k++) if (b.x + k >= W || g[b.y][b.x + k] !== -1) return false;
-  bs.push(b);
-  return true;
-}
-
-function make(spec) {
-  const bs = [];
-  for (let f = 0; f < spec.fixed; f++) {
-    for (let t = 0; t < 50; t++) { const w = ri(1, 2); if (tryPlace(bs, { x: ri(0, W - w), y: ri(3, H - 2), w, t: 'f' })) break; }
-  }
-  for (let t = 0; t < 50; t++) if (tryPlace(bs, { x: ri(0, W - 2), y: ri(0, 1), w: 2, t: 'r' })) break;
-  if (!bs.find(b => b.t === 'r')) return null;
-  // Special blocks. Loops only run when the spec asks for them, so older specs
-  // consume the same random numbers as before and keep their levels.
-  const extra = [['h', spec.heavy, 0, 3], ['k', spec.fragile, 3, H - 1], ['b', spec.balloon, 3, H - 1]];
-  for (const [t, count, y0, y1] of extra) {
-    for (let c = 0; c < (count || 0); c++) {
-      for (let a = 0; a < 50; a++) { const w = ri(1, 3); if (tryPlace(bs, { x: ri(0, W - w), y: ri(y0, y1), w, t })) break; }
-    }
-  }
-  let ice = spec.ice;
-  for (let n = 0; n < spec.n; n++) {
-    for (let t = 0; t < 50; t++) {
-      const w = ri(1, 3);
-      const typ = ice > 0 ? 'i' : 'n';
-      if (tryPlace(bs, { x: ri(0, W - w), y: ri(1, H - 1), w, t: typ })) { if (typ === 'i') ice--; break; }
-    }
-  }
-  C.settle(bs);
-  if (bs.some(b => b.g)) return null; // nothing may break before the first move
-  const red = bs.find(b => b.t === 'r');
-  if (red.y >= H - 1) return null;
-  const exitRow = ri(Math.max(red.y + 1, H - 4), H - 1);
-  // The exit cell must be blocked at the start so the player has to work for it.
-  if (C.grid(bs)[exitRow][W - 1] === -1) return null;
-  return { bs, exitRow };
-}
-
-// True if the level gets a different optimum when blocks of type t act as normal blocks.
-function needs(start, exitRow, opt, t) {
-  const plain = C.settle(start.map(b => ({ ...b, t: b.t === t ? 'n' : b.t })));
-  if (plain.some(b => b.g)) return true;
-  return C.solve(plain, exitRow, 60000) !== opt;
-}
+const make = spec => G.make(spec, ri);
+const needs = G.needs;
 
 const CACHE = path.join(__dirname, '.cache');
 fs.mkdirSync(CACHE, { recursive: true });
 const cacheFile = (i, s, seedIn) => path.join(CACHE, `level-${i + 1}-${i >= INDEPENDENT_FROM ? 'm' : ''}${seedIn}-${Buffer.from(JSON.stringify(s)).toString('base64url').slice(0, 40)}.json`);
 
-function search(s) {
-  let tries = 0;
-  while (tries < 400000) {
-    tries++;
-    const L = make(s);
-    if (!L) continue;
-    const start = L.bs.map(b => ({ ...b }));
-    const o = C.solve(L.bs.map(b => ({ ...b })), L.exitRow, 60000);
-    if (o < s.opt || o > (s.max || s.opt)) continue;
-    if (s.ice && !C.moves(start).some(m => start[m[0]].t === 'i')) continue;
-    if ((s.heavy && !needs(start, L.exitRow, o, 'h')) || (s.balloon && !needs(start, L.exitRow, o, 'b'))) continue;
-    return { level: { exit: L.exitRow, opt: o, blocks: start.map(b => [b.x, b.y, b.w, b.t]) }, tries };
-  }
-  return { level: null, tries };
-}
+const search = s => G.search(s, ri);
 
 const out = [];
 for (let i = 0; i < SPECS.length; i++) {
