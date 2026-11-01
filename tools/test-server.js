@@ -79,6 +79,9 @@ function solution(level) {
   r = await call('/api/leaderboard?mode=campaign', null, duro);
   assert.strictEqual(r.body.rows[0].stars, 3); assert.strictEqual(r.body.mine, null); ok('campaign leaderboard');
 
+  r = await call('/api/stats');
+  assert.strictEqual(r.body.players, 2); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 6); ok('stats');
+
   server.close();
   console.log('Svi testovi servera prolaze.');
 })().catch(e => { console.error('FAIL', e); process.exit(1); });

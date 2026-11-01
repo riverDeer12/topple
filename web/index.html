@@ -4,877 +4,233 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Topple</title>
+<meta name="description" content="Topple je klizna slagalica s gravitacijom: izvedi crveni blok kroz izlaz u što manje poteza. Dnevna zagonetka, beskonačni način i ljestvica.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Lexend:wght@400;500;600&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="theme.css">
 <style>
-/* Layout: one-screen toy cabinet. Header strip, the pine-green board centred, a thumb-reach control row underneath. */
-:root {
-  --page: #E4EAE6;
-  --ink: #1D2B29;
-  --muted: #5E6F6B;
-  --board: #24443F;
-  --board-edge: #17302C;
-  --cell: #2A4C47;
-  --putty: #E3D3B4;
-  --putty-edge: #B8A684;
-  --hero: #E2513A;
-  --hero-edge: #A9351F;
-  --ice: #BEE5EC;
-  --ice-edge: #7FB8C4;
-  --stone: #4D6560;
-  --stone-line: #3C524D;
-  --iron: #5E636B;
-  --iron-edge: #3A3E45;
-  --clay: #E9B796;
-  --clay-edge: #BE8664;
-  --balloon: #B99BE8;
-  --balloon-edge: #8A69C2;
-  --gold: #E8B33B;
-  --panel: #F6F8F6;
-  --panel-line: #CBD6D1;
-  --display: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
-  --body: "Lexend", system-ui, -apple-system, sans-serif;
-  --mono: "DM Mono", ui-monospace, Menlo, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --page: #111917; --ink: #E6EDEA; --muted: #92A39E;
-    --board: #1C3632; --board-edge: #0C1A18; --cell: #22403B;
-    --putty: #D6C5A4; --putty-edge: #9D8C6B;
-    --hero: #EA5C44; --hero-edge: #A4321D;
-    --ice: #A9D9E2; --ice-edge: #6AA3AF;
-    --stone: #415853; --stone-line: #33463F;
-    --iron: #6A7079; --iron-edge: #3E434A; --clay: #DCA684; --clay-edge: #A06C4C; --balloon: #AC8DDF; --balloon-edge: #7656AD;
-    --gold: #F0BE4B; --panel: #1A2523; --panel-line: #2E3E3A;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --page: #111917; --ink: #E6EDEA; --muted: #92A39E;
-  --board: #1C3632; --board-edge: #0C1A18; --cell: #22403B;
-  --putty: #D6C5A4; --putty-edge: #9D8C6B;
-  --hero: #EA5C44; --hero-edge: #A4321D;
-  --ice: #A9D9E2; --ice-edge: #6AA3AF;
-  --stone: #415853; --stone-line: #33463F;
-  --iron: #6A7079; --iron-edge: #3E434A; --clay: #DCA684; --clay-edge: #A06C4C; --balloon: #AC8DDF; --balloon-edge: #7656AD;
-  --gold: #F0BE4B; --panel: #1A2523; --panel-line: #2E3E3A;
-  color-scheme: dark;
-}
-[hidden] { display: none !important; }
-html, body { height: 100%; margin: 0; }
-:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-sizing: border-box; }
-body {
-  background: var(--page); color: var(--ink); font-family: var(--body);
-  overscroll-behavior: none; -webkit-user-select: none; user-select: none;
-  touch-action: manipulation;
-}
-.app {
-  height: 100%; box-sizing: border-box; display: grid; grid-template-rows: auto 1fr auto;
-  max-width: 560px; margin: 0 auto;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 12px 14px; gap: 10px;
-}
-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-h1 { font-family: var(--display); font-weight: 400; font-size: 1.9rem; letter-spacing: .01em; margin: 0; line-height: 1; }
-h1 span { color: var(--hero); }
-.lvl { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-.stats { display: flex; gap: 14px; align-items: baseline; font-variant-numeric: tabular-nums; }
-.stat { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-.stat b { font-family: var(--mono); font-size: 1.25rem; font-weight: 500; line-height: 1; }
-.stat small { font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+/* Home page: hero with a real board, leaderboards, then everything the game has. All text comes from content.js. */
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--body); line-height: 1.5; }
+a { color: inherit; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left, 0px)); box-sizing: border-box; }
+nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; gap: 12px; }
+.logo { font: 400 1.7rem var(--display); text-decoration: none; letter-spacing: .01em; }
+.logo span, h1 span { color: var(--hero); }
+nav .links { display: flex; gap: 18px; font-size: .9rem; font-weight: 500; }
+nav .links a { text-decoration: none; color: var(--muted); }
+nav .links a:hover { color: var(--ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; border-radius: 999px; font: 400 1.15rem var(--display); letter-spacing: .02em; padding: 12px 26px; }
+.btn.go { background: var(--hero); color: #fff; box-shadow: inset 0 -4px 0 var(--hero-edge); }
+.btn.alt { background: var(--panel); color: var(--ink); border: 1px solid var(--panel-line); }
+.btn:focus-visible, nav a:focus-visible, .tab:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 
-.stage { min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
-.hint { font-size: .85rem; color: var(--muted); text-align: center; min-height: 1.3em; max-width: 34ch; text-wrap: balance; }
-.boardwrap { position: relative; }
-.board {
-  position: relative; background: var(--board); border-radius: 14px;
-  box-shadow: inset 0 0 0 6px var(--board-edge), 0 10px 24px -12px rgba(10,30,26,.55);
-  touch-action: none;
-}
-.cellbg { position: absolute; inset: 6px; border-radius: 9px; overflow: hidden;
-  background-image: radial-gradient(circle at center, var(--cell) 22%, transparent 24%);
-}
-.exit { position: absolute; right: -14px; width: 20px; display: grid; place-items: center; }
-.exit::before { content: ""; position: absolute; left: 0; top: 4px; bottom: 4px; width: 8px; background: var(--board); }
-.exit svg { position: relative; left: 4px; width: 14px; height: 14px; fill: var(--hero); animation: nudge 1.4s ease-in-out infinite; }
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; padding: 28px 0 56px; }
+h1 { font: 400 clamp(2.6rem, 6vw, 4.2rem) var(--display); line-height: 1; margin: 0 0 14px; letter-spacing: .01em; }
+.lead { font-size: 1.12rem; color: var(--muted); margin: 0 0 24px; max-width: 46ch; }
+.cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.facts { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 30px; }
+.facts div { display: flex; flex-direction: column; }
+.facts b { font: 500 1.6rem var(--mono); line-height: 1.1; }
+.facts small { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+.demo { justify-self: center; position: relative; background: var(--board); border-radius: 16px; box-shadow: inset 0 0 0 6px var(--board-edge), 0 18px 40px -18px rgba(10,30,26,.6); }
+.demo .cells { position: absolute; inset: 6px; border-radius: 10px; background-image: radial-gradient(circle at center, var(--cell) 22%, transparent 24%); }
+.demo .exit { position: absolute; right: -13px; width: 18px; display: grid; place-items: center; }
+.demo .exit svg { width: 13px; height: 13px; fill: var(--hero); animation: nudge 1.4s ease-in-out infinite; }
 @keyframes nudge { 50% { transform: translateX(3px); } }
+.demo .blk { position: absolute; }
 
-.blk { position: absolute; left: 0; top: 0; box-sizing: border-box; border-radius: 9px; will-change: transform; outline: none; }
-.blk .face { position: absolute; inset: 0; border-radius: inherit; transform-origin: 50% 100%; }
-.blk.n .face { background: var(--putty); box-shadow: inset 0 -5px 0 var(--putty-edge), inset 0 2px 0 rgba(255,255,255,.45); }
-.blk.r .face { background: var(--hero); box-shadow: inset 0 -5px 0 var(--hero-edge), inset 0 2px 0 rgba(255,255,255,.35); }
-.blk.i .face { background: linear-gradient(135deg, rgba(255,255,255,.7) 0 18%, transparent 18% 30%, rgba(255,255,255,.35) 30% 36%, transparent 36%), var(--ice);
-  box-shadow: inset 0 -5px 0 var(--ice-edge), inset 0 0 0 2px rgba(255,255,255,.4); }
-.blk.f .face { border-radius: 6px; background: repeating-linear-gradient(-45deg, var(--stone) 0 6px, var(--stone-line) 6px 9px); box-shadow: inset 0 0 0 2px var(--stone-line); }
-.blk.h .face { border-radius: 7px; background:
-    radial-gradient(circle at 9px 9px, rgba(255,255,255,.35) 0 2.5px, transparent 3px),
-    radial-gradient(circle at calc(100% - 9px) 9px, rgba(255,255,255,.35) 0 2.5px, transparent 3px),
-    linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--iron);
-  box-shadow: inset 0 -6px 0 var(--iron-edge), inset 0 2px 0 rgba(255,255,255,.2); }
-.blk.h .face::after { content: "T"; position: absolute; inset: 0 0 5px; display: grid; place-items: center; font: 400 1rem var(--display); color: rgba(255,255,255,.55); }
-.blk.k .face { background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 30' preserveAspectRatio='none'%3E%3Cpath d='M4 3l7 9-3 6 6 9M22 2l-3 8 7 5-2 7M34 4l-5 7 6 5' fill='none' stroke='%23000' stroke-opacity='.28' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 0 0 / 40px 100% repeat-x,
-    var(--clay);
-  box-shadow: inset 0 -5px 0 var(--clay-edge), inset 0 2px 0 rgba(255,255,255,.35); }
-.blk.b .face { border-radius: 999px; transform-origin: 50% 0;
-  background: radial-gradient(ellipse 30% 40% at 25% 30%, rgba(255,255,255,.55), transparent 70%), var(--balloon);
-  box-shadow: inset 0 -5px 0 var(--balloon-edge); }
-.blk.b .face::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 8px; height: 6px; margin-left: -4px; background: var(--balloon-edge); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
-.blk.gone { visibility: hidden; pointer-events: none; }
-.blk.breaking { visibility: visible; pointer-events: none; }
-.blk.breaking .face { animation: shatter .3s ease-in forwards; }
-@keyframes shatter { 0% { transform: none; opacity: 1; } 30% { transform: scale(1.08, .7); } 100% { transform: scale(1.25, .2) translateY(30%); opacity: 0; } }
-.blk.mv { cursor: grab; }
-.blk.mv:active { cursor: grabbing; }
-.blk.mv:focus-visible .face { box-shadow: 0 0 0 3px var(--gold); }
-.blk.lift .face { filter: brightness(1.06); }
-.blk.land .face { animation: land .26s ease-out; }
-@keyframes land { 0% { transform: scale(1.06, .86); } 55% { transform: scale(.98, 1.04); } 100% { transform: none; } }
-.eyes { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; gap: 18%; padding-bottom: 4px; }
-.eye { width: 22%; max-width: 15px; aspect-ratio: 1; background: #fff; border-radius: 50%; position: relative; }
-.eye::after { content: ""; position: absolute; width: 50%; height: 50%; border-radius: 50%; background: #2A1410; top: 25%; left: calc(25% + var(--look, 0) * 20%); transition: left .15s; }
-.blk.r.win { transition: transform .5s cubic-bezier(.5,0,.8,.4), opacity .5s !important; opacity: 0; }
+section { padding: 48px 0; border-top: 1px solid var(--panel-line); }
+h2 { font: 400 clamp(1.7rem, 3.5vw, 2.3rem) var(--display); margin: 0 0 8px; letter-spacing: .01em; }
+.sub { color: var(--muted); margin: 0 0 26px; max-width: 60ch; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 16px; padding: 18px 18px 16px; }
+.card h3 { font: 400 1.2rem var(--display); margin: 0 0 6px; letter-spacing: .01em; }
+.card p { margin: 0; color: var(--muted); font-size: .93rem; }
 
-.controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-button.ctl {
-  font: 600 .9rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line);
-  border-radius: 999px; padding: 11px 18px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
-}
-button.ctl svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-button.ctl:disabled { opacity: .4; cursor: default; }
-button.ctl:focus-visible, button.go:focus-visible, .lv:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-
-.overlay { position: fixed; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--page) 70%, transparent);
-  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 20;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-.card { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 18px; padding: 22px 22px 20px; width: min(340px, 100%); box-sizing: border-box;
-  display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; box-shadow: 0 20px 40px -20px rgba(0,0,0,.4); }
-.card h2 { font-family: var(--display); font-weight: 400; font-size: 1.8rem; margin: 0; line-height: 1.1; }
-.card p { margin: 0; color: var(--muted); font-size: .9rem; }
-.stars { display: flex; gap: 6px; }
-.stars svg { width: 42px; height: 42px; fill: var(--panel-line); }
-.stars svg.on { fill: var(--gold); animation: pop .4s backwards; }
-.stars svg.on:nth-child(2) { animation-delay: .12s; } .stars svg.on:nth-child(3) { animation-delay: .24s; }
-@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } }
-button.go { font: 400 1.2rem var(--display); letter-spacing: .02em; background: var(--hero); color: #fff; border: 0; border-radius: 999px; padding: 12px 26px; cursor: pointer; box-shadow: inset 0 -4px 0 var(--hero-edge); }
-button.link { background: none; border: 0; color: var(--muted); font: 500 .85rem var(--body); cursor: pointer; padding: 4px; text-decoration: underline; text-underline-offset: 3px; }
-.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; width: 100%; }
-.chapters { width: 100%; max-height: min(62vh, 520px); overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 2px; box-sizing: border-box; }
-.chapter h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 8px; font: 400 1rem var(--display); letter-spacing: .01em; text-align: left; }
-.chapter h3 small { font: 500 .72rem var(--mono); color: var(--muted); }
-.lv { aspect-ratio: 1; border-radius: 12px; border: 1px solid var(--panel-line); background: var(--page); color: var(--ink); font: 400 1.25rem var(--display);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; padding: 0; }
-.lv small { font: 500 .55rem var(--mono); color: var(--gold); letter-spacing: .05em; min-height: 1em; }
-.lv:disabled { opacity: .35; cursor: default; }
-.lv.cur { border-color: var(--hero); box-shadow: inset 0 0 0 1px var(--hero); }
-
-/* Menu, login, leaderboard */
-.menu { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-.mbtn { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; text-align: left; cursor: pointer;
-  background: var(--page); color: var(--ink); border: 1px solid var(--panel-line); border-radius: 14px; padding: 12px 14px; font: 500 .8rem var(--body); }
-.mbtn b { display: block; font: 400 1.15rem var(--display); letter-spacing: .01em; }
-.mbtn span { color: var(--muted); }
-.mbtn .ico { flex: none; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; }
-.mbtn .ico svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-.mbtn.primary { border-color: var(--hero); box-shadow: inset 0 0 0 1px var(--hero); }
-.mbtn:focus-visible, .tab:focus-visible, .tog:focus-visible, input.nick:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-.who { font-size: .85rem; color: var(--muted); }
-.who b { color: var(--ink); font-weight: 600; }
-.row { display: flex; gap: 8px; width: 100%; justify-content: center; flex-wrap: wrap; }
-.tog { font: 600 .8rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 8px 14px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
-.tog[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
-input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(--page); border: 1px solid var(--panel-line); border-radius: 12px; padding: 12px 14px; width: 100%; box-sizing: border-box; text-align: center; }
-.err { color: var(--hero); font-size: .82rem; min-height: 1.2em; }
-.tabs { display: flex; gap: 4px; background: var(--page); border: 1px solid var(--panel-line); border-radius: 999px; padding: 3px; width: 100%; box-sizing: border-box; }
-.tab { flex: 1; font: 600 .78rem var(--body); color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 8px 4px; cursor: pointer; }
-.tab[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
-.lb { list-style: none; margin: 0; padding: 0; width: 100%; max-height: min(50vh, 360px); overflow-y: auto; text-align: left; font-variant-numeric: tabular-nums; }
-.lb li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 8px; align-items: baseline; padding: 8px 6px; border-bottom: 1px solid var(--panel-line); font-size: .9rem; }
+.boards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.lb h3 { display: flex; justify-content: space-between; align-items: baseline; }
+.lb h3 small { font: 500 .72rem var(--mono); color: var(--muted); }
+.lb ol { list-style: none; margin: 10px 0 0; padding: 0; font-variant-numeric: tabular-nums; }
+.lb li { display: grid; grid-template-columns: 2em 1fr auto; gap: 8px; align-items: baseline; padding: 7px 4px; border-bottom: 1px solid var(--panel-line); font-size: .92rem; }
+.lb li:last-child { border-bottom: 0; }
 .lb li .r { font: 500 .8rem var(--mono); color: var(--muted); }
 .lb li .v { font: 500 .85rem var(--mono); }
 .lb li.me { background: color-mix(in srgb, var(--gold) 18%, transparent); border-radius: 8px; }
-.lb .empty { display: block; text-align: center; color: var(--muted); border: 0; padding: 18px 6px; }
-.card.wide { width: min(400px, 100%); }
-.types { display: flex; flex-direction: column; gap: 12px; width: 100%; text-align: left; max-height: min(55vh, 420px); overflow-y: auto; }
-.type { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: center; }
-.type b { display: block; font: 400 1.05rem var(--display); letter-spacing: .01em; }
-.type p { margin: 2px 0 0; font-size: .85rem; line-height: 1.35; }
-.blk.sw { position: relative; width: 76px; height: 34px; transform: none; }
-.blk.sw .eye { max-width: 9px; }
-.rules { display: flex; flex-direction: column; gap: 10px; }
-.rules h3, .types h3 { font: 400 1.05rem var(--display); letter-spacing: .01em; margin: 4px 0 0; }
-.rules p { margin: 0; font-size: .85rem; line-height: 1.4; }
-.help { font: 400 1.1rem var(--display); width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--panel-line); background: var(--panel); color: var(--ink); cursor: pointer; padding: 0; align-self: center; }
-.help:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .exit svg, .stars svg.on { animation: none; } .blk.land .face { animation: none; } .blk.breaking .face { animation-duration: .05s; } }
+.lb li.top .r { color: var(--gold); }
+.lb .empty { display: block; color: var(--muted); border: 0; padding: 14px 4px; font-size: .9rem; }
+
+.types { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.type { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: center; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 16px; padding: 14px; }
+.type b { display: block; font: 400 1.1rem var(--display); letter-spacing: .01em; }
+.type p { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
+.rules { counter-reset: r; }
+.rules .card h3::before { counter-increment: r; content: counter(r) ". "; color: var(--hero); }
+
+.final { text-align: center; padding: 56px 0 64px; }
+footer { border-top: 1px solid var(--panel-line); padding: 22px 0 32px; color: var(--muted); font-size: .85rem; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+@media (max-width: 820px) {
+  .hero { grid-template-columns: 1fr; gap: 28px; padding-top: 12px; }
+  .demo { order: -1; }
+  .boards { grid-template-columns: 1fr; }
+  nav .links { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .demo .exit svg { animation: none; } }
 </style>
 </head>
 <body>
+<div class="wrap">
+  <nav>
+    <a class="logo" href="./">Top<span>ple</span></a>
+    <div class="links">
+      <a href="#ljestvica">Ljestvica</a>
+      <a href="#kako">Kako se igra</a>
+      <a href="#blokovi">Blokovi</a>
+      <a href="#nacini">Načini igre</a>
+    </div>
+    <a class="btn go" href="igra.html" style="padding:8px 18px;font-size:1rem">Igraj</a>
+  </nav>
 
-<div class="app">
-  <header>
+  <header class="hero">
     <div>
       <h1>Top<span>ple</span></h1>
-      <div class="lvl" id="lvlLabel">Razina 1</div>
-    </div>
-    <div class="stats">
-      <div class="stat"><b id="mv">0</b><small>Potezi</small></div>
-      <div class="stat"><b id="par">2</b><small>Cilj</small></div>
-      <button class="help" id="help" type="button" aria-label="Kako se igra">?</button>
-    </div>
-  </header>
-  <main class="stage" id="stage">
-    <div class="boardwrap"><div class="board" id="board"><div class="cellbg"></div></div></div>
-    <div class="hint" id="hint"></div>
-  </main>
-  <div class="controls">
-    <button class="ctl" id="undo" type="button"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>Vrati</button>
-    <button class="ctl" id="reset" type="button"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Ponovi</button>
-    <button class="ctl" id="menu" type="button"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Izbornik</button>
-  </div>
-</div>
-
-<div class="overlay" id="menuBox" hidden>
-  <div class="card wide">
-    <h2>Top<span style="color:var(--hero)">ple</span></h2>
-    <div class="who" id="who"></div>
-    <div class="menu">
-      <button class="mbtn primary" id="mDaily" type="button">
-        <span class="ico" style="background:var(--hero)"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>
-        <span><b>Dnevna zagonetka</b><span id="mDailySub"></span></span>
-      </button>
-      <button class="mbtn" id="mEndless" type="button">
-        <span class="ico" style="background:var(--balloon-edge)"><svg viewBox="0 0 24 24"><path d="M7 9a3 3 0 1 0 0 6c3 0 7-6 10-6a3 3 0 1 1 0 6c-3 0-7-6-10-6z"/></svg></span>
-        <span><b>Beskonačno</b><span id="mEndlessSub"></span></span>
-      </button>
-      <button class="mbtn" id="mLevels" type="button">
-        <span class="ico" style="background:var(--iron)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></span>
-        <span><b>Razine</b><span id="mLevelsSub"></span></span>
-      </button>
-      <button class="mbtn" id="mBoard" type="button">
-        <span class="ico" style="background:var(--gold)"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg></span>
-        <span><b>Ljestvica</b><span>Najbolji igrači</span></span>
-      </button>
-    </div>
-    <div class="row">
-      <button class="tog" id="tSfx" type="button" aria-pressed="true">Zvukovi</button>
-      <button class="tog" id="tMusic" type="button" aria-pressed="true">Glazba</button>
-    </div>
-    <button class="link" id="mTypes" type="button">Kako se igra</button>
-    <button class="link" id="menuClose" type="button">Natrag na igru</button>
-  </div>
-</div>
-
-<div class="overlay" id="loginBox" hidden>
-  <div class="card">
-    <h2>Dobro došli!</h2>
-    <p>Odaberi nadimak za ljestvicu. Ovaj uređaj ostaje prijavljen.</p>
-    <form id="loginForm" style="display:contents">
-      <input class="nick" id="nick" maxlength="16" autocomplete="nickname" placeholder="Nadimak" aria-label="Nadimak" required>
-      <div class="err" id="loginErr" role="alert"></div>
-      <button class="go" id="loginGo" type="submit">Prijavi se</button>
-    </form>
-    <button class="link" id="loginSkip" type="button">Igraj bez prijave</button>
-  </div>
-</div>
-
-<div class="overlay" id="lbBox" hidden>
-  <div class="card wide">
-    <h2>Ljestvica</h2>
-    <div class="tabs" role="tablist">
-      <button class="tab" role="tab" data-m="daily" type="button">Dnevna</button>
-      <button class="tab" role="tab" data-m="endless" type="button">Beskonačno</button>
-      <button class="tab" role="tab" data-m="campaign" type="button">Razine</button>
-    </div>
-    <p id="lbSub"></p>
-    <ul class="lb" id="lbList"></ul>
-    <button class="link" id="lbClose" type="button">Zatvori</button>
-  </div>
-</div>
-
-<div class="overlay" id="winBox" hidden>
-  <div class="card">
-    <div class="stars" id="stars"></div>
-    <h2 id="winTitle">Izašao je!</h2>
-    <p id="winText"></p>
-    <p id="winRank"></p>
-    <button class="go" id="next" type="button">Sljedeća razina</button>
-    <button class="link" id="retry" type="button">Pokušaj u manje poteza</button>
-    <button class="link" id="winMenu" type="button">Izbornik</button>
-  </div>
-</div>
-<div class="overlay" id="introBox" hidden>
-  <div class="card wide">
-    <h2 id="introTitle">Novi blok</h2>
-    <div class="types">
-      <div class="rules" id="introRules" hidden>
-        <h3>Cilj</h3>
-        <p>Izvedi crveni blok kroz izlaz, strelicu na desnom rubu ploče. Crveni mora biti u istom redu kao strelica i dotaknuti desni rub.</p>
-        <h3>Potez</h3>
-        <p>Povuci blok prstom ili mišem lijevo ili desno. Klizi za koliko god slobodnih polja želiš, ali nikad gore ili dolje. Na tipkovnici odaberi blok tipkom Tab i miči ga strelicama.</p>
-        <h3>Gravitacija</h3>
-        <p>Nakon svakog poteza sve što nema oslonac padne. Blok stoji ako je ispod barem jednog njegovog dijela nešto. Jedan potez može pokrenuti cijeli lanac padova.</p>
-        <h3>Zvjezdice</h3>
-        <p>Cilj je najmanji mogući broj poteza. Riješiš li u tom broju, dobiješ 3 zvjezdice, s najviše 2 poteza više 2, inače 1. „Vrati” poništava zadnji potez, a „Ponovi” kreće ispočetka.</p>
-        <h3>Načini igre</h3>
-        <p><b>Razine</b> se otključavaju redom i uvode nove blokove. <b>Dnevna zagonetka</b> je ista za sve igrače taj dan: na ljestvici pobjeđuje manje poteza, pa brže vrijeme. <b>Beskonačno</b> je niz zagonetki koje postaju sve teže.</p>
-        <h3>Blokovi</h3>
+      <p class="lead">Klizna slagalica s gravitacijom. Pomakni blok, sve iznad njega padne, a ti moraš predvidjeti lanac koji slijedi. Izvedi crveni blok kroz izlaz u što manje poteza.</p>
+      <div class="cta">
+        <a class="btn go" href="igra.html">Igraj besplatno</a>
+        <a class="btn alt" href="#ljestvica">Ljestvica</a>
       </div>
-      <div class="types" id="introList" style="overflow:visible;max-height:none"></div>
+      <div class="facts" id="facts"></div>
     </div>
-    <button class="go" id="introOk" type="button">Razumijem</button>
-  </div>
+    <div class="demo" id="demo" role="img" aria-label="Primjer ploče iz igre"></div>
+  </header>
 </div>
-<div class="overlay" id="lvBox" hidden>
-  <div class="card">
-    <h2>Razine</h2>
-    <div class="chapters" id="lvGrid"></div>
-    <button class="link" id="lvClose" type="button">Zatvori</button>
+
+<section id="ljestvica">
+  <div class="wrap">
+    <h2>Ljestvica</h2>
+    <p class="sub" id="lbSub">Najbolji igrači danas, u beskonačnom nizu i u razinama.</p>
+    <div class="boards">
+      <div class="card lb"><h3>Dnevna zagonetka <small id="lbDate"></small></h3><ol id="lbDaily"></ol></div>
+      <div class="card lb"><h3>Beskonačno <small>riješeno</small></h3><ol id="lbEndless"></ol></div>
+      <div class="card lb"><h3>Razine <small>zvjezdice</small></h3><ol id="lbCampaign"></ol></div>
+    </div>
   </div>
+</section>
+
+<section id="kako">
+  <div class="wrap">
+    <h2>Kako se igra</h2>
+    <p class="sub">Pravila stanu u četiri rečenice, ali svaki potez može pokrenuti lanac koji treba predvidjeti.</p>
+    <div class="cards rules" id="rules"></div>
+  </div>
+</section>
+
+<section id="blokovi">
+  <div class="wrap">
+    <h2>Vrste blokova</h2>
+    <p class="sub" id="typesSub"></p>
+    <div class="types" id="types"></div>
+  </div>
+</section>
+
+<section id="nacini">
+  <div class="wrap">
+    <h2>Načini igre</h2>
+    <p class="sub">Igraj razine redom, vrati se svaki dan po novu zagonetku ili idi koliko daleko možeš.</p>
+    <div class="cards" id="modes"></div>
+  </div>
+</section>
+
+<section id="mogucnosti">
+  <div class="wrap">
+    <h2>Što još igra ima</h2>
+    <p class="sub">Igra se u pregledniku, bez instalacije i bez reklama.</p>
+    <div class="cards" id="features"></div>
+  </div>
+</section>
+
+<div class="wrap final">
+  <h2>Spreman za prvi potez?</h2>
+  <p class="sub" style="margin:0 auto 22px">Prva razina traje desetak sekundi. Zadnja malo dulje.</p>
+  <a class="btn go" href="igra.html">Igraj</a>
 </div>
+<div class="wrap"><footer><span>Topple · rdd.software</span><span id="foot"></span></footer></div>
 
 <script src="config.js"></script>
-<script src="core.js"></script>
-<script src="gen.js"></script>
 <script src="levels.js"></script>
 <script src="puzzles.js"></script>
-<script src="audio.js"></script>
+<script src="content.js"></script>
 <script>
-const HINTS = {
-  0: 'Povuci blok lijevo ili desno. Sve iznad njega padne. Dovedi crveni do izlaza.',
-  1: 'Ponekad prvo treba maknuti blok koji nije na putu.',
-  2: 'Kameni blokovi se ne miču i ne padaju.',
-  5: 'Novo: led. Kad ga gurneš, klizi dok ne udari u nešto.',
-  10: 'Novo: teški blok (T). Kad padne na ispucali blok, razbije ga.',
-  11: 'Teški blok razbija samo kad pada. Ako već leži na ispucalom, ništa se ne događa.',
-  13: 'Novo: balon. Ne pada nego se diže dok ne udari u nešto iznad sebe.',
-  16: 'Sve zajedno: kamen, led, teški, ispucali i baloni.',
-};
-const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>';
+// The old GitHub Pages copies send players to the game, which moves their progress to the new address.
+if (/(^|\.)github\.io$/.test(location.hostname) || /^(www\.)?rdd\.software$/.test(location.hostname)) location.replace('igra.html');
+
 const $ = id => document.getElementById(id);
-const board = $('board');
+const K = ToppleContent;
 const API = (window.TOPPLE_API || '').replace(/\/+$/, '');
-const fx = ToppleAudio.fx;
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const PAD = 6, GAP = 3;
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const card = ([h, p]) => `<div class="card"><h3>${esc(h)}</h3><p>${esc(p)}</p></div>`;
+const swatch = t => `<div class="blk sw ${t}"><div class="face"></div>${t === 'r' ? '<div class="eyes"><span class="eye"></span><span class="eye"></span></div>' : ''}</div>`;
 
-// --- persistent state (localStorage, all reads/writes guarded) -------------
-const store = {
-  get(k, d) { try { const v = localStorage.getItem('topple-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem('topple-' + k, JSON.stringify(v)); } catch (e) {} },
-};
+// Content
+$('rules').innerHTML = K.RULES.map(card).join('');
+$('modes').innerHTML = K.MODES.map(card).join('');
+$('features').innerHTML = K.FEATURES.map(card).join('');
+$('types').innerHTML = K.TYPE_ORDER.map(t => `<div class="type">${swatch(t)}<div><b>${esc(K.TYPES[t][0])}</b><p>${esc(K.TYPES[t][1])}</p></div></div>`).join('');
+$('typesSub').textContent = `${K.stats.types} vrsta blokova, svaka sa svojim pravilom. Igra ih uvodi jednu po jednu i objasni svaku kad je prvi put sretneš.`;
+const facts = [[K.stats.levels, 'razina'], [K.stats.types, 'vrsta blokova'], ['1', 'zagonetka dnevno'], ['∞', 'beskonačno']];
+$('facts').innerHTML = facts.map(([n, l]) => `<div><b>${esc(n)}</b><small>${esc(l)}</small></div>`).join('');
 
-// --- moving players from the old addresses to topple.rdd.software -------------------
-// Browser storage belongs to one address, so the old copies (GitHub Pages) send the
-// player to the new address with their progress in the URL, and the new address merges it.
-const HOME = 'https://topple.rdd.software/';
-const MIGRATE_KEYS = ['best', 'progress', 'solutions', 'seen', 'settings', 'user', 'asked', 'last'];
-const oldHost = /(^|\.)github\.io$/.test(location.hostname) || /^(www\.)?rdd\.software$/.test(location.hostname);
-if (oldHost) {
-  const data = {};
-  for (const k of MIGRATE_KEYS) { const v = store.get(k, null); if (v !== null) data[k] = v; }
-  if (data.user) data.user = { name: data.user.name }; // a token from the old address is not valid here
-  document.documentElement.style.visibility = 'hidden';
-  location.replace(HOME + (Object.keys(data).length ? '#import=' + encodeURIComponent(JSON.stringify(data)) : ''));
-} else if (location.hash.startsWith('#import=')) {
-  try { mergeImport(JSON.parse(decodeURIComponent(location.hash.slice(8)))); } catch (e) {}
-  history.replaceState(null, '', location.pathname + location.search);
-}
-// Keeps the better of the local and the imported record everywhere.
-function mergeImport(d) {
-  const better = (a, b) => !a ? b : !b ? a : (b.moves < a.moves || (b.moves === a.moves && b.timeMs < a.timeMs)) ? b : a;
-  const best = store.get('best', {});
-  for (const [i, s] of Object.entries(d.best || {})) best[i] = Math.max(best[i] || 0, s);
-  store.set('best', best);
-  const sols = store.get('solutions', {});
-  for (const [k, v] of Object.entries(d.solutions || {})) {
-    const cur = sols[k], len = x => x ? x.moves.length : Infinity;
-    if (!cur || len(v) < len(cur) || (len(v) === len(cur) && v.timeMs < cur.timeMs)) sols[k] = v;
+// Demo board: a real level from the game, drawn with the game's block styles.
+(function demo() {
+  const L = LEVELS[Math.min(13, LEVELS.length - 1)], W = 6, H = 8, PAD = 6, GAP = 3;
+  const cell = Math.min(46, Math.floor((Math.min(window.innerWidth - 40, 420) - PAD * 2) / W));
+  const d = $('demo');
+  d.style.width = cell * W + PAD * 2 + 'px'; d.style.height = cell * H + PAD * 2 + 'px';
+  let html = `<div class="cells" style="background-size:${cell}px ${cell}px"></div>` +
+    `<div class="exit" style="top:${PAD + L.exit * cell}px;height:${cell}px"><svg viewBox="0 0 10 10"><path d="M2 1l6 4-6 4z"/></svg></div>`;
+  for (const [x, y, w, t] of L.blocks) {
+    html += `<div class="blk ${t}" style="width:${w * cell - GAP * 2}px;height:${cell - GAP * 2}px;transform:translate(${PAD + GAP + x * cell}px,${PAD + GAP + y * cell}px)"><div class="face"></div>${t === 'r' ? '<div class="eyes"><span class="eye"></span><span class="eye"></span></div>' : ''}</div>`;
   }
-  store.set('solutions', sols);
-  const p = store.get('progress', {}), q = d.progress || {};
-  const e = p.endless || { next: 1, stars: 0, best: {} }, f = q.endless || { next: 1, stars: 0, best: {} };
-  for (const [n, s] of Object.entries(f.best || {})) e.best[n] = Math.max(e.best[n] || 0, s);
-  e.next = Math.max(e.next, f.next || 1);
-  e.stars = Object.values(e.best).reduce((a, b) => a + b, 0);
-  const daily = p.daily || {};
-  for (const [date, r] of Object.entries(q.daily || {})) daily[date] = better(daily[date], r);
-  store.set('progress', { ...p, endless: e, daily });
-  store.set('seen', [...new Set([...(store.get('seen', []) || []), ...(d.seen || [])])]);
-  if (!store.get('settings', null) && d.settings) store.set('settings', d.settings);
-  if (!store.get('last', null) && d.last) store.set('last', d.last);
-  if (!store.get('user', null) && d.user && d.user.name) store.set('importedName', d.user.name);
-  if (d.asked && !store.get('user', null)) store.set('asked', false); // offer the login once on the new address
-}
-let best = store.get('best', {});              // campaign: level index -> stars
-let prog = store.get('progress', {});           // { endless: {next, stars, best:{n:stars}}, daily: {date: {moves,timeMs}} }
-prog.endless = prog.endless || { next: 1, stars: 0, best: {} };
-prog.daily = prog.daily || {};
-let sols = store.get('solutions', {});          // 'mode:key' -> best {moves, timeMs}, re-sent to the server on sync
-let user = store.get('user', null);             // { name, token? }
-const settings = store.get('settings', { sfx: true, music: true });
-const saveAll = () => { store.set('best', best); store.set('progress', prog); store.set('solutions', sols); };
+  d.innerHTML = html;
+})();
 
-// --- current puzzle ----------------------------------------------------------
-// ctx: { mode: 'campaign'|'daily'|'endless', key: level index | date | n, level: {exit,opt,blocks} }
-let ctx = null, blocks = [], hist = [], moveLog = [], els = [], cell = 40, busy = false, won_ = false, t0 = 0;
-
-function starsFor(m, opt) { return m <= opt ? 3 : m <= opt + 2 ? 2 : 1; }
-function unlocked(i) { return i === 0 || best[i - 1] > 0; }
-const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
-const today = () => ToppleGen.today();
+// Leaderboards and player count from the API (same address as the game).
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('hr-HR', { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-const potez = n => n % 10 === 1 && n % 100 !== 11 ? 'potez' : 'poteza';
-const showOnly = id => ['menuBox', 'loginBox', 'lbBox', 'winBox', 'lvBox', 'introBox'].forEach(b => { $(b).hidden = b !== id; });
-
-// --- layout & rendering ------------------------------------------------------
-function layout() {
-  if (!ctx) return;
-  const st = $('stage');
-  const availW = st.clientWidth - 24, availH = st.clientHeight - 40;
-  cell = Math.max(28, Math.floor(Math.min((availW - PAD * 2) / W, (availH - PAD * 2) / H, 64)));
-  board.style.width = cell * W + PAD * 2 + 'px';
-  board.style.height = cell * H + PAD * 2 + 'px';
-  board.querySelector('.cellbg').style.backgroundSize = `${cell}px ${cell}px`;
-  const ex = board.querySelector('.exit');
-  ex.style.top = PAD + ctx.level.exit * cell + 'px'; ex.style.height = cell + 'px';
-  els.forEach((el, i) => {
-    el.style.width = blocks[i].w * cell - GAP * 2 + 'px';
-    el.style.height = cell - GAP * 2 + 'px';
-  });
-  place(0);
+let token = null;
+try { const u = JSON.parse(localStorage.getItem('topple-user') || 'null'); token = u && u.token; } catch (e) {}
+async function get(path) {
+  const res = await fetch(API + path, { headers: token ? { Authorization: 'Bearer ' + token } : {} });
+  if (!res.ok) throw new Error(res.status);
+  return res.json();
 }
-function pos(b, dx = 0) { return `translate(${PAD + GAP + (b.x + dx) * cell}px, ${PAD + GAP + b.y * cell}px)`; }
-function place(ms, only) {
-  els.forEach((el, i) => {
-    if (only && !only.includes(i)) return;
-    el.style.transition = ms ? `transform ${ms}ms cubic-bezier(.3,.7,.4,1)` : 'none';
-    el.style.transform = pos(blocks[i]);
-    el.classList.remove('breaking');
-    el.classList.toggle('gone', !!blocks[i].g);
-  });
+function fill(id, r, val) {
+  const ol = $(id), rows = r.rows.slice(0, 10);
+  if (r.mine && !rows.some(x => x.me)) rows.push(r.mine);
+  if (!rows.length) { ol.innerHTML = '<li class="empty">Još nitko. Budi prvi!</li>'; return; }
+  ol.innerHTML = rows.map(x => `<li class="${x.me ? 'me' : ''}${x.rank <= 3 ? ' top' : ''}"><span class="r">${x.rank}.</span><span>${esc(x.name)}</span><span class="v">${esc(val(x))}</span></li>`).join('');
 }
-
-function show(c) {
-  ctx = c; won_ = false; busy = false;
-  blocks = c.level.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
-  hist = []; moveLog = []; t0 = Date.now();
-  board.querySelectorAll('.blk, .exit').forEach(e => e.remove());
-  const ex = document.createElement('div'); ex.className = 'exit';
-  ex.innerHTML = '<svg viewBox="0 0 10 10"><path d="M2 1l6 4-6 4z"/></svg>';
-  board.appendChild(ex);
-  els = blocks.map((b, k) => {
-    const el = document.createElement('div');
-    el.className = 'blk ' + b.t + (b.t !== 'f' ? ' mv' : '');
-    el.innerHTML = '<div class="face"></div>' + (b.t === 'r' ? '<div class="eyes"><span class="eye"></span><span class="eye"></span></div>' : '');
-    if (b.t !== 'f') {
-      el.tabIndex = 0;
-      el.setAttribute('role', 'button');
-      el.setAttribute('aria-label', { r: 'Crveni blok', n: 'Blok', i: 'Ledeni blok', h: 'Teški blok', k: 'Ispucali blok', b: 'Balon' }[b.t] + ', strelicama lijevo i desno');
-      el.addEventListener('pointerdown', e => grab(e, k));
-      el.addEventListener('keydown', e => onKey(e, k));
-    }
-    board.appendChild(el);
-    return el;
-  });
-  $('lvlLabel').textContent = c.mode === 'campaign' ? `Razina ${c.key + 1} od ${LEVELS.length}`
-    : c.mode === 'daily' ? `Dnevna · ${fmtDate(c.key)}` : `Beskonačno #${c.key}`;
-  $('par').textContent = c.level.opt;
-  $('hint').textContent = c.mode === 'campaign' ? (HINTS[c.key] || '')
-    : c.mode === 'daily' ? 'Ista zagonetka za sve igrače danas. Manje poteza je bolje.' : '';
-  showOnly(null);
-  update();
-  layout();
-  store.set('last', { mode: c.mode, key: c.key });
-  maybeIntro(c.level);
-}
-
-// --- block types: short explanation the first time a type shows up ---------------
-const TYPES = {
-  r: ['Crveni blok', 'Njega moraš izvesti. Dovedi ga do strelice na desnom rubu, u isti red.'],
-  n: ['Obični blok', 'Klizi lijevo ili desno za koliko god polja želiš. Kad ispod njega nema ničega, padne.'],
-  f: ['Kamen', 'Jedini se nikad ne miče: ne možeš ga gurnuti i ne pada. Služi kao čvrsti oslonac.'],
-  i: ['Led', 'Kad ga gurneš, klizi sve do prve prepreke. Ne može stati na pola puta.'],
-  h: ['Teški blok', 'Ako padne na ispucali blok, razbije ga i pada dalje. Ako samo leži na njemu, ništa se ne događa.'],
-  k: ['Ispucali blok', 'Miče se i pada kao obični, ali ga teški blok u padu razbije i on nestane.'],
-  b: ['Balon', 'Ne pada nego se diže, dok ne udari u nešto iznad sebe. Drugi blokovi mogu stajati na njemu.'],
-};
-const TYPE_ORDER = ['r', 'n', 'f', 'i', 'h', 'k', 'b'];
-let seen = store.get('seen', null);
-if (!seen) { // first run of this version: types from levels already beaten count as seen
-  const s = new Set(['r', 'n']);
-  for (const i of Object.keys(best)) for (const b of LEVELS[i].blocks) s.add(b[3]);
-  seen = [...s]; store.set('seen', seen);
-}
-function showTypes(types, title, rules = false) {
-  $('introTitle').textContent = title;
-  $('introRules').hidden = !rules;
-  document.querySelector('#introBox .types').scrollTop = 0;
-  $('introList').innerHTML = '';
-  for (const t of types) {
-    const row = document.createElement('div');
-    row.className = 'type';
-    row.innerHTML = `<div class="blk sw ${t}"><div class="face"></div>${t === 'r' ? '<div class="eyes"><span class="eye"></span><span class="eye"></span></div>' : ''}</div><div><b></b><p></p></div>`;
-    row.querySelector('b').textContent = TYPES[t][0];
-    row.querySelector('p').textContent = TYPES[t][1];
-    $('introList').appendChild(row);
-  }
-  showOnly('introBox');
-  $('introOk').focus({ preventScroll: true });
-}
-let introBack = null; // what the "Razumijem" button returns to
-let started = false;  // the board loaded behind the start menu must not use up its intro
-function maybeIntro(level) {
-  if (!started) return;
-  const fresh = TYPE_ORDER.filter(t => !seen.includes(t) && level.blocks.some(b => b[3] === t));
-  if (!fresh.length) return;
-  seen.push(...fresh); store.set('seen', seen);
-  introBack = null;
-  showTypes(fresh, fresh.length === 1 ? 'Novi blok' : 'Novi blokovi');
-}
-$('introOk').onclick = () => (introBack ? introBack() : showOnly(null));
-$('mTypes').onclick = () => { introBack = openMenu; showTypes(TYPE_ORDER, 'Kako se igra', true); };
-$('help').onclick = () => { if (busy) return; introBack = won_ ? () => showOnly('winBox') : null; showTypes(TYPE_ORDER, 'Kako se igra', true); };
-function update() {
-  $('mv').textContent = hist.length;
-  $('undo').disabled = !hist.length || won_;
-}
-
-// --- puzzles for each mode -----------------------------------------------------
-function openCampaign(i) { show({ mode: 'campaign', key: i, level: LEVELS[i] }); }
-let worker = null;
-function generate(kind, arg) {
-  // Past the end of puzzles.js: generate the same board the server would, off the main thread if possible.
-  return new Promise(resolve => {
-    const fallback = () => setTimeout(() => resolve((kind === 'daily' ? ToppleGen.dailyPuzzle(arg) : ToppleGen.endlessPuzzle(arg)).level), 30);
-    try {
-      worker = worker || new Worker('gen-worker.js');
-      worker.onmessage = e => resolve(e.data);
-      worker.onerror = e => { e.preventDefault(); worker = null; fallback(); };
-      worker.postMessage({ kind, arg });
-    } catch (e) { fallback(); }
-  });
-}
-async function openPuzzle(mode, key) {
-  let level = mode === 'daily' ? PUZZLES.daily[key] : PUZZLES.endless[key - 1];
-  if (!level) {
-    showOnly(null);
-    $('hint').textContent = 'Slažem novu zagonetku…';
-    level = await generate(mode, key);
-  }
-  if (level) show({ mode, key, level });
-}
-const openDaily = () => openPuzzle('daily', today());
-const openEndless = () => openPuzzle('endless', prog.endless.next);
-
-// --- input ---------------------------------------------------------------------
-function grab(e, k) {
-  if (busy || won_ || blocks[k].g) return;
-  e.preventDefault();
-  const el = els[k], b = blocks[k];
-  const [l, r] = range(blocks, k);
-  const x0 = e.clientX;
-  el.setPointerCapture(e.pointerId);
-  el.classList.add('lift');
-  el.style.transition = 'none';
-  let dx = 0;
-  const onMove = ev => {
-    dx = Math.max(-l, Math.min(r, (ev.clientX - x0) / cell));
-    el.style.transform = pos(b, dx);
-    if (b.t === 'r') el.style.setProperty('--look', Math.sign(dx));
-  };
-  const onUp = () => {
-    el.removeEventListener('pointermove', onMove);
-    el.removeEventListener('pointerup', onUp);
-    el.removeEventListener('pointercancel', onUp);
-    el.classList.remove('lift');
-    const d = b.t === 'i' ? (dx > .3 ? r : dx < -.3 ? -l : 0) : Math.round(dx);
-    if (!d) { place(140, [k]); return; }
-    commit(k, d, Math.abs(d - dx));
-  };
-  el.addEventListener('pointermove', onMove);
-  el.addEventListener('pointerup', onUp);
-  el.addEventListener('pointercancel', onUp);
-}
-function onKey(e, k) {
-  if (busy || won_ || blocks[k].g) return;
-  const dir = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
-  if (!dir) return;
-  e.preventDefault();
-  const [l, r] = range(blocks, k);
-  const max = dir < 0 ? l : r;
-  if (!max) return;
-  commit(k, blocks[k].t === 'i' ? dir * max : dir, 1);
-}
-
-function commit(k, d, travel) {
-  busy = true;
-  hist.push(blocks.map(b => ({ ...b })));
-  moveLog.push([k, d]);
-  blocks[k].x += d;
-  const slideMs = reduced ? 60 : Math.round(90 + 70 * Math.min(travel, 3));
-  place(slideMs, [k]);
-  fx.slide(slideMs, blocks[k].t === 'i');
-  update();
-  setTimeout(() => fall(), slideMs);
-}
-function fall() {
-  const before = blocks.map(b => b.y), events = [];
-  settle(blocks, events);
-  let maxMs = 0, rose = false, heavyLanded = false;
-  const landed = [], fallMs = {};
-  els.forEach((el, i) => {
-    const dist = blocks[i].y - before[i];
-    if (!dist) return;
-    const up = dist < 0;
-    if (up) rose = true; else if (blocks[i].t === 'h') heavyLanded = true;
-    const ms = reduced ? 80 : Math.round((up ? 190 : 150) * Math.sqrt(Math.abs(dist)));
-    fallMs[i] = ms;
-    maxMs = Math.max(maxMs, ms);
-    el.style.transition = `transform ${ms}ms ${up ? 'cubic-bezier(.35,.1,.5,1)' : 'cubic-bezier(.55,0,1,.6)'}`;
-    el.style.transform = pos(blocks[i]);
-    landed.push([i, ms]);
-  });
-  landed.forEach(([i, ms]) => setTimeout(() => {
-    els[i].classList.remove('land'); void els[i].offsetWidth; els[i].classList.add('land');
-  }, ms));
-  if (rose) fx.rise();
-  // A break happens when the heavy block reaches row e.y; with the falling ease,
-  // distance grows roughly with time squared, so time ~ sqrt(distance fraction).
-  events.forEach(e => {
-    const total = blocks[e.by].y - before[e.by];
-    const t = total > 0 ? (fallMs[e.by] || 0) * Math.sqrt((e.y - before[e.by]) / total) : 0;
-    setTimeout(() => { els[e.broken].classList.add('gone', 'breaking'); fx.crack(); buzz(25); }, t);
-    maxMs = Math.max(maxMs, t + 300);
-  });
-  const falls = landed.filter(([i]) => blocks[i].y > before[i]);
-  if (falls.length) setTimeout(() => { fx.land(heavyLanded); buzz(12); }, Math.max(...falls.map(l => l[1])));
-  setTimeout(() => {
-    busy = false;
-    els.forEach(el => el.classList.remove('breaking'));
-    const ri = blocks.findIndex(b => b.t === 'r');
-    els[ri].style.setProperty('--look', 0);
-    if (won(blocks, ctx.level.exit)) win();
-  }, maxMs + 20);
-}
-
-// --- winning, local records, server sync ------------------------------------------
-function record(mode, key, moves, timeMs) {
-  const id = mode + ':' + key, prev = sols[id];
-  if (!prev || moves.length < prev.moves.length || (moves.length === prev.moves.length && timeMs < prev.timeMs)) sols[id] = { moves, timeMs };
-  const s = starsFor(moves.length, ctx.level.opt);
-  if (mode === 'campaign') best[key] = Math.max(best[key] || 0, s);
-  if (mode === 'daily') {
-    const d = prog.daily[key];
-    if (!d || moves.length < d.moves || (moves.length === d.moves && timeMs < d.timeMs)) prog.daily[key] = { moves: moves.length, timeMs };
-  }
-  if (mode === 'endless') {
-    const e = prog.endless, old = e.best[key] || 0;
-    e.best[key] = Math.max(old, s); e.stars += Math.max(0, s - old);
-    e.next = Math.max(e.next, key + 1);
-  }
-  saveAll();
-  return s;
-}
-function win() {
-  won_ = true; update();
-  const ri = blocks.findIndex(b => b.t === 'r'), el = els[ri];
-  el.style.setProperty('--look', 1);
-  el.classList.add('win');
-  el.style.transform = pos(blocks[ri], 2.5);
-  fx.win();
-  buzz([10, 40, 10]);
-  const opt = ctx.level.opt, m = hist.length, timeMs = Date.now() - t0;
-  const s = record(ctx.mode, ctx.key, moveLog.slice(), timeMs);
-  $('winRank').textContent = '';
-  const c = ctx;
-  sync().then(r => { if (r && r.mine && ctx === c && won_) $('winRank').textContent = rankText(c.mode, r.mine); });
-  setTimeout(() => {
-    $('stars').innerHTML = [0, 1, 2].map(j => STAR.replace('<svg', `<svg class="${j < s ? 'on' : ''}"`)).join('');
-    $('winTitle').textContent = s === 3 ? 'Savršeno!' : 'Izašao je!';
-    $('winText').textContent = (s === 3 ? `${m} ${potez(m)}, točno koliko treba.` : `${m} ${potez(m)}. Može i u ${opt}.`)
-      + (c.mode === 'daily' ? ` Vrijeme ${fmtTime(timeMs)}.` : '');
-    $('retry').hidden = s === 3;
-    $('next').textContent = c.mode === 'daily' ? 'Ljestvica' : c.mode === 'endless' ? 'Sljedeća zagonetka'
-      : c.key === LEVELS.length - 1 ? 'Sve razine' : 'Sljedeća razina';
-    showOnly('winBox');
-    $('next').focus({ preventScroll: true });
-  }, 650);
-}
-const rankText = (mode, r) => mode === 'daily' ? `Danas si ${r.rank}. na ljestvici.`
-  : mode === 'endless' ? `Na ljestvici beskonačnog si ${r.rank}.` : `Na ljestvici razina si ${r.rank}.`;
-
-async function api(path, opts = {}) {
-  if (!API) throw new Error('offline');
-  const headers = { 'Content-Type': 'application/json' };
-  if (user && user.token) headers.Authorization = 'Bearer ' + user.token;
-  const res = await fetch(API + path, { ...opts, headers });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) { const e = new Error(body.error || 'Greška ' + res.status); e.status = res.status; throw e; }
-  return body;
-}
-// Sends every local solution the server does not have yet. Returns the last score response.
-let syncing = null;
-function sync() {
-  if (!API || !user || !user.token) return Promise.resolve(null);
-  if (syncing) return syncing.then(() => sync());
-  syncing = (async () => {
-    let last = null;
-    try {
-      const me = await api('/api/me');
-      const post = async (mode, key, extra) => {
-        const s = sols[mode + ':' + key];
-        if (!s) return;
-        try { last = await api('/api/score', { method: 'POST', body: JSON.stringify({ mode, moves: s.moves, timeMs: s.timeMs, ...extra }) }); }
-        catch (e) { if (!e.status) throw e; } // keep going past rejected entries, stop when offline
-      };
-      for (const [i, s] of Object.entries(best)) if ((me.campaign[+i + 1] || 0) < s) await post('campaign', i, { level: +i + 1 });
-      for (let n = me.endless.next; n < prog.endless.next; n++) await post('endless', n, { n });
-      for (const d of [today()]) {
-        const loc = prog.daily[d];
-        if (loc && (!me.daily[d] || loc.moves <= me.daily[d])) await post('daily', d, { date: d });
-      }
-    } catch (e) {}
-    return last;
-  })();
-  return syncing.finally(() => { syncing = null; });
-}
-
-// --- menu, login, leaderboard -----------------------------------------------------
-function openMenu() {
-  const t = today(), d = prog.daily[t];
-  $('mDailySub').textContent = fmtDate(t) + (d ? ` · riješeno u ${d.moves} ${potez(d.moves)}` : ' · nova');
-  $('mEndlessSub').textContent = `Zagonetka #${prog.endless.next} · ★ ${prog.endless.stars}`;
-  const stars = Object.values(best).reduce((a, b) => a + b, 0);
-  $('mLevelsSub').textContent = `${Object.keys(best).length} od ${LEVELS.length} riješeno · ★ ${stars}/${LEVELS.length * 3}`;
-  $('who').innerHTML = user ? `Igraš kao <b></b> · <button class="link" id="logout" type="button">odjava</button>` : `<button class="link" id="login" type="button">Prijavi se za ljestvicu</button>`;
-  if (user) $('who').querySelector('b').textContent = user.name;
-  $('menuClose').hidden = !ctx;
-  showOnly('menuBox');
-}
-$('who').addEventListener('click', e => {
-  if (e.target.id === 'login') openLogin();
-  if (e.target.id === 'logout' && confirm('Odjaviti se s ovog uređaja? Bez prijave rezultati se ne šalju na ljestvicu.')) { user = null; store.set('user', null); openMenu(); }
-});
-function openLogin() {
-  $('loginErr').textContent = '';
-  if (!$('nick').value) $('nick').value = store.get('importedName', '') || '';
-  showOnly('loginBox'); $('nick').focus();
-}
-$('loginForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const name = $('nick').value.trim().replace(/\s+/g, ' ');
-  if (!/^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u.test(name)) { $('loginErr').textContent = 'Nadimak mora imati 2–16 znakova: slova, brojke, razmak, _ . -'; return; }
-  if (!API) { user = { name }; store.set('user', user); store.set('asked', true); openMenu(); return; }
-  $('loginGo').disabled = true;
+async function boards() {
+  const off = msg => ['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = `<li class="empty">${msg}</li>`; });
+  if (!API) { off('Ljestvica radi na topple.rdd.software.'); return; }
   try {
-    const r = await api('/api/register', { method: 'POST', body: JSON.stringify({ name }) });
-    user = { name: r.name, token: r.token }; store.set('user', user); store.set('asked', true);
-    sync();
-    openMenu();
-  } catch (err) {
-    $('loginErr').textContent = err.status ? err.message : 'Server nije dostupan. Pokušaj kasnije ili igraj bez prijave.';
-  } finally { $('loginGo').disabled = false; }
-});
-$('loginSkip').onclick = () => { store.set('asked', true); openMenu(); };
-
-let lbMode = 'daily';
-async function openBoard(mode = lbMode) {
-  lbMode = mode;
-  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.m === mode)));
-  $('lbSub').textContent = mode === 'daily' ? `Dnevna zagonetka, ${fmtDate(today())}. Najmanje poteza, pa najbrže.`
-    : mode === 'endless' ? 'Najviše riješenih zagonetki u beskonačnom načinu.' : 'Najviše zvjezdica u razinama.';
-  const list = $('lbList');
-  showOnly('lbBox');
-  if (!API) { list.innerHTML = '<li class="empty">Ljestvica još nije spojena na server.</li>'; return; }
-  list.innerHTML = '<li class="empty">Učitavam…</li>';
-  try {
-    const r = await api('/api/leaderboard?mode=' + mode + (mode === 'daily' ? '&date=' + today() : ''));
-    if (lbMode !== mode) return;
-    const val = x => mode === 'daily' ? `${x.moves} · ${fmtTime(x.timeMs)}` : mode === 'endless' ? `#${x.solved} · ★${x.stars}` : `★${x.stars}`;
-    const rows = r.rows.slice();
-    if (r.mine && !rows.some(x => x.me)) rows.push(r.mine);
-    list.innerHTML = rows.length ? '' : '<li class="empty">Još nitko nije na ljestvici. Budi prvi!</li>';
-    for (const x of rows) {
-      const li = document.createElement('li');
-      if (x.me) li.className = 'me';
-      li.innerHTML = '<span class="r"></span><span class="n"></span><span class="v"></span>';
-      li.children[0].textContent = x.rank + '.'; li.children[1].textContent = x.name; li.children[2].textContent = val(x);
-      list.appendChild(li);
-    }
-    if (!user || !user.token) list.insertAdjacentHTML('beforeend', '<li class="empty">Prijavi se u izborniku da se i ti nađeš ovdje.</li>');
-  } catch (e) { list.innerHTML = '<li class="empty">Server nije dostupan.</li>'; }
+    const [d, e, c, s] = await Promise.all([get('/api/leaderboard?mode=daily'), get('/api/leaderboard?mode=endless'), get('/api/leaderboard?mode=campaign'), get('/api/stats')]);
+    $('lbDate').textContent = fmtDate(d.date);
+    fill('lbDaily', d, x => `${x.moves} · ${fmtTime(x.timeMs)}`);
+    fill('lbEndless', e, x => `#${x.solved} · ★${x.stars}`);
+    fill('lbCampaign', c, x => `★${x.stars}`);
+    const igrac = n => n % 10 === 1 && n % 100 !== 11 ? 'igrač' : 'igrača';
+    $('lbSub').textContent = `${s.players} ${igrac(s.players)} na ljestvici. ` + (s.dailyToday
+      ? `Današnju zagonetku ${s.dailyToday === 1 ? 'riješio je 1 igrač' : `riješilo je ${s.dailyToday} ${igrac(s.dailyToday)}`}.`
+      : 'Današnju zagonetku još nitko nije riješio.');
+    $('facts').insertAdjacentHTML('beforeend', `<div><b>${s.players}</b><small>igrača</small></div>`);
+  } catch (err) { off('Ljestvica trenutno nije dostupna.'); }
 }
-document.querySelectorAll('.tab').forEach(t => t.onclick = () => openBoard(t.dataset.m));
-$('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
-
-// Levels are grouped in chapters of 10 (names for chapters 1-10, ready for 100 levels).
-const CHAPTERS = ['Prvi koraci', 'Teško i lagano', 'Sve zajedno', 'Lančane reakcije', 'Majstor gravitacije',
-  'Velika slagalica', 'Poglavlje 7', 'Poglavlje 8', 'Poglavlje 9', 'Poglavlje 10'];
-function openLevels() {
-  const cur = ctx && ctx.mode === 'campaign' ? ctx.key : -1;
-  let html = '';
-  for (let c = 0; c * 10 < LEVELS.length; c++) {
-    const ids = LEVELS.slice(c * 10, c * 10 + 10).map((_, k) => c * 10 + k);
-    const stars = ids.reduce((a, i) => a + (best[i] || 0), 0);
-    html += `<section class="chapter"><h3>${c + 1}. ${CHAPTERS[c] || 'Poglavlje ' + (c + 1)}<small>★ ${stars}/${ids.length * 3}</small></h3><div class="grid">` +
-      ids.map(i => `<button class="lv${i === cur ? ' cur' : ''}" type="button" data-i="${i}" ${unlocked(i) ? '' : 'disabled'}>${i + 1}<small>${best[i] ? '★'.repeat(best[i]) : ''}</small></button>`).join('') +
-      '</div></section>';
-  }
-  $('lvGrid').innerHTML = html;
-  showOnly('lvBox');
-  // Scroll to the current level, or to the first unsolved one.
-  let focus = cur >= 0 ? cur : LEVELS.findIndex((_, i) => !best[i]);
-  const el = $('lvGrid').querySelector(`[data-i="${focus < 0 ? LEVELS.length - 1 : focus}"]`);
-  if (el) el.scrollIntoView({ block: 'center' });
-}
-$('lvGrid').addEventListener('click', e => { const b = e.target.closest('.lv'); if (b && !b.disabled) openCampaign(+b.dataset.i); });
-$('lvClose').onclick = openMenu;
-
-$('mDaily').onclick = openDaily;
-$('mEndless').onclick = openEndless;
-$('mLevels').onclick = openLevels;
-$('mBoard').onclick = () => openBoard('daily');
-$('menuClose').onclick = () => { showOnly(null); if (ctx) maybeIntro(ctx.level); };
-$('menu').onclick = () => { if (!busy) openMenu(); };
-$('winMenu').onclick = openMenu;
-$('undo').onclick = () => {
-  if (busy || !hist.length || won_) return;
-  blocks.splice(0, blocks.length, ...hist.pop()); moveLog.pop();
-  place(160); update(); fx.undo();
-};
-$('reset').onclick = () => { if (!busy && ctx) show(ctx); };
-$('retry').onclick = () => show(ctx);
-$('next').onclick = () => {
-  if (ctx.mode === 'daily') return openBoard('daily');
-  if (ctx.mode === 'endless') return openEndless();
-  if (ctx.key === LEVELS.length - 1) openLevels(); else openCampaign(ctx.key + 1);
-};
-function setToggle(id, on) { $(id).setAttribute('aria-pressed', String(on)); }
-$('tSfx').onclick = () => { settings.sfx = !settings.sfx; ToppleAudio.setSfx(settings.sfx); setToggle('tSfx', settings.sfx); store.set('settings', settings); fx.tap(); };
-$('tMusic').onclick = () => { settings.music = !settings.music; ToppleAudio.setMusic(settings.music); setToggle('tMusic', settings.music); store.set('settings', settings); };
-addEventListener('resize', () => layout());
-// Browsers only allow audio after a user gesture.
-const unlock = () => { ToppleAudio.unlock(); removeEventListener('pointerdown', unlock, true); removeEventListener('keydown', unlock, true); };
-addEventListener('pointerdown', unlock, true);
-addEventListener('keydown', unlock, true);
-
-function start() {
-  ToppleAudio.init(settings); // music starts on the first tap or key press
-  setToggle('tSfx', settings.sfx); setToggle('tMusic', settings.music);
-  // Board behind the menu: continue where the player left off.
-  const last = store.get('last', null);
-  let i = 0;
-  for (let k = 0; k < LEVELS.length; k++) if (unlocked(k)) i = k;
-  if (last && last.mode === 'campaign' && LEVELS[last.key]) i = last.key;
-  openCampaign(i);
-  if (!user && !store.get('asked', false)) openLogin(); else openMenu();
-  started = true;
-  sync();
-}
-start();
+['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = '<li class="empty">Učitavam…</li>'; });
+boards();
+$('foot').textContent = `${K.stats.levels} razina · ${K.stats.chapters} poglavlja · ${K.stats.types} vrsta blokova`;
 </script>
 </body>
 </html>

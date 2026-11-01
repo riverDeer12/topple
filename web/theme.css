@@ -1,0 +1,93 @@
+/* Shared look of the game and the home page: colour tokens (light + dark) and block styles. */
+:root {
+  --page: #E4EAE6;
+  --ink: #1D2B29;
+  --muted: #5E6F6B;
+  --board: #24443F;
+  --board-edge: #17302C;
+  --cell: #2A4C47;
+  --putty: #E3D3B4;
+  --putty-edge: #B8A684;
+  --hero: #E2513A;
+  --hero-edge: #A9351F;
+  --ice: #BEE5EC;
+  --ice-edge: #7FB8C4;
+  --stone: #4D6560;
+  --stone-line: #3C524D;
+  --iron: #5E636B;
+  --iron-edge: #3A3E45;
+  --clay: #E9B796;
+  --clay-edge: #BE8664;
+  --balloon: #B99BE8;
+  --balloon-edge: #8A69C2;
+  --gold: #E8B33B;
+  --panel: #F6F8F6;
+  --panel-line: #CBD6D1;
+  --display: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --body: "Lexend", system-ui, -apple-system, sans-serif;
+  --mono: "DM Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #111917; --ink: #E6EDEA; --muted: #92A39E;
+    --board: #1C3632; --board-edge: #0C1A18; --cell: #22403B;
+    --putty: #D6C5A4; --putty-edge: #9D8C6B;
+    --hero: #EA5C44; --hero-edge: #A4321D;
+    --ice: #A9D9E2; --ice-edge: #6AA3AF;
+    --stone: #415853; --stone-line: #33463F;
+    --iron: #6A7079; --iron-edge: #3E434A; --clay: #DCA684; --clay-edge: #A06C4C; --balloon: #AC8DDF; --balloon-edge: #7656AD;
+    --gold: #F0BE4B; --panel: #1A2523; --panel-line: #2E3E3A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #111917; --ink: #E6EDEA; --muted: #92A39E;
+  --board: #1C3632; --board-edge: #0C1A18; --cell: #22403B;
+  --putty: #D6C5A4; --putty-edge: #9D8C6B;
+  --hero: #EA5C44; --hero-edge: #A4321D;
+  --ice: #A9D9E2; --ice-edge: #6AA3AF;
+  --stone: #415853; --stone-line: #33463F;
+  --iron: #6A7079; --iron-edge: #3E434A; --clay: #DCA684; --clay-edge: #A06C4C; --balloon: #AC8DDF; --balloon-edge: #7656AD;
+  --gold: #F0BE4B; --panel: #1A2523; --panel-line: #2E3E3A;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+
+.blk { position: absolute; left: 0; top: 0; box-sizing: border-box; border-radius: 9px; will-change: transform; outline: none; }
+.blk .face { position: absolute; inset: 0; border-radius: inherit; transform-origin: 50% 100%; }
+.blk.n .face { background: var(--putty); box-shadow: inset 0 -5px 0 var(--putty-edge), inset 0 2px 0 rgba(255,255,255,.45); }
+.blk.r .face { background: var(--hero); box-shadow: inset 0 -5px 0 var(--hero-edge), inset 0 2px 0 rgba(255,255,255,.35); }
+.blk.i .face { background: linear-gradient(135deg, rgba(255,255,255,.7) 0 18%, transparent 18% 30%, rgba(255,255,255,.35) 30% 36%, transparent 36%), var(--ice);
+  box-shadow: inset 0 -5px 0 var(--ice-edge), inset 0 0 0 2px rgba(255,255,255,.4); }
+.blk.f .face { border-radius: 6px; background: repeating-linear-gradient(-45deg, var(--stone) 0 6px, var(--stone-line) 6px 9px); box-shadow: inset 0 0 0 2px var(--stone-line); }
+.blk.h .face { border-radius: 7px; background:
+    radial-gradient(circle at 9px 9px, rgba(255,255,255,.35) 0 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 9px) 9px, rgba(255,255,255,.35) 0 2.5px, transparent 3px),
+    linear-gradient(180deg, rgba(255,255,255,.12), transparent 60%), var(--iron);
+  box-shadow: inset 0 -6px 0 var(--iron-edge), inset 0 2px 0 rgba(255,255,255,.2); }
+.blk.h .face::after { content: "T"; position: absolute; inset: 0 0 5px; display: grid; place-items: center; font: 400 1rem var(--display); color: rgba(255,255,255,.55); }
+.blk.k .face { background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 30' preserveAspectRatio='none'%3E%3Cpath d='M4 3l7 9-3 6 6 9M22 2l-3 8 7 5-2 7M34 4l-5 7 6 5' fill='none' stroke='%23000' stroke-opacity='.28' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 0 0 / 40px 100% repeat-x,
+    var(--clay);
+  box-shadow: inset 0 -5px 0 var(--clay-edge), inset 0 2px 0 rgba(255,255,255,.35); }
+.blk.b .face { border-radius: 999px; transform-origin: 50% 0;
+  background: radial-gradient(ellipse 30% 40% at 25% 30%, rgba(255,255,255,.55), transparent 70%), var(--balloon);
+  box-shadow: inset 0 -5px 0 var(--balloon-edge); }
+.blk.b .face::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 8px; height: 6px; margin-left: -4px; background: var(--balloon-edge); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.blk.gone { visibility: hidden; pointer-events: none; }
+.blk.breaking { visibility: visible; pointer-events: none; }
+.blk.breaking .face { animation: shatter .3s ease-in forwards; }
+@keyframes shatter { 0% { transform: none; opacity: 1; } 30% { transform: scale(1.08, .7); } 100% { transform: scale(1.25, .2) translateY(30%); opacity: 0; } }
+.blk.mv { cursor: grab; }
+.blk.mv:active { cursor: grabbing; }
+.blk.mv:focus-visible .face { box-shadow: 0 0 0 3px var(--gold); }
+.blk.lift .face { filter: brightness(1.06); }
+.blk.land .face { animation: land .26s ease-out; }
+@keyframes land { 0% { transform: scale(1.06, .86); } 55% { transform: scale(.98, 1.04); } 100% { transform: none; } }
+.eyes { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; gap: 18%; padding-bottom: 4px; }
+.eye { width: 22%; max-width: 15px; aspect-ratio: 1; background: #fff; border-radius: 50%; position: relative; }
+.eye::after { content: ""; position: absolute; width: 50%; height: 50%; border-radius: 50%; background: #2A1410; top: 25%; left: calc(25% + var(--look, 0) * 20%); transition: left .15s; }
+.blk.r.win { transition: transform .5s cubic-bezier(.5,0,.8,.4), opacity .5s !important; opacity: 0; }
+.blk.sw { position: relative; width: 76px; height: 34px; transform: none; }
+.blk.sw .eye { max-width: 9px; }
+
