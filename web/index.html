@@ -361,6 +361,49 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem('topple-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('topple-' + k, JSON.stringify(v)); } catch (e) {} },
 };
+
+// --- moving players from the old addresses to topple.rdd.software -------------------
+// Browser storage belongs to one address, so the old copies (GitHub Pages) send the
+// player to the new address with their progress in the URL, and the new address merges it.
+const HOME = 'https://topple.rdd.software/';
+const MIGRATE_KEYS = ['best', 'progress', 'solutions', 'seen', 'settings', 'user', 'asked', 'last'];
+const oldHost = /(^|\.)github\.io$/.test(location.hostname) || /^(www\.)?rdd\.software$/.test(location.hostname);
+if (oldHost) {
+  const data = {};
+  for (const k of MIGRATE_KEYS) { const v = store.get(k, null); if (v !== null) data[k] = v; }
+  if (data.user) data.user = { name: data.user.name }; // a token from the old address is not valid here
+  document.documentElement.style.visibility = 'hidden';
+  location.replace(HOME + (Object.keys(data).length ? '#import=' + encodeURIComponent(JSON.stringify(data)) : ''));
+} else if (location.hash.startsWith('#import=')) {
+  try { mergeImport(JSON.parse(decodeURIComponent(location.hash.slice(8)))); } catch (e) {}
+  history.replaceState(null, '', location.pathname + location.search);
+}
+// Keeps the better of the local and the imported record everywhere.
+function mergeImport(d) {
+  const better = (a, b) => !a ? b : !b ? a : (b.moves < a.moves || (b.moves === a.moves && b.timeMs < a.timeMs)) ? b : a;
+  const best = store.get('best', {});
+  for (const [i, s] of Object.entries(d.best || {})) best[i] = Math.max(best[i] || 0, s);
+  store.set('best', best);
+  const sols = store.get('solutions', {});
+  for (const [k, v] of Object.entries(d.solutions || {})) {
+    const cur = sols[k], len = x => x ? x.moves.length : Infinity;
+    if (!cur || len(v) < len(cur) || (len(v) === len(cur) && v.timeMs < cur.timeMs)) sols[k] = v;
+  }
+  store.set('solutions', sols);
+  const p = store.get('progress', {}), q = d.progress || {};
+  const e = p.endless || { next: 1, stars: 0, best: {} }, f = q.endless || { next: 1, stars: 0, best: {} };
+  for (const [n, s] of Object.entries(f.best || {})) e.best[n] = Math.max(e.best[n] || 0, s);
+  e.next = Math.max(e.next, f.next || 1);
+  e.stars = Object.values(e.best).reduce((a, b) => a + b, 0);
+  const daily = p.daily || {};
+  for (const [date, r] of Object.entries(q.daily || {})) daily[date] = better(daily[date], r);
+  store.set('progress', { ...p, endless: e, daily });
+  store.set('seen', [...new Set([...(store.get('seen', []) || []), ...(d.seen || [])])]);
+  if (!store.get('settings', null) && d.settings) store.set('settings', d.settings);
+  if (!store.get('last', null) && d.last) store.set('last', d.last);
+  if (!store.get('user', null) && d.user && d.user.name) store.set('importedName', d.user.name);
+  if (d.asked && !store.get('user', null)) store.set('asked', false); // offer the login once on the new address
+}
 let best = store.get('best', {});              // campaign: level index -> stars
 let prog = store.get('progress', {});           // { endless: {next, stars, best:{n:stars}}, daily: {date: {moves,timeMs}} }
 prog.endless = prog.endless || { next: 1, stars: 0, best: {} };
@@ -712,7 +755,11 @@ $('who').addEventListener('click', e => {
   if (e.target.id === 'login') openLogin();
   if (e.target.id === 'logout' && confirm('Odjaviti se s ovog uređaja? Bez prijave rezultati se ne šalju na ljestvicu.')) { user = null; store.set('user', null); openMenu(); }
 });
-function openLogin() { $('loginErr').textContent = ''; showOnly('loginBox'); $('nick').focus(); }
+function openLogin() {
+  $('loginErr').textContent = '';
+  if (!$('nick').value) $('nick').value = store.get('importedName', '') || '';
+  showOnly('loginBox'); $('nick').focus();
+}
 $('loginForm').addEventListener('submit', async e => {
   e.preventDefault();
   const name = $('nick').value.trim().replace(/\s+/g, ' ');
