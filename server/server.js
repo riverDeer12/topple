@@ -3,7 +3,7 @@
 // Every submitted solution is replayed with web/core.js before it is stored,
 // so a score can only be recorded by actually solving the puzzle.
 //
-// Env: PORT (8787), DB_PATH (server/topple.db), TZ_GAME (Europe/Zagreb),
+// Env: PORT (8787), HOST (127.0.0.1), DB_PATH (server/topple.db), TZ_GAME (Europe/Zagreb),
 //      ALLOWED_ORIGIN (* or a comma-separated list, e.g. https://topple.rdd.software,http://localhost:8080)
 const http = require('http');
 const path = require('path');
@@ -234,5 +234,7 @@ async function route(req, res) {
 const server = http.createServer((req, res) => {
   route(req, res).catch(e => { console.error(e); if (!res.headersSent) send(res, 400, { error: 'Neispravan zahtjev.' }); });
 });
-if (require.main === module) server.listen(PORT, () => console.log(`Topple API na http://localhost:${PORT}`));
+// Listens on localhost only by default: nginx in front of it handles the public HTTPS traffic.
+const HOST = process.env.HOST || '127.0.0.1';
+if (require.main === module) server.listen(PORT, HOST, () => console.log(`Topple API na http://${HOST}:${PORT}`));
 module.exports = { server, replay, puzzle, db };
