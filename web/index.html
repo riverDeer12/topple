@@ -165,6 +165,34 @@ button.link { background: none; border: 0; color: var(--muted); font: 500 .85rem
 .lv small { font: 500 .55rem var(--mono); color: var(--gold); letter-spacing: .05em; min-height: 1em; }
 .lv:disabled { opacity: .35; cursor: default; }
 .lv.cur { border-color: var(--hero); box-shadow: inset 0 0 0 1px var(--hero); }
+
+/* Menu, login, leaderboard */
+.menu { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.mbtn { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; text-align: left; cursor: pointer;
+  background: var(--page); color: var(--ink); border: 1px solid var(--panel-line); border-radius: 14px; padding: 12px 14px; font: 500 .8rem var(--body); }
+.mbtn b { display: block; font: 400 1.15rem var(--display); letter-spacing: .01em; }
+.mbtn span { color: var(--muted); }
+.mbtn .ico { flex: none; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; }
+.mbtn .ico svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.mbtn.primary { border-color: var(--hero); box-shadow: inset 0 0 0 1px var(--hero); }
+.mbtn:focus-visible, .tab:focus-visible, .tog:focus-visible, input.nick:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.who { font-size: .85rem; color: var(--muted); }
+.who b { color: var(--ink); font-weight: 600; }
+.row { display: flex; gap: 8px; width: 100%; justify-content: center; flex-wrap: wrap; }
+.tog { font: 600 .8rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 8px 14px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.tog[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(--page); border: 1px solid var(--panel-line); border-radius: 12px; padding: 12px 14px; width: 100%; box-sizing: border-box; text-align: center; }
+.err { color: var(--hero); font-size: .82rem; min-height: 1.2em; }
+.tabs { display: flex; gap: 4px; background: var(--page); border: 1px solid var(--panel-line); border-radius: 999px; padding: 3px; width: 100%; box-sizing: border-box; }
+.tab { flex: 1; font: 600 .78rem var(--body); color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 8px 4px; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.lb { list-style: none; margin: 0; padding: 0; width: 100%; max-height: min(50vh, 360px); overflow-y: auto; text-align: left; font-variant-numeric: tabular-nums; }
+.lb li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 8px; align-items: baseline; padding: 8px 6px; border-bottom: 1px solid var(--panel-line); font-size: .9rem; }
+.lb li .r { font: 500 .8rem var(--mono); color: var(--muted); }
+.lb li .v { font: 500 .85rem var(--mono); }
+.lb li.me { background: color-mix(in srgb, var(--gold) 18%, transparent); border-radius: 8px; }
+.lb .empty { display: block; text-align: center; color: var(--muted); border: 0; padding: 18px 6px; }
+.card.wide { width: min(400px, 100%); }
 @media (prefers-reduced-motion: reduce) { .exit svg, .stars svg.on { animation: none; } .blk.land .face { animation: none; } .blk.breaking .face { animation-duration: .05s; } }
 </style>
 </head>
@@ -174,7 +202,7 @@ button.link { background: none; border: 0; color: var(--muted); font: 500 .85rem
   <header>
     <div>
       <h1>Top<span>ple</span></h1>
-      <div class="lvl" id="lvlLabel">Razina 1 od 10</div>
+      <div class="lvl" id="lvlLabel">Razina 1</div>
     </div>
     <div class="stats">
       <div class="stat"><b id="mv">0</b><small>Potezi</small></div>
@@ -188,8 +216,64 @@ button.link { background: none; border: 0; color: var(--muted); font: 500 .85rem
   <div class="controls">
     <button class="ctl" id="undo" type="button"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>Vrati</button>
     <button class="ctl" id="reset" type="button"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Ponovi</button>
-    <button class="ctl" id="levels" type="button"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>Razine</button>
-    <button class="ctl" id="snd" type="button" aria-label="Zvuk"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="sndWave" d="M16.5 8.5a5 5 0 0 1 0 7"/></svg></button>
+    <button class="ctl" id="menu" type="button"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Izbornik</button>
+  </div>
+</div>
+
+<div class="overlay" id="menuBox" hidden>
+  <div class="card wide">
+    <h2>Top<span style="color:var(--hero)">ple</span></h2>
+    <div class="who" id="who"></div>
+    <div class="menu">
+      <button class="mbtn primary" id="mDaily" type="button">
+        <span class="ico" style="background:var(--hero)"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>
+        <span><b>Dnevna zagonetka</b><span id="mDailySub"></span></span>
+      </button>
+      <button class="mbtn" id="mEndless" type="button">
+        <span class="ico" style="background:var(--balloon-edge)"><svg viewBox="0 0 24 24"><path d="M7 9a3 3 0 1 0 0 6c3 0 7-6 10-6a3 3 0 1 1 0 6c-3 0-7-6-10-6z"/></svg></span>
+        <span><b>Beskonačno</b><span id="mEndlessSub"></span></span>
+      </button>
+      <button class="mbtn" id="mLevels" type="button">
+        <span class="ico" style="background:var(--iron)"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></span>
+        <span><b>Razine</b><span id="mLevelsSub"></span></span>
+      </button>
+      <button class="mbtn" id="mBoard" type="button">
+        <span class="ico" style="background:var(--gold)"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg></span>
+        <span><b>Ljestvica</b><span>Najbolji igrači</span></span>
+      </button>
+    </div>
+    <div class="row">
+      <button class="tog" id="tSfx" type="button" aria-pressed="true">Zvukovi</button>
+      <button class="tog" id="tMusic" type="button" aria-pressed="true">Glazba</button>
+    </div>
+    <button class="link" id="menuClose" type="button">Natrag na igru</button>
+  </div>
+</div>
+
+<div class="overlay" id="loginBox" hidden>
+  <div class="card">
+    <h2>Dobro došli!</h2>
+    <p>Odaberi nadimak za ljestvicu. Ovaj uređaj ostaje prijavljen.</p>
+    <form id="loginForm" style="display:contents">
+      <input class="nick" id="nick" maxlength="16" autocomplete="nickname" placeholder="Nadimak" aria-label="Nadimak" required>
+      <div class="err" id="loginErr" role="alert"></div>
+      <button class="go" id="loginGo" type="submit">Prijavi se</button>
+    </form>
+    <button class="link" id="loginSkip" type="button">Igraj bez prijave</button>
+  </div>
+</div>
+
+<div class="overlay" id="lbBox" hidden>
+  <div class="card wide">
+    <h2>Ljestvica</h2>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-m="daily" type="button">Dnevna</button>
+      <button class="tab" role="tab" data-m="endless" type="button">Beskonačno</button>
+      <button class="tab" role="tab" data-m="campaign" type="button">Razine</button>
+    </div>
+    <p id="lbSub"></p>
+    <ul class="lb" id="lbList"></ul>
+    <button class="link" id="lbClose" type="button">Zatvori</button>
   </div>
 </div>
 
@@ -198,8 +282,10 @@ button.link { background: none; border: 0; color: var(--muted); font: 500 .85rem
     <div class="stars" id="stars"></div>
     <h2 id="winTitle">Izašao je!</h2>
     <p id="winText"></p>
+    <p id="winRank"></p>
     <button class="go" id="next" type="button">Sljedeća razina</button>
     <button class="link" id="retry" type="button">Pokušaj u manje poteza</button>
+    <button class="link" id="winMenu" type="button">Izbornik</button>
   </div>
 </div>
 <div class="overlay" id="lvBox" hidden>
@@ -210,8 +296,12 @@ button.link { background: none; border: 0; color: var(--muted); font: 500 .85rem
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="core.js"></script>
+<script src="gen.js"></script>
 <script src="levels.js"></script>
+<script src="puzzles.js"></script>
+<script src="audio.js"></script>
 <script>
 const HINTS = {
   0: 'Povuci blok lijevo ili desno. Sve iznad njega padne. Dovedi crveni do izlaza.',
@@ -226,39 +316,49 @@ const HINTS = {
 const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>';
 const $ = id => document.getElementById(id);
 const board = $('board');
-let lvl = 0, blocks = [], hist = [], els = [], cell = 40, busy = false, won_ = false, soundOn = true, ac = null;
-let best = {};
-try { best = JSON.parse(localStorage.getItem('topple-best') || '{}'); } catch (e) {}
-const saveBest = () => { try { localStorage.setItem('topple-best', JSON.stringify(best)); } catch (e) {} };
+const API = (window.TOPPLE_API || '').replace(/\/+$/, '');
+const fx = ToppleAudio.fx;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const PAD = 6, GAP = 3;
 
+// --- persistent state (localStorage, all reads/writes guarded) -------------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('topple-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('topple-' + k, JSON.stringify(v)); } catch (e) {} },
+};
+let best = store.get('best', {});              // campaign: level index -> stars
+let prog = store.get('progress', {});           // { endless: {next, stars, best:{n:stars}}, daily: {date: {moves,timeMs}} }
+prog.endless = prog.endless || { next: 1, stars: 0, best: {} };
+prog.daily = prog.daily || {};
+let sols = store.get('solutions', {});          // 'mode:key' -> best {moves, timeMs}, re-sent to the server on sync
+let user = store.get('user', null);             // { name, token? }
+const settings = store.get('settings', { sfx: true, music: true });
+const saveAll = () => { store.set('best', best); store.set('progress', prog); store.set('solutions', sols); };
+
+// --- current puzzle ----------------------------------------------------------
+// ctx: { mode: 'campaign'|'daily'|'endless', key: level index | date | n, level: {exit,opt,blocks} }
+let ctx = null, blocks = [], hist = [], moveLog = [], els = [], cell = 40, busy = false, won_ = false, t0 = 0;
+
 function starsFor(m, opt) { return m <= opt ? 3 : m <= opt + 2 ? 2 : 1; }
 function unlocked(i) { return i === 0 || best[i - 1] > 0; }
-
-function tone(freq, dur, type = 'sine', vol = .25) {
-  if (!soundOn) return;
-  try {
-    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, ac.currentTime);
-    o.frequency.exponentialRampToValueAtTime(freq * .55, ac.currentTime + dur);
-    g.gain.setValueAtTime(vol, ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + dur);
-    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
-  } catch (e) {}
-}
 const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+const today = () => ToppleGen.today();
+const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('hr-HR', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const potez = n => n % 10 === 1 && n % 100 !== 11 ? 'potez' : 'poteza';
+const showOnly = id => ['menuBox', 'loginBox', 'lbBox', 'winBox', 'lvBox'].forEach(b => { $(b).hidden = b !== id; });
 
+// --- layout & rendering ------------------------------------------------------
 function layout() {
+  if (!ctx) return;
   const st = $('stage');
   const availW = st.clientWidth - 24, availH = st.clientHeight - 40;
   cell = Math.max(28, Math.floor(Math.min((availW - PAD * 2) / W, (availH - PAD * 2) / H, 64)));
   board.style.width = cell * W + PAD * 2 + 'px';
   board.style.height = cell * H + PAD * 2 + 'px';
   board.querySelector('.cellbg').style.backgroundSize = `${cell}px ${cell}px`;
-  const L = LEVELS[lvl];
   const ex = board.querySelector('.exit');
-  ex.style.top = PAD + L.exit * cell + 'px'; ex.style.height = cell + 'px';
+  ex.style.top = PAD + ctx.level.exit * cell + 'px'; ex.style.height = cell + 'px';
   els.forEach((el, i) => {
     el.style.width = blocks[i].w * cell - GAP * 2 + 'px';
     el.style.height = cell - GAP * 2 + 'px';
@@ -276,11 +376,10 @@ function place(ms, only) {
   });
 }
 
-function load(i, keep) {
-  lvl = i; won_ = false; busy = false;
-  const L = LEVELS[i];
-  blocks = keep ? keep.blocks : L.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
-  hist = keep ? keep.hist : [];
+function show(c) {
+  ctx = c; won_ = false; busy = false;
+  blocks = c.level.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
+  hist = []; moveLog = []; t0 = Date.now();
   board.querySelectorAll('.blk, .exit').forEach(e => e.remove());
   const ex = document.createElement('div'); ex.className = 'exit';
   ex.innerHTML = '<svg viewBox="0 0 10 10"><path d="M2 1l6 4-6 4z"/></svg>';
@@ -299,18 +398,49 @@ function load(i, keep) {
     board.appendChild(el);
     return el;
   });
-  $('lvlLabel').textContent = `Razina ${i + 1} od ${LEVELS.length}`;
-  $('par').textContent = L.opt;
-  $('hint').textContent = HINTS[i] || '';
-  $('winBox').hidden = true;
+  $('lvlLabel').textContent = c.mode === 'campaign' ? `Razina ${c.key + 1} od ${LEVELS.length}`
+    : c.mode === 'daily' ? `Dnevna · ${fmtDate(c.key)}` : `Beskonačno #${c.key}`;
+  $('par').textContent = c.level.opt;
+  $('hint').textContent = c.mode === 'campaign' ? (HINTS[c.key] || '')
+    : c.mode === 'daily' ? 'Ista zagonetka za sve igrače danas. Manje poteza je bolje.' : '';
+  showOnly(null);
   update();
   layout();
+  store.set('last', { mode: c.mode, key: c.key });
 }
 function update() {
   $('mv').textContent = hist.length;
   $('undo').disabled = !hist.length || won_;
 }
 
+// --- puzzles for each mode -----------------------------------------------------
+function openCampaign(i) { show({ mode: 'campaign', key: i, level: LEVELS[i] }); }
+let worker = null;
+function generate(kind, arg) {
+  // Past the end of puzzles.js: generate the same board the server would, off the main thread if possible.
+  return new Promise(resolve => {
+    const fallback = () => setTimeout(() => resolve((kind === 'daily' ? ToppleGen.dailyPuzzle(arg) : ToppleGen.endlessPuzzle(arg)).level), 30);
+    try {
+      worker = worker || new Worker('gen-worker.js');
+      worker.onmessage = e => resolve(e.data);
+      worker.onerror = e => { e.preventDefault(); worker = null; fallback(); };
+      worker.postMessage({ kind, arg });
+    } catch (e) { fallback(); }
+  });
+}
+async function openPuzzle(mode, key) {
+  let level = mode === 'daily' ? PUZZLES.daily[key] : PUZZLES.endless[key - 1];
+  if (!level) {
+    showOnly(null);
+    $('hint').textContent = 'Slažem novu zagonetku…';
+    level = await generate(mode, key);
+  }
+  if (level) show({ mode, key, level });
+}
+const openDaily = () => openPuzzle('daily', today());
+const openEndless = () => openPuzzle('endless', prog.endless.next);
+
+// --- input ---------------------------------------------------------------------
 function grab(e, k) {
   if (busy || won_ || blocks[k].g) return;
   e.preventDefault();
@@ -331,7 +461,7 @@ function grab(e, k) {
     el.removeEventListener('pointerup', onUp);
     el.removeEventListener('pointercancel', onUp);
     el.classList.remove('lift');
-    let d = b.t === 'i' ? (dx > .3 ? r : dx < -.3 ? -l : 0) : Math.round(dx);
+    const d = b.t === 'i' ? (dx > .3 ? r : dx < -.3 ? -l : 0) : Math.round(dx);
     if (!d) { place(140, [k]); return; }
     commit(k, d, Math.abs(d - dx));
   };
@@ -353,22 +483,24 @@ function onKey(e, k) {
 function commit(k, d, travel) {
   busy = true;
   hist.push(blocks.map(b => ({ ...b })));
+  moveLog.push([k, d]);
   blocks[k].x += d;
   const slideMs = reduced ? 60 : Math.round(90 + 70 * Math.min(travel, 3));
   place(slideMs, [k]);
-  tone(blocks[k].t === 'i' ? 900 : 520, .05, 'triangle', .08);
+  fx.slide(slideMs, blocks[k].t === 'i');
   update();
   setTimeout(() => fall(), slideMs);
 }
 function fall() {
   const before = blocks.map(b => b.y), events = [];
   settle(blocks, events);
-  let maxMs = 0;
+  let maxMs = 0, rose = false, heavyLanded = false;
   const landed = [], fallMs = {};
   els.forEach((el, i) => {
     const dist = blocks[i].y - before[i];
     if (!dist) return;
     const up = dist < 0;
+    if (up) rose = true; else if (blocks[i].t === 'h') heavyLanded = true;
     const ms = reduced ? 80 : Math.round((up ? 190 : 150) * Math.sqrt(Math.abs(dist)));
     fallMs[i] = ms;
     maxMs = Math.max(maxMs, ms);
@@ -379,26 +511,43 @@ function fall() {
   landed.forEach(([i, ms]) => setTimeout(() => {
     els[i].classList.remove('land'); void els[i].offsetWidth; els[i].classList.add('land');
   }, ms));
+  if (rose) fx.rise();
   // A break happens when the heavy block reaches row e.y; with the falling ease,
   // distance grows roughly with time squared, so time ~ sqrt(distance fraction).
   events.forEach(e => {
     const total = blocks[e.by].y - before[e.by];
     const t = total > 0 ? (fallMs[e.by] || 0) * Math.sqrt((e.y - before[e.by]) / total) : 0;
-    setTimeout(() => {
-      els[e.broken].classList.add('gone', 'breaking');
-      tone(180, .12, 'square', .12); setTimeout(() => tone(95, .14, 'sawtooth', .08), 30);
-      buzz(25);
-    }, t);
+    setTimeout(() => { els[e.broken].classList.add('gone', 'breaking'); fx.crack(); buzz(25); }, t);
     maxMs = Math.max(maxMs, t + 300);
   });
-  if (landed.length) setTimeout(() => { tone(110, .16, 'sine', .3); buzz(12); }, Math.max(...landed.map(l => l[1])));
+  const falls = landed.filter(([i]) => blocks[i].y > before[i]);
+  if (falls.length) setTimeout(() => { fx.land(heavyLanded); buzz(12); }, Math.max(...falls.map(l => l[1])));
   setTimeout(() => {
     busy = false;
     els.forEach(el => el.classList.remove('breaking'));
     const ri = blocks.findIndex(b => b.t === 'r');
     els[ri].style.setProperty('--look', 0);
-    if (won(blocks, LEVELS[lvl].exit)) win();
+    if (won(blocks, ctx.level.exit)) win();
   }, maxMs + 20);
+}
+
+// --- winning, local records, server sync ------------------------------------------
+function record(mode, key, moves, timeMs) {
+  const id = mode + ':' + key, prev = sols[id];
+  if (!prev || moves.length < prev.moves.length || (moves.length === prev.moves.length && timeMs < prev.timeMs)) sols[id] = { moves, timeMs };
+  const s = starsFor(moves.length, ctx.level.opt);
+  if (mode === 'campaign') best[key] = Math.max(best[key] || 0, s);
+  if (mode === 'daily') {
+    const d = prog.daily[key];
+    if (!d || moves.length < d.moves || (moves.length === d.moves && timeMs < d.timeMs)) prog.daily[key] = { moves: moves.length, timeMs };
+  }
+  if (mode === 'endless') {
+    const e = prog.endless, old = e.best[key] || 0;
+    e.best[key] = Math.max(old, s); e.stars += Math.max(0, s - old);
+    e.next = Math.max(e.next, key + 1);
+  }
+  saveAll();
+  return s;
 }
 function win() {
   won_ = true; update();
@@ -406,45 +555,177 @@ function win() {
   el.style.setProperty('--look', 1);
   el.classList.add('win');
   el.style.transform = pos(blocks[ri], 2.5);
-  [523, 659, 784].forEach((f, j) => setTimeout(() => tone(f, .22, 'triangle', .14), 120 + j * 110));
+  fx.win();
   buzz([10, 40, 10]);
-  const opt = LEVELS[lvl].opt, m = hist.length, s = starsFor(m, opt);
-  best[lvl] = Math.max(best[lvl] || 0, s); saveBest();
+  const opt = ctx.level.opt, m = hist.length, timeMs = Date.now() - t0;
+  const s = record(ctx.mode, ctx.key, moveLog.slice(), timeMs);
+  $('winRank').textContent = '';
+  const c = ctx;
+  sync().then(r => { if (r && r.mine && ctx === c && won_) $('winRank').textContent = rankText(c.mode, r.mine); });
   setTimeout(() => {
     $('stars').innerHTML = [0, 1, 2].map(j => STAR.replace('<svg', `<svg class="${j < s ? 'on' : ''}"`)).join('');
     $('winTitle').textContent = s === 3 ? 'Savršeno!' : 'Izašao je!';
-    $('winText').textContent = s === 3 ? `${m} ${m === 1 ? 'potez' : 'poteza'}, točno koliko treba.`
-      : `${m} poteza. Može i u ${opt}.`;
+    $('winText').textContent = (s === 3 ? `${m} ${potez(m)}, točno koliko treba.` : `${m} ${potez(m)}. Može i u ${opt}.`)
+      + (c.mode === 'daily' ? ` Vrijeme ${fmtTime(timeMs)}.` : '');
     $('retry').hidden = s === 3;
-    const last = lvl === LEVELS.length - 1;
-    $('next').textContent = last ? 'Sve razine' : 'Sljedeća razina';
-    $('winBox').hidden = false;
+    $('next').textContent = c.mode === 'daily' ? 'Ljestvica' : c.mode === 'endless' ? 'Sljedeća zagonetka'
+      : c.key === LEVELS.length - 1 ? 'Sve razine' : 'Sljedeća razina';
+    showOnly('winBox');
     $('next').focus({ preventScroll: true });
   }, 650);
 }
+const rankText = (mode, r) => mode === 'daily' ? `Danas si ${r.rank}. na ljestvici.`
+  : mode === 'endless' ? `Na ljestvici beskonačnog si ${r.rank}.` : `Na ljestvici razina si ${r.rank}.`;
+
+async function api(path, opts = {}) {
+  if (!API) throw new Error('offline');
+  const headers = { 'Content-Type': 'application/json' };
+  if (user && user.token) headers.Authorization = 'Bearer ' + user.token;
+  const res = await fetch(API + path, { ...opts, headers });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(body.error || 'Greška ' + res.status); e.status = res.status; throw e; }
+  return body;
+}
+// Sends every local solution the server does not have yet. Returns the last score response.
+let syncing = null;
+function sync() {
+  if (!API || !user || !user.token) return Promise.resolve(null);
+  if (syncing) return syncing.then(() => sync());
+  syncing = (async () => {
+    let last = null;
+    try {
+      const me = await api('/api/me');
+      const post = async (mode, key, extra) => {
+        const s = sols[mode + ':' + key];
+        if (!s) return;
+        try { last = await api('/api/score', { method: 'POST', body: JSON.stringify({ mode, moves: s.moves, timeMs: s.timeMs, ...extra }) }); }
+        catch (e) { if (!e.status) throw e; } // keep going past rejected entries, stop when offline
+      };
+      for (const [i, s] of Object.entries(best)) if ((me.campaign[+i + 1] || 0) < s) await post('campaign', i, { level: +i + 1 });
+      for (let n = me.endless.next; n < prog.endless.next; n++) await post('endless', n, { n });
+      for (const d of [today()]) {
+        const loc = prog.daily[d];
+        if (loc && (!me.daily[d] || loc.moves <= me.daily[d])) await post('daily', d, { date: d });
+      }
+    } catch (e) {}
+    return last;
+  })();
+  return syncing.finally(() => { syncing = null; });
+}
+
+// --- menu, login, leaderboard -----------------------------------------------------
+function openMenu() {
+  const t = today(), d = prog.daily[t];
+  $('mDailySub').textContent = fmtDate(t) + (d ? ` · riješeno u ${d.moves} ${potez(d.moves)}` : ' · nova');
+  $('mEndlessSub').textContent = `Zagonetka #${prog.endless.next} · ★ ${prog.endless.stars}`;
+  const stars = Object.values(best).reduce((a, b) => a + b, 0);
+  $('mLevelsSub').textContent = `${Object.keys(best).length} od ${LEVELS.length} riješeno · ★ ${stars}/${LEVELS.length * 3}`;
+  $('who').innerHTML = user ? `Igraš kao <b></b> · <button class="link" id="logout" type="button">odjava</button>` : `<button class="link" id="login" type="button">Prijavi se za ljestvicu</button>`;
+  if (user) $('who').querySelector('b').textContent = user.name;
+  $('menuClose').hidden = !ctx;
+  showOnly('menuBox');
+}
+$('who').addEventListener('click', e => {
+  if (e.target.id === 'login') openLogin();
+  if (e.target.id === 'logout' && confirm('Odjaviti se s ovog uređaja? Bez prijave rezultati se ne šalju na ljestvicu.')) { user = null; store.set('user', null); openMenu(); }
+});
+function openLogin() { $('loginErr').textContent = ''; showOnly('loginBox'); $('nick').focus(); }
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = $('nick').value.trim().replace(/\s+/g, ' ');
+  if (!/^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u.test(name)) { $('loginErr').textContent = 'Nadimak mora imati 2–16 znakova: slova, brojke, razmak, _ . -'; return; }
+  if (!API) { user = { name }; store.set('user', user); store.set('asked', true); openMenu(); return; }
+  $('loginGo').disabled = true;
+  try {
+    const r = await api('/api/register', { method: 'POST', body: JSON.stringify({ name }) });
+    user = { name: r.name, token: r.token }; store.set('user', user); store.set('asked', true);
+    sync();
+    openMenu();
+  } catch (err) {
+    $('loginErr').textContent = err.status ? err.message : 'Server nije dostupan. Pokušaj kasnije ili igraj bez prijave.';
+  } finally { $('loginGo').disabled = false; }
+});
+$('loginSkip').onclick = () => { store.set('asked', true); openMenu(); };
+
+let lbMode = 'daily';
+async function openBoard(mode = lbMode) {
+  lbMode = mode;
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.m === mode)));
+  $('lbSub').textContent = mode === 'daily' ? `Dnevna zagonetka, ${fmtDate(today())}. Najmanje poteza, pa najbrže.`
+    : mode === 'endless' ? 'Najviše riješenih zagonetki u beskonačnom načinu.' : 'Najviše zvjezdica u razinama.';
+  const list = $('lbList');
+  showOnly('lbBox');
+  if (!API) { list.innerHTML = '<li class="empty">Ljestvica još nije spojena na server.</li>'; return; }
+  list.innerHTML = '<li class="empty">Učitavam…</li>';
+  try {
+    const r = await api('/api/leaderboard?mode=' + mode + (mode === 'daily' ? '&date=' + today() : ''));
+    if (lbMode !== mode) return;
+    const val = x => mode === 'daily' ? `${x.moves} · ${fmtTime(x.timeMs)}` : mode === 'endless' ? `#${x.solved} · ★${x.stars}` : `★${x.stars}`;
+    const rows = r.rows.slice();
+    if (r.mine && !rows.some(x => x.me)) rows.push(r.mine);
+    list.innerHTML = rows.length ? '' : '<li class="empty">Još nitko nije na ljestvici. Budi prvi!</li>';
+    for (const x of rows) {
+      const li = document.createElement('li');
+      if (x.me) li.className = 'me';
+      li.innerHTML = '<span class="r"></span><span class="n"></span><span class="v"></span>';
+      li.children[0].textContent = x.rank + '.'; li.children[1].textContent = x.name; li.children[2].textContent = val(x);
+      list.appendChild(li);
+    }
+    if (!user || !user.token) list.insertAdjacentHTML('beforeend', '<li class="empty">Prijavi se u izborniku da se i ti nađeš ovdje.</li>');
+  } catch (e) { list.innerHTML = '<li class="empty">Server nije dostupan.</li>'; }
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => openBoard(t.dataset.m));
+$('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
 
 function openLevels() {
   $('lvGrid').innerHTML = LEVELS.map((L, i) =>
-    `<button class="lv${i === lvl ? ' cur' : ''}" type="button" data-i="${i}" ${unlocked(i) ? '' : 'disabled'}>${i + 1}<small>${best[i] ? '★'.repeat(best[i]) : ''}</small></button>`).join('');
-  $('lvBox').hidden = false;
+    `<button class="lv${ctx && ctx.mode === 'campaign' && i === ctx.key ? ' cur' : ''}" type="button" data-i="${i}" ${unlocked(i) ? '' : 'disabled'}>${i + 1}<small>${best[i] ? '★'.repeat(best[i]) : ''}</small></button>`).join('');
+  showOnly('lvBox');
 }
-$('lvGrid').addEventListener('click', e => { const b = e.target.closest('.lv'); if (b && !b.disabled) { $('lvBox').hidden = true; load(+b.dataset.i); } });
-$('lvClose').onclick = () => { $('lvBox').hidden = true; };
-$('levels').onclick = openLevels;
-$('undo').onclick = () => { if (busy || !hist.length || won_) return; blocks.splice(0, blocks.length, ...hist.pop()); place(160); update(); tone(330, .05, 'triangle', .06); };
-$('reset').onclick = () => { if (busy) return; load(lvl); };
-$('retry').onclick = () => load(lvl);
-$('next').onclick = () => { if (lvl === LEVELS.length - 1) { $('winBox').hidden = true; openLevels(); } else load(lvl + 1); };
-$('snd').onclick = () => { soundOn = !soundOn; $('sndWave').style.display = soundOn ? '' : 'none'; if (soundOn) tone(520, .06, 'triangle', .1); };
-addEventListener('resize', () => layout());
+$('lvGrid').addEventListener('click', e => { const b = e.target.closest('.lv'); if (b && !b.disabled) openCampaign(+b.dataset.i); });
+$('lvClose').onclick = openMenu;
 
-function start(data) {
+$('mDaily').onclick = openDaily;
+$('mEndless').onclick = openEndless;
+$('mLevels').onclick = openLevels;
+$('mBoard').onclick = () => openBoard('daily');
+$('menuClose').onclick = () => showOnly(null);
+$('menu').onclick = () => { if (!busy) openMenu(); };
+$('winMenu').onclick = openMenu;
+$('undo').onclick = () => {
+  if (busy || !hist.length || won_) return;
+  blocks.splice(0, blocks.length, ...hist.pop()); moveLog.pop();
+  place(160); update(); fx.undo();
+};
+$('reset').onclick = () => { if (!busy && ctx) show(ctx); };
+$('retry').onclick = () => show(ctx);
+$('next').onclick = () => {
+  if (ctx.mode === 'daily') return openBoard('daily');
+  if (ctx.mode === 'endless') return openEndless();
+  if (ctx.key === LEVELS.length - 1) openLevels(); else openCampaign(ctx.key + 1);
+};
+function setToggle(id, on) { $(id).setAttribute('aria-pressed', String(on)); }
+$('tSfx').onclick = () => { settings.sfx = !settings.sfx; ToppleAudio.setSfx(settings.sfx); setToggle('tSfx', settings.sfx); store.set('settings', settings); fx.tap(); };
+$('tMusic').onclick = () => { settings.music = !settings.music; ToppleAudio.setMusic(settings.music); setToggle('tMusic', settings.music); store.set('settings', settings); };
+addEventListener('resize', () => layout());
+// Browsers only allow audio after a user gesture.
+const unlock = () => { ToppleAudio.unlock(); removeEventListener('pointerdown', unlock, true); removeEventListener('keydown', unlock, true); };
+addEventListener('pointerdown', unlock, true);
+addEventListener('keydown', unlock, true);
+
+function start() {
+  ToppleAudio.init(settings); // music starts on the first tap or key press
+  setToggle('tSfx', settings.sfx); setToggle('tMusic', settings.music);
+  // Board behind the menu: continue where the player left off.
+  const last = store.get('last', null);
   let i = 0;
   for (let k = 0; k < LEVELS.length; k++) if (unlocked(k)) i = k;
-  if (data && typeof data.lvl === 'number') load(data.lvl, data.blocks ? { blocks: data.blocks, hist: data.hist || [] } : null);
-  else load(i);
+  if (last && last.mode === 'campaign' && LEVELS[last.key]) i = last.key;
+  openCampaign(i);
+  if (!user && !store.get('asked', false)) openLogin(); else openMenu();
+  sync();
 }
-start({});
+start();
 </script>
 </body>
 </html>

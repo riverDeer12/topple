@@ -6,12 +6,18 @@ Tekst u igri (UI) je na hrvatskom.
 
 ## Struktura
 
-- `web/index.html` — cijeli UI: CSS, render, povlačenje prstom, animacije, zvuk, zvjezdice, popis razina.
+- `web/index.html` — cijeli UI: CSS, render, povlačenje prstom, animacije, izbornik, prijava, ljestvica, načini igre (razine, dnevna, beskonačno).
+- `web/audio.js` — sintetizirani zvukovi drveta i glazba (Bach, Preludij u C-duru BWV 846), bez audio datoteka.
+- `web/gen.js` — deterministički generator zagonetki (mulberry32 + seed). Koriste ga igra, worker (`gen-worker.js`), server i alati.
+- `web/puzzles.js` — unaprijed generirane zagonetke: 300 beskonačnih i dnevne za godinu dana (`npm run puzzles`). Iza kraja datoteke igra i server generiraju iste ploče iz `gen.js`.
+- `web/config.js` — adresa API servera (`TOPPLE_API`); prazno = igra bez servera.
 - `web/core.js` — čista logika igre (bez DOM-a): mreža, gravitacija (`settle`), dopušteni potezi, provjera pobjede, BFS solver. Koriste je i igra i alati.
 - `web/levels.js` — podaci razina. Generira se, ne uređuj ručno bez `npm run verify`.
 - `tools/generate-levels.js` — generator: nasumično slaže blokove i solverom bira ploče s traženim optimalnim brojem poteza.
 - `tools/verify-levels.js` — ponovno rješava sve razine i provjerava da je `opt` točan minimum.
 - `tools/test-core.js` — testovi pravila iz `core.js` (`npm test`).
+- `tools/generate-puzzles.js` — generira `web/puzzles.js` na svim jezgrama, s cacheom.
+- `server/server.js` — API (Node 22.5+, `node:http` + `node:sqlite`, bez npm paketa): računi po uređaju, provjereni rezultati, ljestvice. Upute u `server/README.md`, testovi `npm run test:server`.
 - `docs/DESIGN.md` — dizajn igre i plan.
 
 ## Pravila igre (izvor istine je `web/core.js`)
@@ -34,11 +40,13 @@ Tekst u igri (UI) je na hrvatskom.
 - Razine 1–10 koriste stari LCG (zadržan da te razine ostanu iste). Od 11. razine svaka ima svoj seed (mulberry32), pa se mogu tražiti paralelno:
   `node tools/generate-levels.js --only 18` u više procesa, zatim `npm run generate`. Nađene razine se spremaju u `tools/.cache/` (nije u gitu).
 - Teške razine (cilj 7+) traže se i do 45 minuta po razini.
+- Dnevna zagonetka i beskonačna zagonetka #n moraju biti iste za sve igrače i server: ne mijenjaj `gen.js` (redoslijed nasumičnih brojeva, specove, `GAME`) bez ponovnog generiranja `puzzles.js`, jer bi se igra i server razišli.
+- Server mora ostati bez npm ovisnosti. Svaki rezultat se provjerava ponovnim igranjem poteza (`replay`).
 - `index.html` mora raditi otvoren izravno iz datoteke i preko GitHub Pagesa, bez build koraka i bez npm ovisnosti u pregledniku.
 - Testiranje u pregledniku: `npm run serve`, pa otvori http://localhost:8080.
 
 ## Sljedeći koraci (vidi docs/DESIGN.md)
 
-1. Generator za beskonačan način igre i dnevnu zagonetku (isti seed za sve taj dan).
+1. Postaviti API na server i upisati adresu u `web/config.js`.
 2. Više razina (cilj 40–60) i testiranje na mobitelu.
 3. Prijenos na iOS: Swift paket s logikom iz `core.js`, SpriteKit scena, haptika, Game Center.
