@@ -130,7 +130,8 @@ for (let i = 0; i < SPECS.length; i++) {
     continue;
   }
   if (only && !only.has(i)) {
-    if (i < INDEPENDENT_FROM) { console.error(`Razina ${i + 1} nije u cacheu, a o njoj ovise kasnije razine.`); process.exit(1); }
+    // A missing shared-stream level only matters if a later shared-stream level is wanted.
+    if ([...only].some(j => j > i && j < INDEPENDENT_FROM)) { console.error(`Razina ${i + 1} nije u cacheu, a o njoj ovise kasnije razine.`); process.exit(1); }
     out.push(null);
     continue;
   }
