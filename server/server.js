@@ -3,7 +3,7 @@
 // Every submitted solution is replayed with web/core.js before it is stored,
 // so a score can only be recorded by actually solving the puzzle.
 //
-// Env: PORT (8787), HOST (127.0.0.1), DB_PATH (server/topple.db), TZ_GAME (Europe/Zagreb),
+// Env: PORT (8787), HOST (127.0.0.1), DB_PATH (server/topple.db), TZ_GAME (Europe/Zagreb), GOOGLE_CLIENT_ID,
 //      ALLOWED_ORIGIN (* or a comma-separated list, e.g. https://topple.rdd.software,http://localhost:8080)
 const http = require('http');
 const path = require('path');
@@ -50,6 +50,86 @@ db.exec(`
 `);
 
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
+
+// --- accounts: sessions (one per signed-in device), passwords, Google -------------
+// Schema v1 adds login methods and a sessions table. Older databases had one
+// token per user in users.token_hash; those become the user's first session.
+if (db.prepare('PRAGMA user_version').get().user_version < 1) {
+  const cols = db.prepare('PRAGMA table_info(users)').all().map(c => c.name);
+  for (const c of ['email', 'password_hash', 'google_sub']) if (!cols.includes(c)) db.exec(`ALTER TABLE users ADD COLUMN ${c} TEXT`);
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS users_email ON users (email COLLATE NOCASE) WHERE email IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS users_google ON users (google_sub) WHERE google_sub IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS sessions (
+      token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), created_at INTEGER NOT NULL
+    );
+    INSERT OR IGNORE INTO sessions (token_hash, user_id, created_at) SELECT token_hash, id, created_at FROM users;
+    PRAGMA user_version = 1;
+  `);
+}
+function newSession(userId) {
+  const token = crypto.randomBytes(24).toString('base64url');
+  db.prepare('INSERT INTO sessions (token_hash, user_id, created_at) VALUES (?, ?, ?)').run(sha(token), userId, Date.now());
+  return token;
+}
+function createUser(name, fields = {}) {
+  // users.token_hash is a legacy NOT NULL column; new accounts sign in through sessions.
+  const r = db.prepare('INSERT INTO users (name, token_hash, created_at, email, password_hash, google_sub) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(name, sha(crypto.randomBytes(24).toString('base64url')), Date.now(), fields.email || null, fields.password_hash || null, fields.google_sub || null);
+  return Number(r.lastInsertRowid);
+}
+const scrypt = (pw, salt) => crypto.scryptSync(pw, salt, 32, { N: 16384, r: 8, p: 1 });
+function hashPassword(pw) {
+  const salt = crypto.randomBytes(16);
+  return 'scrypt$' + salt.toString('base64') + '$' + scrypt(pw, salt).toString('base64');
+}
+function checkPassword(pw, stored) {
+  if (!stored || typeof pw !== 'string') return false;
+  const [, salt, hash] = stored.split('$');
+  const a = scrypt(pw, Buffer.from(salt, 'base64')), b = Buffer.from(hash, 'base64');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}\.[^\s@]{2,}$/;
+const cleanEmail = e => String(e || '').trim().toLowerCase();
+const PW_ERR = 'Lozinka mora imati najmanje 6 znakova.';
+const validPassword = pw => typeof pw === 'string' && pw.length >= 6 && pw.length <= 200;
+
+// Google Sign-In: the browser gets an ID token (JWT) from Google; we check its
+// signature with Google's public keys and that it was issued for our client ID.
+let GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+let googleKeys = null, googleKeysUntil = 0;
+async function googleKey(kid) {
+  if (!googleKeys || Date.now() > googleKeysUntil || !googleKeys[kid]) {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/certs');
+    const { keys } = await res.json();
+    const age = /max-age=(\d+)/.exec(res.headers.get('cache-control') || '');
+    googleKeys = Object.fromEntries(keys.map(k => [k.kid, crypto.createPublicKey({ key: k, format: 'jwk' })]));
+    googleKeysUntil = Date.now() + (age ? Number(age[1]) * 1000 : 3600e3);
+  }
+  return googleKeys[kid];
+}
+async function verifyGoogle(credential) {
+  const parts = String(credential || '').split('.');
+  if (parts.length !== 3) return null;
+  const [h, p, sig] = parts;
+  let header, payload;
+  try { header = JSON.parse(Buffer.from(h, 'base64url')); payload = JSON.parse(Buffer.from(p, 'base64url')); } catch (e) { return null; }
+  if (header.alg !== 'RS256') return null;
+  const key = await googleKey(header.kid);
+  if (!key || !crypto.verify('RSA-SHA256', Buffer.from(h + '.' + p), key, Buffer.from(sig, 'base64url'))) return null;
+  if (!['accounts.google.com', 'https://accounts.google.com'].includes(payload.iss)) return null;
+  if (payload.aud !== GOOGLE_CLIENT_ID || !payload.sub || payload.exp * 1000 < Date.now()) return null;
+  return payload;
+}
+// A free nickname based on the Google name: invalid characters dropped, number appended if taken.
+function freeName(base) {
+  let n = String(base || '').normalize('NFC').replace(/[^\p{L}\p{N} _.-]/gu, '').trim().replace(/\s+/g, ' ').slice(0, 14);
+  if (!NAME_RE.test(n)) n = 'Igrač';
+  for (let i = 1; ; i++) {
+    const c = i === 1 ? n : (n.slice(0, 16 - String(i).length) + i);
+    if (NAME_RE.test(c) && !db.prepare('SELECT 1 FROM users WHERE name = ?').get(c)) return c;
+  }
+}
 const starsFor = (m, opt) => (m <= opt ? 3 : m <= opt + 2 ? 2 : 1);
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u;
 
@@ -106,7 +186,7 @@ function readJson(req) {
 }
 function userFrom(req) {
   const m = /^Bearer ([A-Za-z0-9_-]{20,100})$/.exec(req.headers.authorization || '');
-  return m ? db.prepare('SELECT * FROM users WHERE token_hash = ?').get(sha(m[1])) : null;
+  return m ? db.prepare('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?').get(sha(m[1])) : null;
 }
 // Simple in-memory rate limit per IP and bucket.
 const hits = new Map();
@@ -153,6 +233,9 @@ function board(mode, date, me) {
 function profile(u) {
   return {
     name: u.name,
+    email: u.email || null,
+    hasPassword: !!u.password_hash,
+    google: !!u.google_sub,
     endless: { next: u.endless_next, stars: u.endless_stars },
     campaign: Object.fromEntries(db.prepare('SELECT level, stars FROM campaign WHERE user_id = ?').all(u.id).map(r => [r.level, r.stars])),
     daily: Object.fromEntries(db.prepare('SELECT date, moves FROM daily WHERE user_id = ? ORDER BY date DESC LIMIT 30').all(u.id).map(r => [r.date, r.moves])),
@@ -175,15 +258,83 @@ async function route(req, res) {
     });
   }
 
+  if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null });
+
+  // New account: nickname + password, e-mail optional (then it can be used to sign in too).
   if (req.method === 'POST' && p === '/api/register') {
     if (limited(req, 'reg', 10, 3600e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj kasnije.' });
-    const { name } = await readJson(req);
+    const { name, password, email } = await readJson(req);
     const n = String(name || '').trim().replace(/\s+/g, ' ');
-    if (!NAME_RE.test(n)) return send(res, 400, { error: 'Nadimak mora imati 2–16 znakova: slova, brojke, razmak, _ . -' });
-    if (db.prepare('SELECT 1 FROM users WHERE name = ?').get(n)) return send(res, 409, { error: 'Taj nadimak je zauzet.' });
-    const token = crypto.randomBytes(24).toString('base64url');
-    db.prepare('INSERT INTO users (name, token_hash, created_at) VALUES (?, ?, ?)').run(n, sha(token), Date.now());
-    return send(res, 201, { name: n, token });
+    if (!NAME_RE.test(n)) return send(res, 400, { error: 'Korisničko ime mora imati 2–16 znakova: slova, brojke, razmak, _ . -' });
+    if (!validPassword(password)) return send(res, 400, { error: PW_ERR });
+    const e = cleanEmail(email);
+    if (e && !EMAIL_RE.test(e)) return send(res, 400, { error: 'E-mail adresa nije ispravna.' });
+    if (db.prepare('SELECT 1 FROM users WHERE name = ?').get(n)) return send(res, 409, { error: 'To korisničko ime je zauzeto.' });
+    if (e && db.prepare('SELECT 1 FROM users WHERE email = ?').get(e)) return send(res, 409, { error: 'Taj e-mail već ima račun. Prijavi se.' });
+    const id = createUser(n, { email: e || null, password_hash: hashPassword(password) });
+    return send(res, 201, { name: n, token: newSession(id) });
+  }
+
+  // Sign in with username or e-mail and password.
+  if (req.method === 'POST' && p === '/api/login') {
+    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.' });
+    const { login, password } = await readJson(req);
+    const l = String(login || '').trim();
+    const u = l.includes('@') ? db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail(l)) : db.prepare('SELECT * FROM users WHERE name = ?').get(l);
+    if (!u || !checkPassword(password, u.password_hash)) return send(res, 401, { error: 'Pogrešno korisničko ime, e-mail ili lozinka.' });
+    return send(res, 200, { name: u.name, token: newSession(u.id) });
+  }
+
+  // Google: signs in, creates an account, or (when already signed in) links Google to this account.
+  if (req.method === 'POST' && p === '/api/google') {
+    if (!GOOGLE_CLIENT_ID) return send(res, 503, { error: 'Prijava s Googleom nije postavljena.' });
+    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.' });
+    const { credential } = await readJson(req);
+    const g = await verifyGoogle(credential);
+    if (!g) return send(res, 401, { error: 'Google prijava nije uspjela.' });
+    const email = g.email_verified ? cleanEmail(g.email) : '';
+    const me = userFrom(req), owner = db.prepare('SELECT * FROM users WHERE google_sub = ?').get(g.sub);
+    if (me) {
+      if (owner && owner.id !== me.id) return send(res, 409, { error: 'Taj Google račun je već povezan s drugim igračem.' });
+      db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').run(g.sub, me.id);
+      if (email && !me.email && !db.prepare('SELECT 1 FROM users WHERE email = ?').get(email)) db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, me.id);
+      return send(res, 200, { name: me.name, linked: true });
+    }
+    if (owner) return send(res, 200, { name: owner.name, token: newSession(owner.id) });
+    const byEmail = email && db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    if (byEmail) { // same verified e-mail: this is the same person
+      db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').run(g.sub, byEmail.id);
+      return send(res, 200, { name: byEmail.name, token: newSession(byEmail.id) });
+    }
+    const name = freeName(g.given_name || g.name || email.split('@')[0]);
+    const id = createUser(name, { email: email || null, google_sub: g.sub });
+    return send(res, 201, { name, token: newSession(id), created: true });
+  }
+
+  if (req.method === 'POST' && p === '/api/logout') {
+    const m = /^Bearer ([A-Za-z0-9_-]{20,100})$/.exec(req.headers.authorization || '');
+    if (m) db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(sha(m[1]));
+    return send(res, 200, { ok: true });
+  }
+
+  // Account settings: add or change password and e-mail. Changing an existing password needs the current one.
+  if (req.method === 'POST' && p === '/api/account') {
+    const u = userFrom(req);
+    if (!u) return send(res, 401, { error: 'Nisi prijavljen.' });
+    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.' });
+    const { password, currentPassword, email } = await readJson(req);
+    if (password !== undefined) {
+      if (!validPassword(password)) return send(res, 400, { error: PW_ERR });
+      if (u.password_hash && !checkPassword(currentPassword, u.password_hash)) return send(res, 401, { error: 'Trenutna lozinka nije točna.' });
+      db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hashPassword(password), u.id);
+    }
+    if (email !== undefined) {
+      const e = cleanEmail(email);
+      if (e && !EMAIL_RE.test(e)) return send(res, 400, { error: 'E-mail adresa nije ispravna.' });
+      if (e && db.prepare('SELECT 1 FROM users WHERE email = ? AND id <> ?').get(e, u.id)) return send(res, 409, { error: 'Taj e-mail već koristi drugi račun.' });
+      db.prepare('UPDATE users SET email = ? WHERE id = ?').run(e || null, u.id);
+    }
+    return send(res, 200, profile(db.prepare('SELECT * FROM users WHERE id = ?').get(u.id)));
   }
 
   if (req.method === 'GET' && p === '/api/me') {
@@ -246,4 +397,6 @@ const server = http.createServer((req, res) => {
 // Listens on localhost only by default: nginx in front of it handles the public HTTPS traffic.
 const HOST = process.env.HOST || '127.0.0.1';
 if (require.main === module) server.listen(PORT, HOST, () => console.log(`Topple API na http://${HOST}:${PORT}`));
-module.exports = { server, replay, puzzle, db };
+// Test hook: use local keys and client ID instead of Google's.
+function setGoogleForTests(keys, clientId) { googleKeys = keys; googleKeysUntil = Infinity; GOOGLE_CLIENT_ID = clientId; }
+module.exports = { server, replay, puzzle, db, setGoogleForTests };

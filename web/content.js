@@ -33,7 +33,8 @@ const ToppleContent = (() => {
   ];
 
   const FEATURES = [
-    ['Ljestvica', 'Prijavi se nadimkom i natječi se na dnevnoj ljestvici, u beskonačnom nizu i u zvjezdicama iz razina.'],
+    ['Ljestvica', 'Natječi se na dnevnoj ljestvici, u beskonačnom nizu i u zvjezdicama iz razina.'],
+    ['Prijava i više uređaja', 'Prijavi se Google računom, e-mailom ili korisničkim imenom i lozinkom. Napredak te prati na mobitelu i na računalu.'],
     ['Pošteni rezultati', 'Server ponovno odigra svako poslano rješenje i sprema samo ispravna. Na ljestvicu se ne može upisati izmišljeni rezultat.'],
     ['Neograničeno „Vrati”', 'Eksperimentiraj bez kazne: svaki potez se može poništiti, a ploča vratiti na početak.'],
     ['Zvuk i glazba', 'Zvukovi drveta za klizanje, slijetanje i pucanje, a u pozadini Bachov Preludij u C-duru. Oboje se može isključiti.'],
@@ -41,7 +42,11 @@ const ToppleContent = (() => {
     ['Mobitel i računalo', 'Igra se u pregledniku, bez instalacije. Prstom na mobitelu, mišem ili tipkovnicom na računalu.'],
   ];
 
+  // Playing without an account is allowed, with limits (shared by the game and the home page).
+  const GUEST = { levels: 20, endless: 10 };
+  FEATURES.push(['Igraj i bez prijave', `Bez računa dobiješ smiješno ime gosta i igraš prvih ${GUEST.levels} razina, ${GUEST.endless} beskonačnih zagonetki i dnevnu zagonetku. Sve ostale razine, beskonačni niz bez ograničenja i mjesto na ljestvici imaju prijavljeni igrači.`]);
+
   const stats = { levels, chapters, endless, types: TYPE_ORDER.length };
-  return { TYPES, TYPE_ORDER, RULES, MODES, FEATURES, stats };
+  return { TYPES, TYPE_ORDER, RULES, MODES, FEATURES, GUEST, stats };
 })();
 if (typeof module !== 'undefined') module.exports = ToppleContent;
