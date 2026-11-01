@@ -165,6 +165,15 @@ async function route(req, res) {
   const p = url.pathname.replace(/\/+$/, '');
   if (req.method === 'OPTIONS') return send(res, 204);
   if (req.method === 'GET' && p === '/api/health') return send(res, 200, { ok: true, today: G.today(TZ) });
+  if (req.method === 'GET' && p === '/api/stats') {
+    const today = G.today(TZ);
+    return send(res, 200, {
+      players: db.prepare('SELECT COUNT(*) AS n FROM users').get().n,
+      dailyToday: db.prepare('SELECT COUNT(*) AS n FROM daily WHERE date = ?').get(today).n,
+      solved: db.prepare('SELECT (SELECT COUNT(*) FROM campaign) + (SELECT COUNT(*) FROM daily) + (SELECT COUNT(*) FROM endless) AS n').get().n,
+      today,
+    });
+  }
 
   if (req.method === 'POST' && p === '/api/register') {
     if (limited(req, 'reg', 10, 3600e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj kasnije.' });

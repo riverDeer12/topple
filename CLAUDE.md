@@ -6,7 +6,10 @@ Tekst u igri (UI) je na hrvatskom.
 
 ## Struktura
 
-- `web/index.html` — cijeli UI: CSS, render, povlačenje prstom, animacije, izbornik, prijava, ljestvica, načini igre (razine, dnevna, beskonačno).
+- `web/index.html` — početna stranica: ljestvice uživo, pravila, vrste blokova, načini igre i mogućnosti. Sav tekst čita iz `content.js`, brojke iz podataka igre.
+- `web/igra.html` — igra: render, povlačenje prstom, animacije, izbornik, prijava, ljestvica, načini igre (razine, dnevna, beskonačno).
+- `web/content.js` — jedini izvor teksta o igri (pravila, vrste blokova, načini igre, mogućnosti) za početnu stranicu i „Kako se igra” u igri.
+- `web/theme.css` — zajedničke boje (svijetla i tamna tema) i stilovi blokova.
 - `web/audio.js` — sintetizirani zvukovi drveta i glazba (Bach, Preludij u C-duru BWV 846), bez audio datoteka.
 - `web/gen.js` — deterministički generator zagonetki (mulberry32 + seed). Koriste ga igra, worker (`gen-worker.js`), server i alati.
 - `web/puzzles.js` — unaprijed generirane zagonetke: 300 beskonačnih i dnevne za godinu dana (`npm run puzzles`). Iza kraja datoteke igra i server generiraju iste ploče iz `gen.js`.
@@ -16,6 +19,7 @@ Tekst u igri (UI) je na hrvatskom.
 - `tools/generate-levels.js` — generator: nasumično slaže blokove i solverom bira ploče s traženim optimalnim brojem poteza.
 - `tools/verify-levels.js` — ponovno rješava sve razine i provjerava da je `opt` točan minimum.
 - `tools/test-core.js` — testovi pravila iz `core.js` (`npm test`).
+- `tools/test-content.js` — provjerava da je svaka vrsta bloka iz razina i zagonetki opisana u `content.js` i ima stil u `theme.css` (`npm test`).
 - `tools/generate-puzzles.js` — generira `web/puzzles.js` na svim jezgrama, s cacheom.
 - `server/server.js` — API (Node 22.5+, `node:http` + `node:sqlite`, bez npm paketa): računi po uređaju, provjereni rezultati, ljestvice. Upute u `server/README.md`, testovi `npm run test:server`.
 - `docs/DESIGN.md` — dizajn igre i plan.
@@ -36,15 +40,16 @@ Tekst u igri (UI) je na hrvatskom.
 
 - Vlasnik je trajno dopustio: kad je promjena gotova i testovi prolaze, otvori pull request prema `main` i spoji ga bez pitanja. Spajanje na `main` objavljuje igru (GitHub Pages i server topple.rdd.software unutar 2 minute).
 - Svaka promjena pravila ide u `core.js`, dobiva test u `tools/test-core.js` i mora proći `npm test` i `npm run verify`. Ako promjena pravila mijenja rješenja, ponovno generiraj razine (`npm run generate`).
-- Nove vrste blokova: dodaj tip u `core.js` (`settle`, `moves`), stil u `index.html`, spec u generatoru, te naziv i kratak opis u `TYPES` u `index.html`. Opis se igraču prikaže kad prvi put naiđe na taj blok, a stoji i na stranici „Kako se igra” (gumb „?”).
+- Nove vrste blokova: dodaj tip u `core.js` (`settle`, `moves`), stil u `theme.css`, spec u generatoru, te naziv i kratak opis u `TYPES` u `content.js`. Opis se igraču prikaže kad prvi put naiđe na taj blok, a stoji i na početnoj stranici i na „Kako se igra” (gumb „?”).
+- Svaka nova mogućnost, način igre ili promjena pravila mora se upisati u `content.js` (`RULES`, `MODES`, `FEATURES`), jer iz njega se pune početna stranica i „Kako se igra”. Brojke (razine, poglavlja, zagonetke) ne upisuj ručno, nego ih računaj iz podataka (`stats`).
 - Generator troši nasumične brojeve za nove tipove samo kad ih spec traži, pa dodavanje novih specova ne mijenja postojeće razine.
 - Razine 1–10 koriste stari LCG (zadržan da te razine ostanu iste). Od 11. razine svaka ima svoj seed (mulberry32), pa se mogu tražiti paralelno:
   `node tools/generate-levels.js --only 18` u više procesa, zatim `npm run generate`. Nađene razine se spremaju u `tools/.cache/` (nije u gitu).
 - Teške razine (cilj 7+) traže se i do 45 minuta po razini.
 - Dnevna zagonetka i beskonačna zagonetka #n moraju biti iste za sve igrače i server: ne mijenjaj `gen.js` (redoslijed nasumičnih brojeva, specove, `GAME`) bez ponovnog generiranja `puzzles.js`, jer bi se igra i server razišli.
-- Stare adrese (GitHub Pages: `*.github.io`, `rdd.software/topple`) automatski preusmjeravaju na `https://topple.rdd.software` i u adresi (`#import=`) nose napredak iz localStoragea; nova adresa ga spoji (`mergeImport` u `index.html`, uvijek bolji rezultat), a `sync()` nakon prijave pošalje rješenja serveru.
+- Stare adrese (GitHub Pages: `*.github.io`, `rdd.software/topple`) automatski preusmjeravaju na `https://topple.rdd.software` i u adresi (`#import=`) nose napredak iz localStoragea; nova adresa ga spoji (`mergeImport` u `igra.html`, uvijek bolji rezultat; početna stranica na staroj adresi šalje na `igra.html`), a `sync()` nakon prijave pošalje rješenja serveru.
 - Server mora ostati bez npm ovisnosti. Svaki rezultat se provjerava ponovnim igranjem poteza (`replay`).
-- `index.html` mora raditi otvoren izravno iz datoteke i preko GitHub Pagesa, bez build koraka i bez npm ovisnosti u pregledniku.
+- `index.html` i `igra.html` moraju raditi otvoreni izravno iz datoteke i preko GitHub Pagesa, bez build koraka i bez npm ovisnosti u pregledniku.
 - Testiranje u pregledniku: `npm run serve`, pa otvori http://localhost:8080.
 
 ## Sljedeći koraci (vidi docs/DESIGN.md)
