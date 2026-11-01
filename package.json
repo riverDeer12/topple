@@ -1,0 +1,12 @@
+{
+  "name": "topple",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Klizna slagalica s gravitacijom. Web prototip, kasnije iOS.",
+  "scripts": {
+    "verify": "node tools/verify-levels.js",
+    "generate": "node tools/generate-levels.js && node tools/verify-levels.js",
+    "serve": "npx --yes http-server web -p 8080 -c-1"
+  },
+  "license": "UNLICENSED"
+}
