@@ -1,14 +1,14 @@
-# Topple na vlastitom serveru
+# Topple na vlastitom serveru (Windows + IIS)
 
-Igra i API rade na istom serveru, na adresi **https://topple.rdd.software**:
+Igra i API rade na istom serveru (31.147.206.142), na adresi **https://topple.rdd.software**:
 
-- **nginx** poslužuje igru (mapu `web/`) i HTTPS, a zahtjeve na `/api/` prosljeđuje API-ju.
-- **API** (`server/server.js`) je jedan Node.js proces bez npm paketa. Podaci su u jednoj SQLite datoteci.
+- **IIS** poslužuje igru (mapu `web/`) i HTTPS. Zahtjeve na `/api/` prosljeđuje API-ju; pravila su u `web/web.config`.
+- **API** (`server/server.js`) je jedan Node.js proces bez npm paketa, pokrenut kao Windows servis. Podaci su u jednoj SQLite datoteci.
 - Server ponovno odigra svako poslano rješenje istim `web/core.js` kao igra. Rezultat se sprema samo ako je rješenje stvarno ispravno.
 
-Upute pretpostavljaju Ubuntu ili Debian i pristup serveru preko SSH-a s `sudo` pravima. Naredbe se upisuju na serveru (31.147.206.142).
+Sve naredbe upisuju se na serveru, u **PowerShellu pokrenutom kao Administrator**.
 
-## 1. DNS (Namecheap)
+## 1. DNS (Namecheap) i GitHub
 
 Advanced DNS za `rdd.software`:
 
@@ -16,138 +16,90 @@ Advanced DNS za `rdd.software`:
 - Ako postoji CNAME `topple` → `riverdeer12.github.io.`, obriši ga, jer A i CNAME za isti host ne mogu postojati istovremeno.
 - Ako si dodao `api.topple`, obriši i njega, jer više ne treba.
 
-Na GitHubu (repozitorij topple → Settings → Pages) kod **Custom domain** klikni **Remove**. Igra na GitHub Pagesu i dalje postoji na `riverdeer12.github.io/topple` kao rezervna kopija, ali bez ljestvice.
+Na GitHubu (repozitorij topple → Settings → Pages) kod **Custom domain** klikni **Remove**. Igra na `riverdeer12.github.io/topple` ostaje kao rezervna kopija, bez ljestvice.
 
-Provjera s bilo kojeg računala (može potrajati do sat vremena):
+Provjera (može potrajati do sat vremena):
 
-```bash
-nslookup topple.rdd.software
+```powershell
+Resolve-DnsName topple.rdd.software
 ```
 
 Mora vratiti `31.147.206.142`.
 
 ## 2. Programi
 
-```bash
-sudo apt update
-sudo apt install -y git nginx certbot python3-certbot-nginx sqlite3 curl
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt install -y nodejs
+Instaliraj redom, sa zadanim postavkama:
+
+1. **Node.js 22 LTS** (Windows Installer, `.msi`): https://nodejs.org/en/download
+2. **Git for Windows**: https://git-scm.com/download/win
+3. **IIS URL Rewrite 2.1**: https://www.iis.net/downloads/microsoft/url-rewrite
+4. **IIS Application Request Routing 3.0 (ARR)**: https://www.iis.net/downloads/microsoft/application-request-routing
+5. **NSSM** (pokreće Node kao Windows servis): https://nssm.cc/download. Raspakiraj i kopiraj `win64\nssm.exe` u `C:\Windows\System32`.
+
+Zatvori i ponovno otvori PowerShell, pa provjeri:
+
+```powershell
 node -v
+git --version
+nssm version
 ```
 
 `node -v` mora pokazati v22.5 ili noviju verziju.
 
-Ako je uključen vatrozid `ufw`, otvori HTTP i HTTPS:
+**Uključi proxy u ARR-u** (bez toga IIS neće prosljeđivati `/api/`):
+IIS Manager → klikni naziv servera (na vrhu lijevo) → **Application Request Routing Cache** → desno **Server Proxy Settings…** → označi **Enable proxy** → **Apply**.
 
-```bash
-sudo ufw allow 'Nginx Full'
+## 3. Kod i mapa za bazu
+
+```powershell
+git clone https://github.com/riverDeer12/topple.git C:\topple
+New-Item -ItemType Directory -Force C:\topple-data
 ```
 
-## 3. Korisnik, kod i mapa za bazu
+Baza će biti u `C:\topple-data\topple.db`, odvojeno od koda, pa je ažuriranje koda ne dira.
 
-API radi pod posebnim korisnikom `topple` koji nema druga prava na serveru.
+## 4. API kao Windows servis
 
-```bash
-sudo useradd --system --home /srv/topple --shell /usr/sbin/nologin topple
-sudo git clone https://github.com/riverDeer12/topple.git /srv/topple
-sudo chown -R topple:topple /srv/topple
-sudo mkdir -p /var/lib/topple
-sudo chown topple:topple /var/lib/topple
+```powershell
+nssm install topple "C:\Program Files\nodejs\node.exe" "C:\topple\server\server.js"
+nssm set topple AppDirectory C:\topple
+nssm set topple AppEnvironmentExtra PORT=8787 DB_PATH=C:\topple-data\topple.db ALLOWED_ORIGIN=https://topple.rdd.software,https://riverdeer12.github.io
+nssm set topple AppStdout C:\topple-data\api.log
+nssm set topple AppStderr C:\topple-data\api.log
+nssm set topple Start SERVICE_AUTO_START
+Start-Service topple
+Invoke-RestMethod http://127.0.0.1:8787/api/health
 ```
 
-Baza će biti u `/var/lib/topple/topple.db`, odvojeno od koda, pa je ažuriranje koda ne dira.
+Zadnja naredba mora vratiti `ok: True`. Servis se sam pokreće nakon restarta servera. Zapisi su u `C:\topple-data\api.log`.
 
-## 4. API kao stalni servis (systemd)
+API sluša samo na `127.0.0.1`, pa izvana nije dostupan mimo IIS-a i port 8787 ne treba otvarati u vatrozidu.
 
-```bash
-sudo nano /etc/systemd/system/topple.service
-```
+## 5. IIS stranica
 
-Sadržaj:
+1. IIS Manager → **Sites** → desni klik → **Add Website…**
+   - **Site name:** `topple`
+   - **Physical path:** `C:\topple\web`
+   - **Binding:** Type `http`, IP address `All Unassigned`, Port `80`, Host name `topple.rdd.software`
+   - **OK**
+2. Otvori http://topple.rdd.software u pregledniku na serveru ili na svom računalu. Moraš vidjeti igru.
+3. Otvori http://topple.rdd.software/api/health. Moraš vidjeti `{"ok":true,...}`.
 
-```ini
-[Unit]
-Description=Topple API
-After=network.target
+Datoteka `C:\topple\web\web.config` već sadrži sva pravila:
+- prosljeđivanje `/api/` na API
+- preusmjeravanje HTTP-a na HTTPS (počinje vrijediti kad postoji HTTPS binding)
+- `index.html` kao početnu stranicu
+- isključeno predmemoriranje, da igrači odmah dobiju nove verzije
 
-[Service]
-User=topple
-WorkingDirectory=/srv/topple
-ExecStart=/usr/bin/node server/server.js
-Environment=PORT=8787
-Environment=DB_PATH=/var/lib/topple/topple.db
-Environment=ALLOWED_ORIGIN=https://topple.rdd.software,https://riverdeer12.github.io
-Restart=always
+Ako IIS javi grešku **500.19**, nije instaliran URL Rewrite (2. korak).
 
-[Install]
-WantedBy=multi-user.target
-```
+## 6. HTTPS certifikat (win-acme, besplatno)
 
-Pokretanje i provjera:
+1. Preuzmi **win-acme** (x64, pluggable): https://www.win-acme.com, i raspakiraj u `C:\win-acme`.
+2. Pokreni `C:\win-acme\wacs.exe` kao Administrator.
+3. Odaberi **N** (create certificate, default settings) → odaberi stranicu `topple` → potvrdi `topple.rdd.software` → upiši e-mail i prihvati uvjete.
 
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now topple
-curl http://127.0.0.1:8787/api/health
-```
-
-Odgovor mora biti `{"ok":true,"today":"..."}`. Zapisi servisa: `sudo journalctl -u topple -f`.
-
-## 5. nginx: igra i API na istoj adresi
-
-```bash
-sudo nano /etc/nginx/sites-available/topple
-```
-
-Sadržaj:
-
-```nginx
-server {
-  listen 80;
-  server_name topple.rdd.software;
-
-  root /srv/topple/web;
-  index index.html;
-
-  # Game files: browsers re-check them, so players get updates right away.
-  location / {
-    try_files $uri $uri/ =404;
-    add_header Cache-Control "no-cache";
-  }
-
-  # API
-  location /api/ {
-    proxy_pass http://127.0.0.1:8787;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $remote_addr;
-    client_max_body_size 64k;
-  }
-
-  gzip on;
-  gzip_types application/javascript application/json text/css;
-}
-```
-
-Uključivanje:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/topple /etc/nginx/sites-enabled/topple
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-`nginx -t` mora reći `syntax is ok` i `test is successful`.
-
-## 6. HTTPS certifikat
-
-Kad DNS iz 1. koraka pokazuje na server:
-
-```bash
-sudo certbot --nginx -d topple.rdd.software
-```
-
-Certbot sam doda HTTPS u nginx konfiguraciju i postavi automatsko obnavljanje certifikata. Na pitanje o preusmjeravanju odaberi preusmjeravanje HTTP-a na HTTPS.
+win-acme sam doda HTTPS binding u IIS i napravi zakazani zadatak koji obnavlja certifikat prije isteka.
 
 ## 7. Provjera
 
@@ -159,39 +111,41 @@ Igra sama prepozna da je otvorena s `topple.rdd.software` i spoji se na API na i
 
 ## Ažuriranje
 
-Kad se promjene spoje u `main` na GitHubu, na serveru pokreni:
+Kad se promjene spoje u `main` na GitHubu, na serveru u PowerShellu kao Administrator:
 
-```bash
-sudo /srv/topple/server/deploy.sh
+```powershell
+C:\topple\server\deploy.ps1
 ```
 
-Skripta povuče novi kod, ponovno pokrene API i provjeri da radi. Igra se ažurira odmah, jer nginx poslužuje datoteke izravno iz `/srv/topple/web`.
+Skripta povuče novi kod, ponovno pokrene API i provjeri da radi. Igra se ažurira odmah, jer IIS poslužuje datoteke izravno iz `C:\topple\web`.
+
+Ako PowerShell ne dopušta pokretanje skripti, jednom pokreni `Set-ExecutionPolicy RemoteSigned`.
 
 ## Sigurnosna kopija
 
-Cijela baza je jedna datoteka. Kopija dok server radi:
+Cijela baza je jedna datoteka. Kopija dok API radi (čuva po jednu kopiju za svaki dan u tjednu, `backup-pon.db` … `backup-ned.db`):
 
-```bash
-sudo -u topple sqlite3 /var/lib/topple/topple.db ".backup /var/lib/topple/backup-$(date +%F).db"
+```powershell
+node C:\topple\server\backup.js C:\topple-data\topple.db
 ```
 
-Za svakodnevnu automatsku kopiju dodaj u `sudo crontab -e`:
+Svakodnevna automatska kopija u 4:30:
 
-```cron
-30 4 * * * sudo -u topple sqlite3 /var/lib/topple/topple.db ".backup /var/lib/topple/backup-$(date +\%u).db"
+```powershell
+schtasks /Create /TN "Topple backup" /SC DAILY /ST 04:30 /RU SYSTEM /TR "\"C:\Program Files\nodejs\node.exe\" C:\topple\server\backup.js C:\topple-data\topple.db"
 ```
-
-Tako se čuva po jedna kopija za svaki dan u tjednu.
 
 ## Postavke API-ja
 
 | Varijabla | Zadano | Značenje |
 |---|---|---|
 | `PORT` | `8787` | port na kojem API sluša |
-| `HOST` | `127.0.0.1` | adresa na kojoj API sluša; lokalno, jer je ispred nginx |
+| `HOST` | `127.0.0.1` | adresa na kojoj API sluša; lokalno, jer je ispred IIS |
 | `DB_PATH` | `server/topple.db` | datoteka baze |
 | `ALLOWED_ORIGIN` | `*` | s kojih drugih adresa igra smije zvati API, odvojeno zarezom |
 | `TZ_GAME` | `Europe/Zagreb` | vremenska zona za dnevnu zagonetku |
+
+Promjena postavki: `nssm edit topple` (kartica Environment), pa `Restart-Service topple`.
 
 ## API
 
