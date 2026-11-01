@@ -47,6 +47,6 @@ Tekst u igri (UI) je na hrvatskom.
 
 ## Sljedeći koraci (vidi docs/DESIGN.md)
 
-1. Postaviti API na server i upisati adresu u `web/config.js`.
+1. Postaviti igru i API na vlastiti server (31.147.206.142) na `https://topple.rdd.software` prema `server/README.md`. Server je Windows s IIS-om: IIS poslužuje `web/` i prosljeđuje `/api/` (pravila u `web/web.config`, treba URL Rewrite + ARR), API radi kao servis preko NSSM-a, ažuriranje sa `server/deploy.ps1`. GitHub Pages ostaje rezervna kopija bez ljestvice.
 2. Više razina (cilj 40–60) i testiranje na mobitelu.
 3. Prijenos na iOS: Swift paket s logikom iz `core.js`, SpriteKit scena, haptika, Game Center.
