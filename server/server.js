@@ -399,4 +399,4 @@ const HOST = process.env.HOST || '127.0.0.1';
 if (require.main === module) server.listen(PORT, HOST, () => console.log(`Topple API na http://${HOST}:${PORT}`));
 // Test hook: use local keys and client ID instead of Google's.
 function setGoogleForTests(keys, clientId) { googleKeys = keys; googleKeysUntil = Infinity; GOOGLE_CLIENT_ID = clientId; }
-module.exports = { server, replay, puzzle, db, setGoogleForTests };
+module.exports = { server, replay, puzzle, db, setGoogleForTests, hashPassword, checkPassword, EMAIL_RE, cleanEmail, validPassword };

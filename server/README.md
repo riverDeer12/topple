@@ -131,6 +131,22 @@ powershell -ExecutionPolicy Bypass -File C:\inetpub\wwwroot\topple\server\instal
 
 Skripta postavi `GOOGLE_CLIENT_ID` za API i ponovno ga pokrene. Gumb se u igri pojavi sam. Server mora moći dohvatiti `https://www.googleapis.com/oauth2/v3/certs` (Googleovi javni ključevi za provjeru prijave).
 
+## Upravljanje računima
+
+Popis igrača i načina prijave:
+
+```powershell
+node C:\inetpub\wwwroot\topple\server\admin.js list --db C:\inetpub\topple-data\topple.db
+```
+
+Postojećem igraču postavi e-mail i lozinku (kao da se tako registrirao):
+
+```powershell
+node C:\inetpub\wwwroot\topple\server\admin.js set-login Ime ime@example.com "lozinka" --db C:\inetpub\topple-data\topple.db
+```
+
+Samo nova lozinka: `set-password Ime "lozinka"`. Lozinku stavi u navodnike ako sadrži znakove poput `#` ili razmaka.
+
 ## Postavke API-ja
 
 | Varijabla | Zadano | Značenje |
