@@ -368,7 +368,7 @@ const store = {
 // Browser storage belongs to one address, so the old copies (GitHub Pages) send the
 // player to the new address with their progress in the URL, and the new address merges it.
 const HOME = 'https://topple.rdd.software/igra.html';
-const MIGRATE_KEYS = ['best', 'progress', 'solutions', 'seen', 'settings', 'user', 'asked', 'last'];
+const MIGRATE_KEYS = ['best', 'progress', 'solutions', 'seen', 'settings', 'user', 'asked', 'last', 'rules'];
 const oldHost = /(^|\.)github\.io$/.test(location.hostname) || /^(www\.)?rdd\.software$/.test(location.hostname);
 if (oldHost) {
   const data = {};
@@ -492,7 +492,7 @@ function place(ms, only) {
 function show(c) {
   clearHint();
   ctx = c; won_ = false; busy = false;
-  blocks = c.level.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
+  blocks = fromLevel(c.level.blocks);
   hist = []; moveLog = []; t0 = Date.now();
   board.querySelectorAll('.blk, .exit').forEach(e => e.remove());
   const ex = document.createElement('div'); ex.className = 'exit';
@@ -500,9 +500,10 @@ function show(c) {
   board.appendChild(ex);
   els = blocks.map((b, k) => {
     const el = document.createElement('div');
-    el.className = 'blk ' + b.t + (b.t !== 'f' ? ' mv' : '') + (b.t === 'r' ? ' skin-' + currentSkin() : '');
+    const still = b.t === 'f' || b.t === 's';
+    el.className = 'blk ' + b.t + (still ? '' : ' mv') + (b.d < 0 ? ' al' : '') + (b.t === 'r' ? ' skin-' + currentSkin() : '');
     el.innerHTML = '<div class="face"></div>' + (b.t === 'r' ? '<div class="eyes"><span class="eye"></span><span class="eye"></span></div>' : '');
-    if (b.t !== 'f') {
+    if (!still) {
       el.tabIndex = 0;
       el.setAttribute('role', 'button');
       el.setAttribute('aria-label', ToppleContent.TYPES[b.t][0] + t('aria.arrows'));
@@ -558,8 +559,20 @@ function showTypes(types, title, rules = false) {
 }
 let introBack = null; // what the "Razumijem" button returns to
 let started = false;  // the board loaded behind the start menu must not use up its intro
+// The rules pop up once, the first time a new player starts a puzzle (players who
+// already solved something or opened "How to play" have seen them).
+let rulesSeen = store.get('rules', false) || Object.keys(best).length > 0;
 function maybeIntro(level) {
   if (!started) return;
+  if (!rulesSeen) {
+    rulesSeen = true; store.set('rules', true);
+    const types = TYPE_ORDER.filter(t => level.blocks.some(b => b[3] === t));
+    for (const t of types) if (!seen.includes(t)) seen.push(t);
+    store.set('seen', seen);
+    introBack = null;
+    showTypes(types, t('help.title'), true);
+    return;
+  }
   const fresh = TYPE_ORDER.filter(t => !seen.includes(t) && level.blocks.some(b => b[3] === t));
   if (!fresh.length) return;
   seen.push(...fresh); store.set('seen', seen);
@@ -567,8 +580,9 @@ function maybeIntro(level) {
   showTypes(fresh, fresh.length === 1 ? t('intro.new1') : t('intro.newN'));
 }
 $('introOk').onclick = () => (introBack ? introBack() : showOnly(null));
-$('mTypes').onclick = () => { introBack = openMenu; showTypes(TYPE_ORDER, t('help.title'), true); };
-$('help').onclick = () => { if (busy) return; introBack = won_ ? () => showOnly('winBox') : null; showTypes(TYPE_ORDER, t('help.title'), true); };
+const rulesRead = () => { rulesSeen = true; store.set('rules', true); };
+$('mTypes').onclick = () => { rulesRead(); introBack = openMenu; showTypes(TYPE_ORDER, t('help.title'), true); };
+$('help').onclick = () => { if (busy) return; rulesRead(); introBack = won_ ? () => showOnly('winBox') : null; showTypes(TYPE_ORDER, t('help.title'), true); };
 function update() {
   $('mv').textContent = hist.length;
   $('undo').disabled = !hist.length || won_;
@@ -649,12 +663,22 @@ function commit(k, d, travel) {
   busy = true;
   hist.push(blocks.map(b => ({ ...b })));
   moveLog.push([k, d]);
-  blocks[k].x += d;
+  const to = slide(blocks, k, d); // a spring sends the block back the other way
+  blocks[k].x = to.hit !== undefined ? to.hit : to.x;
   const slideMs = reduced ? 60 : Math.round(90 + 70 * Math.min(travel, 3));
   place(slideMs, [k]);
   fx.slide(slideMs, blocks[k].t === 'i');
   update();
-  setTimeout(() => fall(), slideMs);
+  if (to.hit === undefined) { setTimeout(() => fall(), slideMs); return; }
+  const backMs = reduced ? 60 : Math.round(110 + 60 * Math.min(Math.abs(to.x - to.hit), 4));
+  setTimeout(() => {
+    const sp = blocks.findIndex(b => b.t === 's' && b.y === blocks[k].y && (b.x === to.hit + blocks[k].w || b.x === to.hit - 1));
+    if (sp >= 0) { els[sp].classList.remove('boing'); void els[sp].offsetWidth; els[sp].classList.add('boing'); }
+    fx.boing(); buzz(15);
+    blocks[k].x = to.x;
+    place(backMs, [k]);
+    setTimeout(() => fall(), backMs);
+  }, slideMs);
 }
 function fall() {
   const before = blocks.map(b => b.y), events = [];
@@ -976,7 +1000,7 @@ document.querySelectorAll('#lbBox .tab').forEach(t => t.onclick = () => openBoar
 $('lbList').addEventListener('click', e => { if (e.target.closest('[data-login]')) needAccount(t('lb.needAccount')); });
 $('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
 
-// Levels are grouped in chapters of 10 (names for chapters 1-10, ready for 100 levels).
+// Levels are grouped in chapters of 10 (names for chapters 1-12 in i18n.js CHAPTERS).
 // --- hints: the next move of a shortest solution from the current position ------------------
 // Players get 3 hints to start and one more each day (up to HINT_MAX). More come from rewarded ads.
 const HINT_START = 3, HINT_DAILY = 1, HINT_MAX = 10;

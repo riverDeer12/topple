@@ -21,6 +21,10 @@
   --balloon: #B99BE8;
   --balloon-edge: #8A69C2;
   --gold: #E8B33B;
+  --arrow: #7CC6B4;
+  --arrow-edge: #4C9483;
+  --spring: #C9D3DC;
+  --spring-edge: #4A5866;
   --panel: #F6F8F6;
   --panel-line: #CBD6D1;
   --display: "Fredoka", "Arial Rounded MT Bold", system-ui, sans-serif;
@@ -37,6 +41,7 @@
     --stone: #415853; --stone-line: #33463F;
     --iron: #6A7079; --iron-edge: #3E434A; --clay: #DCA684; --clay-edge: #A06C4C; --balloon: #AC8DDF; --balloon-edge: #7656AD;
     --gold: #F0BE4B; --panel: #1A2523; --panel-line: #2E3E3A;
+    --arrow: #6AB5A3; --arrow-edge: #3E7D6E; --spring: #AEB9C4; --spring-edge: #36424E;
     color-scheme: dark;
   }
 }
@@ -49,6 +54,7 @@
   --stone: #415853; --stone-line: #33463F;
   --iron: #6A7079; --iron-edge: #3E434A; --clay: #DCA684; --clay-edge: #A06C4C; --balloon: #AC8DDF; --balloon-edge: #7656AD;
   --gold: #F0BE4B; --panel: #1A2523; --panel-line: #2E3E3A;
+    --arrow: #6AB5A3; --arrow-edge: #3E7D6E; --spring: #AEB9C4; --spring-edge: #36424E;
   color-scheme: dark;
 }
 [hidden] { display: none !important; }
@@ -74,6 +80,15 @@
   background: radial-gradient(ellipse 30% 40% at 25% 30%, rgba(255,255,255,.55), transparent 70%), var(--balloon);
   box-shadow: inset 0 -5px 0 var(--balloon-edge); }
 .blk.b .face::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 8px; height: 6px; margin-left: -4px; background: var(--balloon-edge); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.blk.a .face { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M7 5l6 5-6 5' fill='none' stroke='%23fff' stroke-opacity='.85' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 6px 50% / 20px 60% space no-repeat, var(--arrow);
+  box-shadow: inset 0 -5px 0 var(--arrow-edge), inset 0 2px 0 rgba(255,255,255,.35); }
+.blk.a.al .face { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M13 5l-6 5 6 5' fill='none' stroke='%23fff' stroke-opacity='.85' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 6px 50% / 20px 60% space no-repeat, var(--arrow); }
+.blk.s .face { border-radius: 6px; background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 20' preserveAspectRatio='none'%3E%3Cpath d='M4 10l4-7 4 14 4-14 4 14 4-14 4 14 4-14 4 7' fill='none' stroke='%234A5866' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% 70% no-repeat,
+    linear-gradient(90deg, var(--spring-edge) 0 4px, transparent 4px calc(100% - 4px), var(--spring-edge) calc(100% - 4px)), var(--spring);
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), inset 0 2px 0 rgba(255,255,255,.45); }
+.blk.s.boing .face { animation: boing .32s ease-out; transform-origin: 50% 50%; }
+@keyframes boing { 0% { transform: none; } 30% { transform: scaleX(.72); } 60% { transform: scaleX(1.12); } 100% { transform: none; } }
 .blk.gone { visibility: hidden; pointer-events: none; }
 .blk.breaking { visibility: visible; pointer-events: none; }
 .blk.breaking .face { animation: shatter .3s ease-in forwards; }
@@ -145,3 +160,15 @@
   box-shadow: inset 0 -5px 0 #120F33, inset 0 2px 0 rgba(255,255,255,.2), 0 0 10px rgba(155,108,255,.45); }
 .blk.r.skin-cosmos::before { content: ""; position: absolute; left: 50%; top: -11px; width: 16px; height: 16px; margin-left: -8px; background: linear-gradient(180deg, #FFE08A, #E0A21E);
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); filter: drop-shadow(0 0 3px #FFE08A); }
+/* bee: yellow and black stripes, little wings */
+.blk.r.skin-bee .face { background: repeating-linear-gradient(90deg, #FFD23F 0 12px, #2B2118 12px 19px); box-shadow: inset 0 -5px 0 rgba(0,0,0,.28), inset 0 2px 0 rgba(255,255,255,.4); }
+.blk.r.skin-bee::before, .blk.r.skin-bee::after { content: ""; position: absolute; top: -8px; width: 16px; height: 11px; border-radius: 50%; background: rgba(220,240,255,.85); box-shadow: inset 0 0 0 1.5px rgba(120,150,180,.6); }
+.blk.r.skin-bee::before { left: 22%; transform: rotate(-18deg); }
+.blk.r.skin-bee::after { right: 22%; transform: rotate(18deg); }
+/* diamond: faceted ice-blue gem with a sparkle */
+.blk.r.skin-diamond .face { background:
+    linear-gradient(115deg, transparent 0 30%, rgba(255,255,255,.55) 30% 34%, transparent 34% 62%, rgba(255,255,255,.35) 62% 65%, transparent 65%),
+    conic-gradient(from 200deg at 50% 40%, #B8F1FF, #6FD3F0, #E6FBFF, #4FB6E0, #A9E9FF, #B8F1FF);
+  box-shadow: inset 0 -5px 0 #2E8DB5, inset 0 2px 0 rgba(255,255,255,.7), 0 0 8px rgba(120,220,255,.5); }
+.blk.r.skin-diamond::after { content: ""; position: absolute; right: 6px; top: -6px; width: 12px; height: 12px; background: #fff;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); filter: drop-shadow(0 0 3px #BFF4FF); }

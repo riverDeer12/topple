@@ -14,7 +14,7 @@ const PUZZLES = require('../web/puzzles.js');
 
 // BFS that returns the optimal move list.
 function solution(level) {
-  const start = level.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
+  const start = C.fromLevel(level.blocks);
   const seen = new Set([C.key(start)]);
   let frontier = [[start, []]];
   while (frontier.length) {

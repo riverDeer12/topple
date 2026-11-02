@@ -70,11 +70,55 @@ const tests = {
     assert.ok(n[0].g);
     assert.strictEqual(n[2].y, 7);
   },
+  'arrow slides only in its direction'() {
+    const right = [{ x: 2, y: 7, w: 2, t: 'a', d: 1 }], left = [{ x: 2, y: 7, w: 2, t: 'a', d: -1 }];
+    assert.deepStrictEqual(C.range(right, 0), [0, 2]);
+    assert.deepStrictEqual(C.moves(right).map(m => m[1]), [1, 2]);
+    assert.deepStrictEqual(C.moves(left).map(m => m[1]), [-1, -2]);
+  },
+  'arrow falls like a normal block'() {
+    const bs = C.settle([{ x: 0, y: 2, w: 2, t: 'a', d: 1 }]);
+    assert.strictEqual(bs[0].y, 7);
+  },
+  'spring neither falls nor moves'() {
+    const bs = C.settle([B(3, 2, 1, 's')]);
+    assert.strictEqual(bs[0].y, 2);
+    assert.deepStrictEqual(C.moves(bs), []);
+  },
+  'block stopping against a spring bounces back to the far end'() {
+    // floor row: [n n . . . s] -> slide n (x 0, w 2) right by 3 touches the spring, bounces back to x 0
+    const bs = [B(1, 7, 2, 'n'), B(5, 7, 1, 's')];
+    assert.deepStrictEqual(C.slide(bs, 0, 2), { x: 0, hit: 3 });
+    assert.strictEqual(C.apply(bs, [0, 2])[0].x, 0);
+    assert.deepStrictEqual(C.slide(bs, 0, 1), { x: 2 }, 'stopping short of the spring is a normal move');
+    assert.deepStrictEqual(C.slide(bs, 0, -1), { x: 0 });
+  },
+  'bounce stops at the first obstacle'() {
+    const bs = [B(0, 7, 1, 'f'), B(2, 7, 1, 'n'), B(4, 7, 1, 's')];
+    assert.deepStrictEqual(C.slide(bs, 1, 1), { x: 1, hit: 3 });
+  },
+  'a bounced arrow goes against its direction; ice bounces too'() {
+    const bs = [{ x: 1, y: 7, w: 1, t: 'a', d: 1 }, B(5, 7, 1, 's')];
+    assert.strictEqual(C.apply(bs, [0, 3])[0].x, 0);
+    const ice = [B(2, 7, 1, 'i'), B(0, 7, 1, 's')];
+    assert.deepStrictEqual(C.moves(ice).map(m => m[1]).sort(), [-1, 3]);
+    assert.strictEqual(C.apply(ice, [0, -1])[0].x, 5);
+  },
+  'block falls after bouncing back off its support'() {
+    // block on a ledge slides into a spring, bounces past the ledge edge and falls
+    const bs = [B(2, 5, 3, 'f'), B(3, 4, 1, 'n'), B(5, 4, 1, 's')];
+    const n = C.apply(bs, [1, 1]);
+    assert.strictEqual(n[1].x, 0);
+    assert.strictEqual(n[1].y, 7);
+  },
+  'fromLevel keeps the arrow direction'() {
+    assert.deepStrictEqual(C.fromLevel([[0, 1, 2, 'a', -1], [3, 4, 1, 'n']]), [{ x: 0, y: 1, w: 2, t: 'a', d: -1 }, { x: 3, y: 4, w: 1, t: 'n' }]);
+  },
   'solvePath returns an optimal, valid solution'() {
     const LEVELS = require('../web/levels.js');
     for (const i of [0, 9, 16, 30]) {
       const L = LEVELS[i];
-      let bs = L.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
+      let bs = C.fromLevel(L.blocks);
       const path = C.solvePath(bs, L.exit);
       assert.strictEqual(path.length, L.opt, `level ${i + 1}`);
       for (const m of path) { assert.ok(C.moves(bs).some(([b, d]) => b === m[0] && d === m[1])); bs = C.apply(bs, m); }

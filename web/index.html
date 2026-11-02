@@ -214,8 +214,8 @@ $('facts').innerHTML = facts.map(([n, l]) => `<div><b>${esc(n)}</b><small>${esc(
   d.style.width = cell * W + PAD * 2 + 'px'; d.style.height = cell * H + PAD * 2 + 'px';
   let html = `<div class="cells" style="background-size:${cell}px ${cell}px"></div>` +
     `<div class="exit" style="top:${PAD + L.exit * cell}px;height:${cell}px"><svg viewBox="0 0 10 10"><path d="M2 1l6 4-6 4z"/></svg></div>`;
-  for (const [x, y, w, t] of L.blocks) {
-    html += `<div class="blk ${t}" style="width:${w * cell - GAP * 2}px;height:${cell - GAP * 2}px;transform:translate(${PAD + GAP + x * cell}px,${PAD + GAP + y * cell}px)"><div class="face"></div>${t === 'r' ? '<div class="eyes"><span class="eye"></span><span class="eye"></span></div>' : ''}</div>`;
+  for (const [x, y, w, t, dir] of L.blocks) {
+    html += `<div class="blk ${t}${dir < 0 ? ' al' : ''}" style="width:${w * cell - GAP * 2}px;height:${cell - GAP * 2}px;transform:translate(${PAD + GAP + x * cell}px,${PAD + GAP + y * cell}px)"><div class="face"></div>${t === 'r' ? '<div class="eyes"><span class="eye"></span><span class="eye"></span></div>' : ''}</div>`;
   }
   d.innerHTML = html;
 })();
