@@ -32,7 +32,9 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 - Potez: jedan blok klizne lijevo ili desno za bilo koji broj slobodnih polja (kao Rush Hour).
 - Nakon poteza sve pokretne blokove vuče gravitacija dolje dok ne stanu na nešto. Blok stoji ako je ispod bar jedne njegove ćelije nešto.
 - Tipovi: `r` crveni (cilj), `n` obični, `i` led (klizi do kraja, nema djelomičnog pomaka), `f` kamen (ne miče se, ne pada),
-  `h` teški (kad padne bar jedan red na `k`, razbije ga i pada dalje), `k` krhki/ispucali, `b` balon (diže se umjesto da pada).
+  `h` teški (kad padne bar jedan red na `k`, razbije ga i pada dalje), `k` krhki/ispucali, `b` balon (diže se umjesto da pada),
+  `a` strelica (klizi samo u smjeru `d`: 1 desno, -1 lijevo; u podacima razine peti element `[x, y, w, 'a', d]`, učitava se s `fromLevel`),
+  `s` opruga (široka 1, ne miče se i ne pada; blok koji se zaustavi uz nju odbije se i klizi do kraja na suprotnu stranu, jednom, i strelica; `slide` u `core.js`).
 - Redoslijed gravitacije: u svakom krugu sve što pada spusti se za red (odozdo), zatim se baloni dignu za red (odozgo), dok se ništa ne miče.
 - Razbijeni blok ostaje u nizu s oznakom `g: true` da indeksi ostanu stabilni (UI, Vrati, solver).
 - Pobjeda: crveni je u redu `exit` i dodiruje desni rub.
@@ -65,5 +67,5 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 ## Sljedeći koraci (vidi docs/DESIGN.md)
 
 1. Postaviti igru i API na vlastiti server (31.147.206.142) na `https://topple.rdd.software` prema `server/README.md`. Server je Windows s IIS-om: IIS poslužuje `web/` i prosljeđuje `/api/` (pravila u `web/web.config`, treba URL Rewrite + ARR), API radi kao servis preko NSSM-a. Postava jednom skriptom `server/install.ps1` (kod u `C:\inetpub\wwwroot\topple`, podaci u `C:\inetpub\topple-data`); zakazani zadatak svake 2 minute pokreće `server/update.ps1` i instalira svaku novu verziju s `main`. Skripte su UTF-8 s BOM-om i CRLF zbog Windows PowerShella 5.1. GitHub Pages ostaje rezervna kopija bez ljestvice.
-2. Razine 61–100 (poglavlja 7–10; nazivi su u `CHAPTERS` u `i18n.js`) i testiranje na mobitelu. Specove dodaj na kraj `SPECS`; za teške ciljeve koristi raspon (`max`) i manje blokova, inače pretraga traje satima.
+2. Razine 61–120 (poglavlja 7–12; nazivi su u `CHAPTERS` u `i18n.js`; 11 = strelice, 12 = opruge). `--upto N` zapisuje samo razine 1–N u `levels.js`. Testiranje na mobitelu. Specove dodaj na kraj `SPECS`; za teške ciljeve koristi raspon (`max`) i manje blokova, inače pretraga traje satima.
 3. Prijenos na iOS: Swift paket s logikom iz `core.js`, SpriteKit scena, haptika, Game Center.

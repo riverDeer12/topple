@@ -194,7 +194,7 @@ function puzzle(mode, key) {
 // legal and the red block reaches the exit exactly on the last move.
 function replay(level, moves) {
   if (!Array.isArray(moves) || moves.length < 1 || moves.length > 500) return false;
-  let bs = level.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
+  let bs = C.fromLevel(level.blocks);
   for (let k = 0; k < moves.length; k++) {
     const m = moves[k];
     if (!Array.isArray(m) || m.length !== 2 || !Number.isInteger(m[0]) || !Number.isInteger(m[1])) return false;

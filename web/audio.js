@@ -97,6 +97,18 @@ const ToppleAudio = (() => {
       for (let i = 0; i < 6; i++) knock(500 + Math.random() * 1400, 0.25, t + i * 0.018 + Math.random() * 0.01);
       body(t, 120, 0.2, 0.4, 'sine', 0.6);
     },
+    // Block bounces off a spring: a short metallic "boing" with a wobbling pitch.
+    boing() {
+      if (!ready()) return;
+      const t = ac.currentTime;
+      const o = ac.createOscillator(), l = ac.createOscillator(), lg = ac.createGain(), g = ac.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(520, t + 0.18);
+      l.frequency.value = 28; lg.gain.value = 40; l.connect(lg).connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+      o.connect(g).connect(sfxBus); o.start(t); l.start(t); o.stop(t + 0.35); l.stop(t + 0.35);
+      knock(900, 0.15, t);
+    },
     // Balloon floats up: soft rising airy tone.
     rise() {
       if (!ready()) return;

@@ -5,7 +5,7 @@ const LEVELS = require('../web/levels.js');
 
 let bad = 0;
 LEVELS.forEach((L, i) => {
-  const blocks = L.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
+  const blocks = C.fromLevel(L.blocks);
   const settled = C.key(C.settle(blocks.map(b => ({ ...b })))) === C.key(blocks);
   const opt = C.solve(blocks, L.exit, 500000);
   const ok = settled && opt === L.opt;
@@ -17,7 +17,7 @@ const PUZZLES = require('../web/puzzles.js');
 const puzzles = [...PUZZLES.endless.map((l, i) => ['beskonačna ' + (i + 1), l]), ...Object.entries(PUZZLES.daily).map(([d, l]) => ['dnevna ' + d, l])];
 let badP = 0;
 for (const [name, L] of puzzles) {
-  const blocks = L.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
+  const blocks = C.fromLevel(L.blocks);
   const settled = C.key(C.settle(blocks.map(b => ({ ...b })))) === C.key(blocks);
   const opt = C.solve(blocks, L.exit, 500000);
   if (!settled || opt !== L.opt) { badP++; console.log(`Zagonetka ${name}  cilj ${L.opt}  solver ${opt}  GREŠKA`); }

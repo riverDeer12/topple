@@ -49,6 +49,13 @@
         for (let a = 0; a < 50; a++) { const w = ri(1, 3); if (tryPlace(bs, { x: ri(0, GW - w), y: ri(y0, y1), w, t })) break; }
       }
     }
+    // Springs (1 wide, fixed) and arrows (with a direction) came later; same rule.
+    for (let c = 0; c < (spec.spring || 0); c++) {
+      for (let a = 0; a < 50; a++) if (tryPlace(bs, { x: ri(0, GW - 1), y: ri(2, GH - 1), w: 1, t: 's' })) break;
+    }
+    for (let c = 0; c < (spec.arrow || 0); c++) {
+      for (let a = 0; a < 50; a++) { const w = ri(1, 3), d = ri(0, 1) ? 1 : -1; if (tryPlace(bs, { x: ri(0, GW - w), y: ri(1, GH - 1), w, t: 'a', d })) break; }
+    }
     let ice = spec.ice;
     for (let n = 0; n < spec.n; n++) {
       for (let t = 0; t < 50; t++) {
@@ -67,9 +74,10 @@
     return { bs, exitRow };
   }
 
-  // True if the level gets a different optimum when blocks of type t act as normal blocks.
-  function needs(start, exitRow, opt, t, maxStates) {
-    const plain = C.settle(start.map(b => ({ ...b, t: b.t === t ? 'n' : b.t })));
+  // True if the level gets a different optimum when blocks of type t act as `as` blocks
+  // (normal by default; springs are compared with plain stone).
+  function needs(start, exitRow, opt, t, maxStates, as = 'n') {
+    const plain = C.settle(start.map(b => (b.t === t ? { x: b.x, y: b.y, w: b.w, t: as } : { ...b })));
     if (plain.some(b => b.g)) return true;
     return C.solve(plain, exitRow, maxStates) !== opt;
   }
@@ -89,7 +97,8 @@
       if (o < spec.opt || o > (spec.max || spec.opt)) continue;
       if (spec.ice && !C.moves(start).some(m => start[m[0]].t === 'i')) continue;
       if ((spec.heavy && !needs(start, L.exitRow, o, 'h', maxStates)) || (spec.balloon && !needs(start, L.exitRow, o, 'b', maxStates))) continue;
-      return { level: { exit: L.exitRow, opt: o, blocks: start.map(b => [b.x, b.y, b.w, b.t]) }, tries };
+      if ((spec.arrow && !needs(start, L.exitRow, o, 'a', maxStates)) || (spec.spring && !needs(start, L.exitRow, o, 's', maxStates, 'f'))) continue;
+      return { level: { exit: L.exitRow, opt: o, blocks: start.map(b => (b.d ? [b.x, b.y, b.w, b.t, b.d] : [b.x, b.y, b.w, b.t])) }, tries };
     }
     return { level: null, tries };
   }
