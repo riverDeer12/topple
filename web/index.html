@@ -69,6 +69,8 @@ h2 { font: 600 clamp(1.7rem, 3.5vw, 2.3rem) var(--display); margin: 0 0 8px; let
 .type b { display: block; font: 600 1.1rem var(--display); letter-spacing: .01em; }
 .type p { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
 .rules { counter-reset: r; }
+.skins .type { padding-top: 22px; }
+.unl { display: inline-block; margin-top: 4px; font: 500 .72rem var(--mono); color: var(--hero); }
 .rules .card h3::before { counter-increment: r; content: counter(r) ". "; color: var(--hero); }
 
 .final { text-align: center; padding: 56px 0 64px; }
@@ -91,6 +93,7 @@ footer { border-top: 1px solid var(--panel-line); padding: 22px 0 32px; color: v
       <a href="#ljestvica" data-i18n="home.navBoard">Ljestvica</a>
       <a href="#kako" data-i18n="home.navHow">Kako se igra</a>
       <a href="#blokovi" data-i18n="home.navBlocks">Blokovi</a>
+      <a href="#likovi" data-i18n="home.navSkins">Likovi</a>
       <a href="#nacini" data-i18n="home.navModes">Načini igre</a>
     </div>
     <span class="navr"><span id="langNav"></span><a class="btn go" href="igra.html" style="padding:8px 18px;font-size:1rem" data-i18n="home.play">Igraj</a></span>
@@ -136,6 +139,14 @@ footer { border-top: 1px solid var(--panel-line); padding: 22px 0 32px; color: v
     <h2 data-i18n="home.typesTitle">Vrste blokova</h2>
     <p class="sub" id="typesSub"></p>
     <div class="types" id="types"></div>
+  </div>
+</section>
+
+<section id="likovi">
+  <div class="wrap">
+    <h2 data-i18n="home.skinsTitle">Likovi crvenog bloka</h2>
+    <p class="sub" data-i18n="home.skinsSub"></p>
+    <div class="types skins" id="skins"></div>
   </div>
 </section>
 
@@ -186,6 +197,7 @@ const swatch = t => `<div class="blk sw ${t}"><div class="face"></div>${t === 'r
 $('rules').innerHTML = K.RULES.map(card).join('');
 $('modes').innerHTML = K.MODES.map(card).join('');
 $('features').innerHTML = K.FEATURES.map(card).join('');
+$('skins').innerHTML = K.SKINS.map(sk => `<div class="type"><div class="blk sw r skin-${sk.id}"><div class="face"></div><div class="eyes"><span class="eye"></span><span class="eye"></span></div></div><div><b>${esc(t('skin.' + sk.id))}</b><p>${esc(K.SKIN_TEXT[sk.id])}</p><small class="unl">${esc(sk.level ? t('home.skinAt', { n: sk.level }) : t('home.skinFrom'))}</small></div></div>`).join('');
 $('types').innerHTML = K.TYPE_ORDER.map(t => `<div class="type">${swatch(t)}<div><b>${esc(K.TYPES[t][0])}</b><p>${esc(K.TYPES[t][1])}</p></div></div>`).join('');
 $('typesSub').textContent = t('home.typesSub', { n: K.stats.types });
 const facts = [[K.stats.levels, t('home.factLevels')], [K.stats.types, t('home.factTypes')], ['1', t('home.factDaily')], ['∞', t('home.factEndless')]];

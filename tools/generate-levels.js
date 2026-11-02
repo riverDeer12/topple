@@ -103,6 +103,50 @@ const SPECS = [
   { opt: 10, max: 13, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2 },
   { opt: 10, max: 14, n: 8, fixed: 2, ice: 2 },
   { opt: 11, max: 16, n: 8, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
+  // Chapter 7 (61-70), ice road: lots of ice. Targets 9-13; ranges keep the searches short.
+  { opt: 9, max: 11, n: 8, fixed: 1, ice: 3 },
+  { opt: 9, max: 11, n: 7, fixed: 2, ice: 2, balloon: 1 },
+  { opt: 9, max: 11, n: 8, fixed: 1, ice: 3 },
+  { opt: 9, max: 12, n: 7, fixed: 1, ice: 2, heavy: 1, fragile: 2 },
+  { opt: 10, max: 12, n: 8, fixed: 2, ice: 3 },
+  { opt: 10, max: 12, n: 7, fixed: 1, ice: 2, balloon: 1 },
+  { opt: 10, max: 12, n: 8, fixed: 1, ice: 4 },
+  { opt: 10, max: 12, n: 7, fixed: 1, ice: 2, heavy: 1, fragile: 2 },
+  { opt: 10, max: 13, n: 8, fixed: 2, ice: 3 },
+  { opt: 11, max: 13, n: 8, fixed: 1, ice: 3 },
+  // Chapter 8 (71-80), a sky full of balloons.
+  { opt: 9, max: 11, n: 7, fixed: 1, ice: 1, balloon: 2 },
+  { opt: 9, max: 12, n: 8, fixed: 1, ice: 0, balloon: 2 },
+  { opt: 10, max: 12, n: 7, fixed: 2, ice: 1, balloon: 1 },
+  { opt: 10, max: 12, n: 7, fixed: 1, ice: 1, balloon: 3 },
+  { opt: 10, max: 12, n: 8, fixed: 1, ice: 2, balloon: 2 },
+  { opt: 10, max: 13, n: 7, fixed: 2, ice: 0, balloon: 2 },
+  { opt: 10, max: 13, n: 8, fixed: 1, ice: 1, balloon: 2 },
+  { opt: 11, max: 13, n: 7, fixed: 1, ice: 1, balloon: 3 },
+  { opt: 11, max: 13, n: 8, fixed: 2, ice: 1, balloon: 2 },
+  { opt: 11, max: 14, n: 8, fixed: 1, ice: 2, balloon: 2 },
+  // Chapter 9 (81-90), brittle ground: heavy and cracked blocks.
+  { opt: 9, max: 12, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2 },
+  { opt: 10, max: 12, n: 7, fixed: 1, ice: 0, heavy: 2, fragile: 3 },
+  { opt: 10, max: 12, n: 7, fixed: 2, ice: 1, heavy: 1, fragile: 2 },
+  { opt: 10, max: 12, n: 6, fixed: 1, ice: 1, heavy: 2, fragile: 2 },
+  { opt: 10, max: 13, n: 7, fixed: 1, ice: 2, heavy: 1, fragile: 3 },
+  { opt: 10, max: 13, n: 7, fixed: 2, ice: 0, heavy: 2, fragile: 2 },
+  { opt: 11, max: 13, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2 },
+  { opt: 11, max: 13, n: 6, fixed: 1, ice: 1, heavy: 2, fragile: 3 },
+  { opt: 11, max: 14, n: 7, fixed: 2, ice: 1, heavy: 1, fragile: 2 },
+  { opt: 11, max: 14, n: 7, fixed: 1, ice: 2, heavy: 2, fragile: 3 },
+  // Chapter 10 (91-100), grand finale: everything, the hardest targets.
+  { opt: 10, max: 12, n: 8, fixed: 2, ice: 2 },
+  { opt: 10, max: 13, n: 7, fixed: 1, ice: 1, balloon: 2 },
+  { opt: 10, max: 13, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2 },
+  { opt: 10, max: 13, n: 6, fixed: 1, ice: 1, heavy: 1, fragile: 1, balloon: 1 },
+  { opt: 11, max: 13, n: 9, fixed: 2, ice: 2 },
+  { opt: 11, max: 14, n: 8, fixed: 1, ice: 1, balloon: 2 },
+  { opt: 11, max: 14, n: 7, fixed: 2, ice: 1, heavy: 2, fragile: 2 },
+  { opt: 11, max: 14, n: 6, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
+  { opt: 12, max: 15, n: 9, fixed: 2, ice: 2 },
+  { opt: 12, max: 16, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
 ];
 
 const make = spec => G.make(spec, ri);
@@ -112,7 +156,18 @@ const CACHE = path.join(__dirname, '.cache');
 fs.mkdirSync(CACHE, { recursive: true });
 const cacheFile = (i, s, seedIn) => path.join(CACHE, `level-${i + 1}-${i >= INDEPENDENT_FROM ? 'm' : ''}${seedIn}-${Buffer.from(JSON.stringify(s)).toString('base64url').slice(0, 40)}.json`);
 
-const search = s => G.search(s, ri);
+// Long searches save their progress (generator state + tries) every 25 tries, so a search
+// that is stopped (e.g. by a time limit) continues where it left off with the same result.
+const search = (s, progressFile) => {
+  let startTries = 0;
+  if (progressFile && fs.existsSync(progressFile)) {
+    const p = JSON.parse(fs.readFileSync(progressFile, 'utf8'));
+    seed = p.seed; startTries = p.tries;
+    console.log(`Razina: nastavljam od ${startTries}. pokušaja`);
+  }
+  const onTry = progressFile ? t => { if (t % 25 === 0 && t > startTries) fs.writeFileSync(progressFile, JSON.stringify({ seed, tries: t })); } : undefined;
+  return G.search(s, ri, { startTries, onTry });
+};
 
 const out = [];
 for (let i = 0; i < SPECS.length; i++) {
@@ -133,9 +188,12 @@ for (let i = 0; i < SPECS.length; i++) {
     continue;
   }
   const t0 = Date.now();
-  const { level, tries } = search(s);
+  // Only independent levels (own seed, mulberry32) can resume: their state is just `seed`.
+  const progressFile = i >= INDEPENDENT_FROM ? file.replace(/\.json$/, '.progress') : null;
+  const { level, tries } = search(s, progressFile);
   if (!level) { console.error(`Nema razine ${i + 1} za cilj ${s.opt} nakon ${tries} pokušaja.`); process.exit(1); }
   fs.writeFileSync(file, JSON.stringify({ seedOut: seed, level }));
+  if (progressFile) fs.rmSync(progressFile, { force: true });
   console.log(`Razina ${i + 1}: cilj ${level.opt} (${tries} pokušaja, ${Math.round((Date.now() - t0) / 1000)} s)`);
   out.push(level);
 }
