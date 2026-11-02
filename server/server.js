@@ -401,6 +401,8 @@ async function route(req, res) {
       guests: db.prepare('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL').get().n,
       activeWeek: db.prepare('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND last_seen > ?').get(Date.now() - 7 * 864e5).n,
       dailyToday: db.prepare('SELECT COUNT(*) AS n FROM daily WHERE date = ?').get(today).n,
+      // Playing right now: signed-in players and guests seen in the last 15 minutes.
+      online: db.prepare('SELECT (SELECT COUNT(*) FROM users WHERE last_seen > ?1) + (SELECT COUNT(*) FROM guests WHERE user_id IS NULL AND last_seen > ?1) AS n').get(Date.now() - 15 * 60e3).n,
       solved: db.prepare('SELECT (SELECT COUNT(*) FROM campaign) + (SELECT COUNT(*) FROM daily) + (SELECT COUNT(*) FROM endless) AS n').get().n,
       today,
     });

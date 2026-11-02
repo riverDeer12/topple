@@ -155,7 +155,7 @@ function solution(level) {
   ok('guests: progress stored (never lowered), linked to the account on sign-up');
 
   r = await call('/api/stats');
-  assert.strictEqual(r.body.players, 5); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 7); ok('stats');
+  assert.strictEqual(r.body.players, 5); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 7); assert.ok(r.body.online >= 1); ok('stats');
 
   r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
