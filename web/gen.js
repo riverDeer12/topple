@@ -108,9 +108,22 @@
 
   // Endless mode: one shared sequence for everyone, puzzle n (1-based) gets
   // harder as n grows and cycles through the mechanics.
+  // Arrows and springs join the endless sequence from puzzle 31 and the daily puzzle
+  // from this date. Earlier puzzles stay exactly as they were (players already solved them).
+  const NEW_BLOCKS_ENDLESS = 31, NEW_BLOCKS_DAILY = '2026-11-04';
   function endlessSpec(n) {
     const tier = Math.min(4, Math.floor((n - 1) / 5)); // 0..4, every 5 puzzles
     const opt = [3, 4, 4, 5, 5][tier], max = [4, 5, 6, 6, 7][tier];
+    if (n >= NEW_BLOCKS_ENDLESS) {
+      // 0 plain+ice, 1 heavy, 2 balloon, 3 arrows, 4 spring, 5 spring + arrow
+      const f = n % 6, s = { opt, max, n: 6, fixed: 1, ice: f === 0 ? 1 : 0 };
+      if (f === 1) { s.heavy = 1; s.fragile = 2; }
+      if (f === 2) s.balloon = 1;
+      if (f === 3) s.arrow = 2;
+      if (f === 4) { s.spring = 1; s.n = 5; }
+      if (f === 5) { s.spring = 1; s.arrow = 1; s.n = 5; }
+      return s;
+    }
     const flavor = n % 4; // 0 plain+ice, 1 heavy, 2 balloon, 3 mixed
     const s = { opt, max, n: 4 + Math.min(2, tier), fixed: tier > 0 ? 1 : 0, ice: flavor === 0 && tier > 0 ? 1 : 0 };
     if (flavor === 1 || flavor === 3) { s.heavy = 1; s.fragile = 1 + (tier > 2 ? 1 : 0); }
@@ -137,6 +150,11 @@
     if (day === 2 || day === 5 || day === 0) { s.heavy = 1; s.fragile = 1; }
     if (day === 3 || day === 6 || day === 0) { s.balloon = 1; }
     if (day === 0) { s.opt = 6; s.max = 8; }
+    if (date >= NEW_BLOCKS_DAILY) { // Monday arrows, Thursday a spring, Saturday both
+      if (day === 1) { s.ice = 0; s.arrow = 2; }
+      if (day === 4) { s.ice = 0; s.spring = 1; }
+      if (day === 6) { s.balloon = 0; s.spring = 1; s.arrow = 1; }
+    }
     return s;
   }
   function dailyPuzzle(date) { return seeded(dailySpec(date), 'daily:' + date); }
