@@ -8,7 +8,7 @@ const ToppleContent = (() => {
   const endless = typeof PUZZLES !== 'undefined' ? PUZZLES.endless.length : 0;
   const chapters = Math.ceil(levels / 10);
   // Playing without an account is allowed, with limits (shared by the game and the home page).
-  const GUEST = { levels: 20, endless: 10 };
+  const GUEST = { levels: 10, endless: 10 };
   const TYPE_ORDER = ['r', 'n', 'f', 'i', 'h', 'k', 'b'];
   // Looks for the red block. `level` = the level to solve to unlock it (0 = from the start).
   // Each needs a .skin-<id> style in theme.css and a 'skin.<id>' name in i18n.js.
