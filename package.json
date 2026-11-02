@@ -5,7 +5,7 @@
   "description": "Klizna slagalica s gravitacijom. Web prototip, kasnije iOS.",
   "scripts": {
     "test": "node tools/test-core.js && node tools/test-content.js",
-    "test:server": "node tools/test-server.js",
+    "test:server": "node tools/test-server.js && node tools/test-gdrive.js",
     "verify": "node tools/verify-levels.js",
     "generate": "node tools/generate-levels.js && node tools/verify-levels.js",
     "puzzles": "node tools/generate-puzzles.js",

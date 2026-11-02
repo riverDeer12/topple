@@ -24,6 +24,7 @@ jobs:
       - run: node tools/test-core.js
       - run: node tools/test-content.js
       - run: node tools/test-server.js
+      - run: node tools/test-gdrive.js
       - run: node tools/verify-levels.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

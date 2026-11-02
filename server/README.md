@@ -131,6 +131,29 @@ powershell -ExecutionPolicy Bypass -File C:\inetpub\wwwroot\topple\server\instal
 
 Skripta postavi `GOOGLE_CLIENT_ID` za API i ponovno ga pokrene. Gumb se u igri pojavi sam. Server mora moći dohvatiti `https://www.googleapis.com/oauth2/v3/certs` (Googleovi javni ključevi za provjeru prijave).
 
+## Sigurnosne kopije na Google Drive
+
+Zadatak **Topple backup** svaki dan u 4:30 napravi lokalnu kopiju i, kad je Google Drive povezan, pošalje kopiju s datumom (`topple-2026-11-03.db`) u mapu **RDD → DB_Backups → Topple** na tvom Driveu. Tamo se čuva zadnjih 30 kopija, starije se brišu same. Skripta smije vidjeti samo datoteke koje je sama napravila (dozvola `drive.file`), ništa drugo na Driveu. Zapis: `C:\inetpub\topple-data\backup.log`.
+
+Jednokratno povezivanje:
+
+1. **Google Cloud** (projekt Topple) → **APIs & Services → Library** → potraži **Google Drive API** → **Enable**.
+2. **Google Auth Platform → Clients → Create client**: Application type **Desktop app**, Name `Topple backup` → **Create** → **Download JSON**.
+3. Kopiraj preuzetu datoteku na server, npr. u `C:\inetpub\topple-data\gdrive-client.json`.
+4. Na serveru (PowerShell):
+
+```powershell
+node C:\inetpub\wwwroot\topple\server\gdrive-auth.js C:\inetpub\topple-data\gdrive-client.json --db C:\inetpub\topple-data\topple.db
+```
+
+5. Skripta ispiše link. Otvori ga u pregledniku (može i na svom računalu), odaberi svoj Google račun i dopusti pristup. Ako Google upozori „Google hasn't verified this app”, klikni **Advanced → Go to Topple** (to je tvoja aplikacija).
+6. Preglednik zatim otvori adresu koja počinje s `http://127.0.0.1:53682/?code=...` i javi da se stranica ne može otvoriti. To je očekivano: kopiraj cijelu adresu i zalijepi je u PowerShell. (Ako je preglednik na samom serveru, ovaj korak ide sam.)
+7. Proba: `node C:\inetpub\wwwroot\topple\server\backup.js C:\inetpub\topple-data\topple.db` — kopija se mora pojaviti na Driveu.
+
+Ako na Driveu već imaš svoju mapu **RDD**, skripta je ne vidi (dozvola `drive.file`) i napravi svoju. Mapu **Topple** koju je skripta napravila možeš premjestiti u svoju RDD → DB_Backups, a višak obrisati: skripta pamti mapu i nastavlja slati u nju.
+
+Dozvola je spremljena u `C:\inetpub\topple-data\gdrive.json` (izvan weba). Za prekid: obriši tu datoteku ili ukloni pristup na https://myaccount.google.com/permissions.
+
 ## Reklame za savjete (Google AdSense)
 
 Igra nudi reklamu s nagradom kad igraču nestane savjeta. Dok AdSense nije uključen, umjesto reklame se prikazuje probni prozor od 5 sekundi (`simulate: true` u `web/config.js`).
