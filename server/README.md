@@ -185,6 +185,12 @@ node C:\inetpub\wwwroot\topple\server\admin.js set-login Ime ime@example.com "lo
 
 Samo nova lozinka: `set-password Ime "lozinka"`.
 
+Statistika igrača i gostiju (koliko ih ima, koliko je aktivno danas / 7 / 30 dana, dokle gosti stižu, koliko ih se registriralo):
+
+```powershell
+node C:\inetpub\wwwroot\topple\server\admin.js stats --db C:\inetpub\topple-data\topple.db
+```
+
 Brisanje igrača i svih njegovih podataka (rezultati, ljestvice, prijave na uređajima). Bez `--yes` samo pokaže što bi se obrisalo:
 
 ```powershell

@@ -2,6 +2,7 @@
 //   node server/admin.js list                                   (players and their sign-in methods)
 //   node server/admin.js set-login <name> <email> <password>    (as if the player had registered with them)
 //   node server/admin.js set-password <name> <password>
+//   node server/admin.js stats                                  (players, guests, activity, how far guests get)
 //   node server/admin.js delete <name> [--yes]                  (removes the player and all their data; without --yes only shows what would go)
 // Uses DB_PATH, or --db <path>. On the Windows server: --db C:\inetpub\topple-data\topple.db
 const args = process.argv.slice(2);
@@ -31,6 +32,20 @@ if (cmd === 'list') {
   if (email) db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, u.id);
   db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hashPassword(password), u.id);
   console.log(`Gotovo: ${u.name} se sada može prijaviti ${email ? `e-mailom ${email} ili ` : ''}korisničkim imenom i novom lozinkom.`);
+} else if (cmd === 'stats') {
+  const now = Date.now(), n = (q, ...a) => db.prepare(q).get(...a).n;
+  const since = days => now - days * 864e5;
+  const users = n('SELECT COUNT(*) AS n FROM users');
+  const guests = n('SELECT COUNT(*) AS n FROM guests'), converted = n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NOT NULL');
+  console.log(`Registrirani igrači: ${users}`);
+  console.log(`Gosti ukupno: ${guests} (od toga se registriralo ili prijavilo: ${converted}${guests ? `, ${Math.round(100 * converted / guests)} %` : ''})`);
+  for (const [label, d] of [['danas (24 h)', 1], ['zadnjih 7 dana', 7], ['zadnjih 30 dana', 30]]) {
+    console.log(`Aktivni gosti ${label}: ${n('SELECT COUNT(*) AS n FROM guests WHERE last_seen > ?', since(d))}, novi: ${n('SELECT COUNT(*) AS n FROM guests WHERE first_seen > ?', since(d))}`);
+  }
+  console.log('Gosti po broju riješenih razina:');
+  for (const r of db.prepare(`SELECT CASE WHEN levels = 0 THEN '0' WHEN levels <= 3 THEN '1-3' WHEN levels <= 9 THEN '4-9' ELSE '10+' END AS b, COUNT(*) AS c FROM guests GROUP BY b ORDER BY MIN(levels)`).all()) console.log(`  ${r.b.padEnd(5)} ${r.c}`);
+  console.log('Gosti po jeziku: ' + db.prepare('SELECT COALESCE(lang, \'?\') AS l, COUNT(*) AS c FROM guests GROUP BY l ORDER BY c DESC').all().map(r => `${r.l} ${r.c}`).join(', '));
+  console.log(`Prosječno posjeta po gostu: ${guests ? (n('SELECT SUM(visits) AS n FROM guests') / guests).toFixed(1) : 0}`);
 } else if (cmd === 'delete') {
   const yes = rest.includes('--yes');
   const name = rest.filter(a => a !== '--yes').join(' ');
@@ -47,5 +62,5 @@ if (cmd === 'list') {
   } catch (e) { db.exec('ROLLBACK'); throw e; }
   console.log(`Obrisano: ${summary}.`);
 } else {
-  console.log('Naredbe: list | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | delete <ime> [--yes]   [--db putanja]');
+  console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | delete <ime> [--yes]   [--db putanja]');
 }

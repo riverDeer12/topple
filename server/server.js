@@ -72,6 +72,26 @@ if (db.prepare('PRAGMA user_version').get().user_version < 2) {
   if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'skin')) db.exec('ALTER TABLE users ADD COLUMN skin TEXT');
   db.exec('PRAGMA user_version = 2');
 }
+// Schema v3: anonymous guests (players without an account), to see how many people play.
+// A guest is a random id made by the browser; no personal data. Linked to the account if
+// the guest later signs up or signs in.
+if (db.prepare('PRAGMA user_version').get().user_version < 3) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS guests (
+      id TEXT PRIMARY KEY, name TEXT, lang TEXT,
+      first_seen INTEGER NOT NULL, last_seen INTEGER NOT NULL, visits INTEGER NOT NULL DEFAULT 1,
+      levels INTEGER NOT NULL DEFAULT 0, stars INTEGER NOT NULL DEFAULT 0,
+      endless INTEGER NOT NULL DEFAULT 0, daily INTEGER NOT NULL DEFAULT 0,
+      user_id INTEGER REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS guests_seen ON guests (last_seen);
+    PRAGMA user_version = 3;
+  `);
+}
+const GUEST_ID = /^[A-Za-z0-9_-]{16,64}$/;
+function linkGuest(guestId, userId) {
+  if (typeof guestId === 'string' && GUEST_ID.test(guestId)) db.prepare('UPDATE guests SET user_id = ? WHERE id = ? AND user_id IS NULL').run(userId, guestId);
+}
 const SKINS = require('../web/content.js').SKINS;
 function newSession(userId) {
   const token = crypto.randomBytes(24).toString('base64url');
@@ -268,10 +288,32 @@ async function route(req, res) {
   const p = url.pathname.replace(/\/+$/, '');
   if (req.method === 'OPTIONS') return send(res, 204);
   if (req.method === 'GET' && p === '/api/health') return send(res, 200, { ok: true, today: G.today(TZ) });
+  // A guest reports its progress (fire-and-forget from the game).
+  if (req.method === 'POST' && p === '/api/guest') {
+    if (limited(req, 'guest', 60, 60e3)) return send(res, 429, { error: 'Previše zahtjeva.', code: 'too_many' });
+    const b = await readJson(req);
+    if (typeof b.id !== 'string' || !GUEST_ID.test(b.id)) return send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' });
+    const num = v => Math.max(0, Math.min(100000, Math.floor(Number(v) || 0)));
+    const name = String(b.name || '').slice(0, 40), lang = ['hr', 'en', 'it', 'de'].includes(b.lang) ? b.lang : null, now = Date.now();
+    const old = db.prepare('SELECT last_seen FROM guests WHERE id = ?').get(b.id);
+    if (!old) {
+      db.prepare('INSERT INTO guests (id, name, lang, first_seen, last_seen, levels, stars, endless, daily) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(b.id, name, lang, now, now, num(b.levels), num(b.stars), num(b.endless), num(b.daily));
+    } else {
+      // A new visit = back after at least 30 minutes away.
+      db.prepare(`UPDATE guests SET name = ?, lang = ?, last_seen = ?, visits = visits + ?,
+        levels = MAX(levels, ?), stars = MAX(stars, ?), endless = MAX(endless, ?), daily = MAX(daily, ?) WHERE id = ?`)
+        .run(name, lang, now, now - old.last_seen > 30 * 60e3 ? 1 : 0, num(b.levels), num(b.stars), num(b.endless), num(b.daily), b.id);
+    }
+    return send(res, 200, { ok: true });
+  }
+
   if (req.method === 'GET' && p === '/api/stats') {
     const today = G.today(TZ);
     return send(res, 200, {
       players: db.prepare('SELECT COUNT(*) AS n FROM users').get().n,
+      guests: db.prepare('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL').get().n,
+      activeWeek: db.prepare('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND last_seen > ?').get(Date.now() - 7 * 864e5).n,
       dailyToday: db.prepare('SELECT COUNT(*) AS n FROM daily WHERE date = ?').get(today).n,
       solved: db.prepare('SELECT (SELECT COUNT(*) FROM campaign) + (SELECT COUNT(*) FROM daily) + (SELECT COUNT(*) FROM endless) AS n').get().n,
       today,
@@ -283,7 +325,7 @@ async function route(req, res) {
   // New account: nickname + password, e-mail optional (then it can be used to sign in too).
   if (req.method === 'POST' && p === '/api/register') {
     if (limited(req, 'reg', 10, 3600e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj kasnije.', code: 'too_many' });
-    const { name, password, email } = await readJson(req);
+    const { name, password, email, guest } = await readJson(req);
     const n = String(name || '').trim().replace(/\s+/g, ' ');
     if (!NAME_RE.test(n)) return send(res, 400, { error: 'Korisničko ime mora imati 2–16 znakova: slova, brojke, razmak, _ . -', code: 'name_invalid' });
     if (!validPassword(password)) return send(res, 400, { error: PW_ERR, code: 'password_short' });
@@ -292,16 +334,18 @@ async function route(req, res) {
     if (db.prepare('SELECT 1 FROM users WHERE name = ?').get(n)) return send(res, 409, { error: 'To korisničko ime je zauzeto.', code: 'name_taken' });
     if (e && db.prepare('SELECT 1 FROM users WHERE email = ?').get(e)) return send(res, 409, { error: 'Taj e-mail već ima račun. Prijavi se.', code: 'email_taken' });
     const id = createUser(n, { email: e || null, password_hash: hashPassword(password) });
+    linkGuest(guest, id);
     return send(res, 201, { name: n, token: newSession(id) });
   }
 
   // Sign in with username or e-mail and password.
   if (req.method === 'POST' && p === '/api/login') {
     if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
-    const { login, password } = await readJson(req);
+    const { login, password, guest } = await readJson(req);
     const l = String(login || '').trim();
     const u = l.includes('@') ? db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail(l)) : db.prepare('SELECT * FROM users WHERE name = ?').get(l);
     if (!u || !checkPassword(password, u.password_hash)) return send(res, 401, { error: 'Pogrešno korisničko ime, e-mail ili lozinka.', code: 'bad_login' });
+    linkGuest(guest, u.id);
     return send(res, 200, { name: u.name, token: newSession(u.id) });
   }
 
@@ -309,7 +353,7 @@ async function route(req, res) {
   if (req.method === 'POST' && p === '/api/google') {
     if (!GOOGLE_CLIENT_ID) return send(res, 503, { error: 'Prijava s Googleom nije postavljena.', code: 'google_off' });
     if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
-    const { credential } = await readJson(req);
+    const { credential, guest } = await readJson(req);
     const g = await verifyGoogle(credential);
     if (!g) return send(res, 401, { error: 'Google prijava nije uspjela.', code: 'google_failed' });
     const email = g.email_verified ? cleanEmail(g.email) : '';
@@ -320,14 +364,16 @@ async function route(req, res) {
       if (email && !me.email && !db.prepare('SELECT 1 FROM users WHERE email = ?').get(email)) db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, me.id);
       return send(res, 200, { name: me.name, linked: true });
     }
-    if (owner) return send(res, 200, { name: owner.name, token: newSession(owner.id) });
+    if (owner) { linkGuest(guest, owner.id); return send(res, 200, { name: owner.name, token: newSession(owner.id) }); }
     const byEmail = email && db.prepare('SELECT * FROM users WHERE email = ?').get(email);
     if (byEmail) { // same verified e-mail: this is the same person
       db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').run(g.sub, byEmail.id);
+      linkGuest(guest, byEmail.id);
       return send(res, 200, { name: byEmail.name, token: newSession(byEmail.id) });
     }
     const name = freeName(g.given_name || g.name || email.split('@')[0]);
     const id = createUser(name, { email: email || null, google_sub: g.sub });
+    linkGuest(guest, id);
     return send(res, 201, { name, token: newSession(id), created: true });
   }
 

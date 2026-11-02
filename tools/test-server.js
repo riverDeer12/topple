@@ -142,8 +142,20 @@ function solution(level) {
   r = await call('/api/account', { skin: 'cat' }, ana); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.skin, 'cat');
   ok('skins: locked until level 10 is solved, then saved on the account');
 
+  const gid = 'guest_' + 'x'.repeat(20);
+  r = await call('/api/guest', { id: gid, name: 'Pospani Pingvin 17', lang: 'hr', levels: 4, stars: 10, endless: 1, daily: 0 }); assert.strictEqual(r.status, 200);
+  r = await call('/api/guest', { id: gid, name: 'Pospani Pingvin 17', lang: 'hr', levels: 2, stars: 12 }); assert.strictEqual(r.status, 200);
+  r = await call('/api/guest', { id: 'short' }); assert.strictEqual(r.status, 400);
+  const { db: sdb } = require('../server/server.js');
+  let gr = sdb.prepare('SELECT * FROM guests WHERE id = ?').get(gid);
+  assert.strictEqual(gr.levels, 4); assert.strictEqual(gr.stars, 12); assert.strictEqual(gr.visits, 1);
+  r = await call('/api/stats'); assert.strictEqual(r.body.guests, 1); assert.strictEqual(r.body.activeWeek, 1);
+  r = await call('/api/register', { name: 'Bivsi Gost', password: 'lozinka1', guest: gid }); assert.strictEqual(r.status, 201);
+  gr = sdb.prepare('SELECT user_id FROM guests WHERE id = ?').get(gid); assert.ok(gr.user_id);
+  ok('guests: progress stored (never lowered), linked to the account on sign-up');
+
   r = await call('/api/stats');
-  assert.strictEqual(r.body.players, 4); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 7); ok('stats');
+  assert.strictEqual(r.body.players, 5); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 7); ok('stats');
 
   server.close();
   console.log('Svi testovi servera prolaze.');
