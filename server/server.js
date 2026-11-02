@@ -67,6 +67,12 @@ if (db.prepare('PRAGMA user_version').get().user_version < 1) {
     PRAGMA user_version = 1;
   `);
 }
+// Schema v2: chosen look of the red block.
+if (db.prepare('PRAGMA user_version').get().user_version < 2) {
+  if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'skin')) db.exec('ALTER TABLE users ADD COLUMN skin TEXT');
+  db.exec('PRAGMA user_version = 2');
+}
+const SKINS = require('../web/content.js').SKINS;
 function newSession(userId) {
   const token = crypto.randomBytes(24).toString('base64url');
   db.prepare('INSERT INTO sessions (token_hash, user_id, created_at) VALUES (?, ?, ?)').run(sha(token), userId, Date.now());
@@ -240,6 +246,7 @@ function profile(u) {
     campaign: Object.fromEntries(db.prepare('SELECT level, stars FROM campaign WHERE user_id = ?').all(u.id).map(r => [r.level, r.stars])),
     daily: Object.fromEntries(db.prepare('SELECT date, moves FROM daily WHERE user_id = ? ORDER BY date DESC LIMIT 30').all(u.id).map(r => [r.date, r.moves])),
     createdAt: u.created_at,
+    skin: u.skin || 'classic',
     stats: {
       levels: db.prepare('SELECT COUNT(*) AS n FROM campaign WHERE user_id = ?').get(u.id).n,
       stars: db.prepare('SELECT COALESCE(SUM(stars), 0) AS n FROM campaign WHERE user_id = ?').get(u.id).n,
@@ -335,7 +342,13 @@ async function route(req, res) {
     const u = userFrom(req);
     if (!u) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
     if (limited(req, 'account', 30, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
-    const { password, currentPassword, email, name } = await readJson(req);
+    const { password, currentPassword, email, name, skin } = await readJson(req);
+    if (skin !== undefined) {
+      const sk = SKINS.find(x => x.id === skin);
+      if (!sk) return send(res, 400, { error: 'Nepoznat izgled.', code: 'skin_unknown' });
+      if (sk.level && !db.prepare('SELECT 1 FROM campaign WHERE user_id = ? AND level = ?').get(u.id, sk.level)) return send(res, 403, { error: 'Taj izgled još nije otključan.', code: 'skin_locked' });
+      db.prepare('UPDATE users SET skin = ? WHERE id = ?').run(sk.id, u.id);
+    }
     if (name !== undefined) {
       const n = String(name || '').trim().replace(/\s+/g, ' ');
       if (!NAME_RE.test(n)) return send(res, 400, { error: 'Korisničko ime mora imati 2–16 znakova: slova, brojke, razmak, _ . -', code: 'name_invalid' });

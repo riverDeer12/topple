@@ -135,8 +135,15 @@ function solution(level) {
   r = await call('/api/login', { login: 'ana nova', password: 'nova1234' }); assert.strictEqual(r.status, 200);
   ok('account: change username (unique, validated; own name in other case allowed), shown on leaderboards');
 
+  r = await call('/api/me', null, ana); assert.strictEqual(r.body.skin, 'classic');
+  r = await call('/api/account', { skin: 'cat' }, ana); assert.strictEqual(r.status, 403); assert.strictEqual(r.body.code, 'skin_locked');
+  r = await call('/api/account', { skin: 'unicorn' }, ana); assert.strictEqual(r.status, 400);
+  r = await call('/api/score', { mode: 'campaign', level: 10, moves: solution(LEVELS[9]) }, ana); assert.strictEqual(r.status, 200);
+  r = await call('/api/account', { skin: 'cat' }, ana); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.skin, 'cat');
+  ok('skins: locked until level 10 is solved, then saved on the account');
+
   r = await call('/api/stats');
-  assert.strictEqual(r.body.players, 4); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 6); ok('stats');
+  assert.strictEqual(r.body.players, 4); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 7); ok('stats');
 
   server.close();
   console.log('Svi testovi servera prolaze.');

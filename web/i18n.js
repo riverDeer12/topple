@@ -8,6 +8,7 @@ const ToppleI18n = (() => {
 
   const S = {
     hr: {
+      'menu.skins': 'Izgled bloka', 'menu.skinsSub': '{n} od {total} otključano', 'skins.title': 'Izgled crvenog bloka', 'skins.intro': 'Zadnja razina svakog poglavlja otključava novi izgled.', 'skins.locked': 'Riješi razinu {n}', 'skins.selected': 'Odabrano', 'skins.pick': 'Odaberi', 'win.unlock': 'Otključan novi izgled: {name}!', 'srv.skin_locked': 'Taj izgled još nije otključan.', 'srv.skin_unknown': 'Nepoznat izgled.', 'skin.classic': 'Klasični', 'skin.cat': 'Mačak', 'skin.robot': 'Robot', 'skin.melon': 'Lubenica', 'skin.rainbow': 'Duga', 'skin.gold': 'Zlatni', 'skin.king': 'Kralj',
       'prof.title': 'Profil', 'prof.since': 'Igra od {date}', 'prof.levels': 'Razine', 'prof.endless': 'Beskonačno', 'prof.daily': 'Dnevne zagonetke', 'prof.solved': 'riješeno', 'prof.ranks': 'Mjesto na ljestvici', 'prof.rankLine': 'dnevna {d} · beskonačno {e} · razine {c}', 'prof.rank': '{r}.', 'prof.edit': 'Uredi profil', 'prof.signin': 'Prijava na drugim uređajima',
       'lvl.level': 'Razina {n} od {total}', 'lvl.daily': 'Dnevna · {date}', 'lvl.endless': 'Beskonačno #{n}',
       'stat.moves': 'Potezi', 'stat.par': 'Cilj',
@@ -73,6 +74,7 @@ const ToppleI18n = (() => {
       'home.foot': '{levels} razina · {chapters} poglavlja · {types} vrsta blokova',
     },
     en: {
+      'menu.skins': 'Block look', 'menu.skinsSub': '{n} of {total} unlocked', 'skins.title': 'Red block look', 'skins.intro': 'The last level of every chapter unlocks a new look.', 'skins.locked': 'Solve level {n}', 'skins.selected': 'Selected', 'skins.pick': 'Choose', 'win.unlock': 'New look unlocked: {name}!', 'srv.skin_locked': 'That look is not unlocked yet.', 'srv.skin_unknown': 'Unknown look.', 'skin.classic': 'Classic', 'skin.cat': 'Cat', 'skin.robot': 'Robot', 'skin.melon': 'Watermelon', 'skin.rainbow': 'Rainbow', 'skin.gold': 'Gold', 'skin.king': 'King',
       'prof.title': 'Profile', 'prof.since': 'Playing since {date}', 'prof.levels': 'Levels', 'prof.endless': 'Endless', 'prof.daily': 'Daily puzzles', 'prof.solved': 'solved', 'prof.ranks': 'Leaderboard place', 'prof.rankLine': 'daily {d} · endless {e} · levels {c}', 'prof.rank': '#{r}', 'prof.edit': 'Edit profile', 'prof.signin': 'Sign-in on other devices',
       'lvl.level': 'Level {n} of {total}', 'lvl.daily': 'Daily · {date}', 'lvl.endless': 'Endless #{n}',
       'stat.moves': 'Moves', 'stat.par': 'Target',
@@ -137,6 +139,7 @@ const ToppleI18n = (() => {
       'home.foot': '{levels} levels · {chapters} chapters · {types} block types',
     },
     it: {
+      'menu.skins': 'Aspetto del blocco', 'menu.skinsSub': '{n} di {total} sbloccati', 'skins.title': 'Aspetto del blocco rosso', 'skins.intro': 'L’ultimo livello di ogni capitolo sblocca un nuovo aspetto.', 'skins.locked': 'Risolvi il livello {n}', 'skins.selected': 'Selezionato', 'skins.pick': 'Scegli', 'win.unlock': 'Nuovo aspetto sbloccato: {name}!', 'srv.skin_locked': 'Questo aspetto non è ancora sbloccato.', 'srv.skin_unknown': 'Aspetto sconosciuto.', 'skin.classic': 'Classico', 'skin.cat': 'Gatto', 'skin.robot': 'Robot', 'skin.melon': 'Anguria', 'skin.rainbow': 'Arcobaleno', 'skin.gold': 'Oro', 'skin.king': 'Re',
       'prof.title': 'Profilo', 'prof.since': 'Gioca dal {date}', 'prof.levels': 'Livelli', 'prof.endless': 'Infinito', 'prof.daily': 'Rompicapi del giorno', 'prof.solved': 'risolti', 'prof.ranks': 'Posizione in classifica', 'prof.rankLine': 'giorno {d} · infinito {e} · livelli {c}', 'prof.rank': '{r}°', 'prof.edit': 'Modifica profilo', 'prof.signin': 'Accesso da altri dispositivi',
       'lvl.level': 'Livello {n} di {total}', 'lvl.daily': 'Giornaliero · {date}', 'lvl.endless': 'Infinito #{n}',
       'stat.moves': 'Mosse', 'stat.par': 'Obiettivo',
@@ -201,6 +204,7 @@ const ToppleI18n = (() => {
       'home.foot': '{levels} livelli · {chapters} capitoli · {types} tipi di blocchi',
     },
     de: {
+      'menu.skins': 'Block-Look', 'menu.skinsSub': '{n} von {total} freigeschaltet', 'skins.title': 'Look des roten Blocks', 'skins.intro': 'Das letzte Level jedes Kapitels schaltet einen neuen Look frei.', 'skins.locked': 'Löse Level {n}', 'skins.selected': 'Ausgewählt', 'skins.pick': 'Wählen', 'win.unlock': 'Neuer Look freigeschaltet: {name}!', 'srv.skin_locked': 'Dieser Look ist noch nicht freigeschaltet.', 'srv.skin_unknown': 'Unbekannter Look.', 'skin.classic': 'Klassisch', 'skin.cat': 'Katze', 'skin.robot': 'Roboter', 'skin.melon': 'Wassermelone', 'skin.rainbow': 'Regenbogen', 'skin.gold': 'Gold', 'skin.king': 'König',
       'prof.title': 'Profil', 'prof.since': 'Spielt seit {date}', 'prof.levels': 'Level', 'prof.endless': 'Endlos', 'prof.daily': 'Tagesrätsel', 'prof.solved': 'gelöst', 'prof.ranks': 'Ranglistenplatz', 'prof.rankLine': 'täglich {d} · endlos {e} · Level {c}', 'prof.rank': '{r}.', 'prof.edit': 'Profil bearbeiten', 'prof.signin': 'Anmeldung auf anderen Geräten',
       'lvl.level': 'Level {n} von {total}', 'lvl.daily': 'Täglich · {date}', 'lvl.endless': 'Endlos #{n}',
       'stat.moves': 'Züge', 'stat.par': 'Ziel',
