@@ -10,6 +10,12 @@ const ToppleContent = (() => {
   // Playing without an account is allowed, with limits (shared by the game and the home page).
   const GUEST = { levels: 20, endless: 10 };
   const TYPE_ORDER = ['r', 'n', 'f', 'i', 'h', 'k', 'b'];
+  // Looks for the red block. `level` = the level to solve to unlock it (0 = from the start).
+  // Each needs a .skin-<id> style in theme.css and a 'skin.<id>' name in i18n.js.
+  const SKINS = [
+    { id: 'classic', level: 0 }, { id: 'cat', level: 10 }, { id: 'robot', level: 20 }, { id: 'melon', level: 30 },
+    { id: 'rainbow', level: 40 }, { id: 'gold', level: 50 }, { id: 'king', level: 60 },
+  ];
 
   const TEXT = {
     hr: {
@@ -37,6 +43,7 @@ const ToppleContent = (() => {
         ['Ljestvica', 'Natječi se na dnevnoj ljestvici, u beskonačnom nizu i u zvjezdicama iz razina.'],
         ['Prijava i više uređaja', 'Prijavi se Google računom, e-mailom ili korisničkim imenom i lozinkom. Napredak te prati na mobitelu i na računalu.'],
         ['Profil', 'Pregled tvojih razina, zvjezdica, beskonačnog niza i mjesta na ljestvicama. Korisničko ime možeš promijeniti kad god želiš.'],
+        ['Izgledi crvenog bloka', 'Riješi zadnju razinu poglavlja i otključaj novi izgled crvenog bloka: mačak, robot, lubenica, duga, zlatni i kralj. Odabireš ga u izborniku.'],
         ['Pošteni rezultati', 'Server ponovno odigra svako poslano rješenje i sprema samo ispravna. Na ljestvicu se ne može upisati izmišljeni rezultat.'],
         ['Neograničeno „Vrati”', 'Eksperimentiraj bez kazne: svaki potez se može poništiti, a ploča vratiti na početak.'],
         ['Zvuk i glazba', 'Zvukovi drveta za klizanje, slijetanje i pucanje, a u pozadini Bachov Preludij u C-duru. Oboje se može isključiti.'],
@@ -71,6 +78,7 @@ const ToppleContent = (() => {
         ['Leaderboard', 'Compete on the daily leaderboard, in the endless run and in stars from the levels.'],
         ['Sign-in and devices', 'Sign in with Google, e-mail or a username and password. Your progress follows you from phone to computer.'],
         ['Profile', 'See your levels, stars, endless run and leaderboard places. You can change your username at any time.'],
+        ['Red block looks', 'Finish the last level of a chapter to unlock a new look for the red block: cat, robot, watermelon, rainbow, gold and king. Pick one in the menu.'],
         ['Fair results', 'The server replays every submitted solution and keeps only valid ones. Nobody can put a made-up score on the leaderboard.'],
         ['Unlimited undo', 'Experiment without penalty: every move can be undone and the board reset.'],
         ['Sound and music', 'Wooden sounds for sliding, landing and cracking, and Bach’s Prelude in C major in the background. Both can be switched off.'],
@@ -105,6 +113,7 @@ const ToppleContent = (() => {
         ['Classifica', 'Sfida gli altri nella classifica del giorno, nella serie infinita e nelle stelle dei livelli.'],
         ['Accesso e dispositivi', 'Accedi con Google, e-mail o nome utente e password. I tuoi progressi ti seguono dal telefono al computer.'],
         ['Profilo', 'Vedi i tuoi livelli, le stelle, la serie infinita e le posizioni in classifica. Puoi cambiare il nome utente quando vuoi.'],
+        ['Aspetti del blocco rosso', 'Completa l’ultimo livello di un capitolo e sblocca un nuovo aspetto del blocco rosso: gatto, robot, anguria, arcobaleno, oro e re. Lo scegli nel menu.'],
         ['Risultati onesti', 'Il server rigioca ogni soluzione inviata e salva solo quelle valide. Nessuno può mettere in classifica un risultato inventato.'],
         ['Annulla senza limiti', 'Sperimenta senza penalità: ogni mossa si può annullare e la tavola si può ricominciare.'],
         ['Suoni e musica', 'Suoni di legno per scivolate, atterraggi e rotture, e in sottofondo il Preludio in do maggiore di Bach. Si possono disattivare entrambi.'],
@@ -139,6 +148,7 @@ const ToppleContent = (() => {
         ['Rangliste', 'Miss dich in der Tagesrangliste, im Endlosmodus und mit den Sternen aus den Leveln.'],
         ['Anmeldung und Geräte', 'Melde dich mit Google, E-Mail oder Benutzername und Passwort an. Dein Fortschritt begleitet dich vom Handy zum Computer.'],
         ['Profil', 'Sieh deine Level, Sterne, deinen Endlos-Lauf und deine Ranglistenplätze. Deinen Benutzernamen kannst du jederzeit ändern.'],
+        ['Looks für den roten Block', 'Schaff das letzte Level eines Kapitels und schalte ein neues Aussehen für den roten Block frei: Katze, Roboter, Wassermelone, Regenbogen, Gold und König. Du wählst es im Menü.'],
         ['Faire Ergebnisse', 'Der Server spielt jede eingereichte Lösung nach und speichert nur gültige. Niemand kann ein erfundenes Ergebnis in die Rangliste bringen.'],
         ['Unbegrenztes Zurück', 'Probier ohne Strafe aus: Jeder Zug lässt sich zurücknehmen und das Brett neu starten.'],
         ['Klang und Musik', 'Holzgeräusche für Gleiten, Landen und Zerbrechen, im Hintergrund Bachs Präludium in C-Dur. Beides lässt sich ausschalten.'],
@@ -152,6 +162,6 @@ const ToppleContent = (() => {
 
   const lang = typeof ToppleI18n !== 'undefined' && TEXT[ToppleI18n.lang] ? ToppleI18n.lang : 'hr';
   const stats = { levels, chapters, endless, types: TYPE_ORDER.length };
-  return { ...TEXT[lang], TYPE_ORDER, GUEST, stats, TEXT };
+  return { ...TEXT[lang], TYPE_ORDER, SKINS, GUEST, stats, TEXT };
 })();
 if (typeof module !== 'undefined') module.exports = ToppleContent;

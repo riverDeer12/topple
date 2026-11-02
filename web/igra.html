@@ -129,6 +129,14 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 .psec { font: 600 1.05rem var(--display); margin: 6px 0 0; width: 100%; text-align: left; }
 .lbl { font-size: .78rem; font-weight: 600; color: var(--muted); text-align: left; margin-top: 4px; }
 .small { margin: 0; font-size: .8rem; text-align: left; }
+.skins { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; width: 100%; }
+.skin { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 18px 6px 10px; border-radius: 14px; border: 1px solid var(--panel-line); background: var(--page); color: var(--ink); cursor: pointer; font: 600 .82rem var(--body); }
+.skin small { font: 500 .7rem var(--body); color: var(--muted); text-align: center; }
+.skin.on { border-color: var(--hero); box-shadow: inset 0 0 0 1px var(--hero); }
+.skin.locked { cursor: default; }
+.skin.locked .blk { filter: grayscale(1) opacity(.45); }
+.skin:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.unlock { color: var(--hero); font-weight: 600; }
 .gbtn { display: flex; justify-content: center; min-height: 44px; width: 100%; }
 .or { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--muted); font-size: .8rem; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--panel-line); }
@@ -189,6 +197,10 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
       <button class="mbtn" id="mBoard" type="button">
         <span class="ico" style="background:var(--gold)"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"/></svg></span>
         <span><b data-i18n="menu.board">Ljestvica</b><span data-i18n="menu.boardSub">Najbolji igrači</span></span>
+      </button>
+      <button class="mbtn" id="mSkins" type="button">
+        <span class="ico" style="background:var(--hero)"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.8 1.6-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-4-4-7.2-9-7.2z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></svg></span>
+        <span><b data-i18n="menu.skins">Izgled bloka</b><span id="mSkinsSub"></span></span>
       </button>
     </div>
     <div class="row">
@@ -268,6 +280,7 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
     <h2 id="winTitle">Izašao je!</h2>
     <p id="winText"></p>
     <p id="winRank"></p>
+    <p id="winUnlock" class="unlock" hidden></p>
     <button class="go" id="next" type="button">Sljedeća razina</button>
     <button class="link" id="retry" type="button" data-i18n="win.retry">Pokušaj u manje poteza</button>
     <button class="link" id="winMenu" type="button" data-i18n="win.menu">Izbornik</button>
@@ -281,6 +294,14 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
       <div class="types" id="introList" style="overflow:visible;max-height:none"></div>
     </div>
     <button class="go" id="introOk" type="button" data-i18n="intro.ok">Razumijem</button>
+  </div>
+</div>
+<div class="overlay" id="skinBox" hidden>
+  <div class="card wide scroll">
+    <h2 data-i18n="skins.title">Izgled crvenog bloka</h2>
+    <p data-i18n="skins.intro"></p>
+    <div class="skins" id="skinGrid"></div>
+    <button class="link" id="skinClose" type="button" data-i18n="lv.close">Zatvori</button>
   </div>
 </div>
 <div class="overlay" id="lvBox" hidden>
@@ -391,7 +412,7 @@ const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => ToppleI18n.plural.moves(n);
-const showOnly = id => ['menuBox', 'loginBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox'].forEach(b => { $(b).hidden = b !== id; });
+const showOnly = id => ['menuBox', 'loginBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox'].forEach(b => { $(b).hidden = b !== id; });
 
 // --- layout & rendering ------------------------------------------------------
 function layout() {
@@ -431,7 +452,7 @@ function show(c) {
   board.appendChild(ex);
   els = blocks.map((b, k) => {
     const el = document.createElement('div');
-    el.className = 'blk ' + b.t + (b.t !== 'f' ? ' mv' : '');
+    el.className = 'blk ' + b.t + (b.t !== 'f' ? ' mv' : '') + (b.t === 'r' ? ' skin-' + currentSkin() : '');
     el.innerHTML = '<div class="face"></div>' + (b.t === 'r' ? '<div class="eyes"><span class="eye"></span><span class="eye"></span></div>' : '');
     if (b.t !== 'f') {
       el.tabIndex = 0;
@@ -652,7 +673,11 @@ function win() {
   fx.win();
   buzz([10, 40, 10]);
   const opt = ctx.level.opt, m = hist.length, timeMs = Date.now() - t0;
+  const unlockedBefore = SKINS.filter(skinUnlocked).map(x => x.id);
   const s = record(ctx.mode, ctx.key, moveLog.slice(), timeMs);
+  const fresh = SKINS.filter(x => skinUnlocked(x) && !unlockedBefore.includes(x.id));
+  $('winUnlock').hidden = !fresh.length;
+  if (fresh.length) $('winUnlock').textContent = t('win.unlock', { name: fresh.map(x => t('skin.' + x.id)).join(', ') });
   $('winRank').textContent = '';
   const c = ctx;
   sync().then(r => { if (r && r.mine && ctx === c && won_) $('winRank').textContent = rankText(c.mode, r.mine); });
@@ -709,6 +734,10 @@ function sync() {
       if (me.endless.next > prog.endless.next) { prog.endless.next = me.endless.next; changed = true; }
       if (me.endless.stars > prog.endless.stars) { prog.endless.stars = me.endless.stars; changed = true; }
       for (const [d, m] of Object.entries(me.daily)) if (!prog.daily[d] || prog.daily[d].moves > m) { prog.daily[d] = { moves: m, timeMs: prog.daily[d] ? prog.daily[d].timeMs : 0 }; changed = true; }
+      // Look of the red block: a choice made before signing in goes up, otherwise the account's choice wins.
+      const localSkin = store.get('skin', 'classic');
+      if (me.skin === 'classic' && localSkin !== 'classic') api('/api/account', { method: 'POST', body: JSON.stringify({ skin: localSkin }) }).catch(() => {});
+      else if (me.skin && me.skin !== localSkin) { store.set('skin', me.skin); changed = true; }
       if (changed) { saveAll(); if (!$('menuBox').hidden) openMenu(); }
     } catch (e) { if (e.status === 401) { user = null; store.set('user', null); } } // session ended elsewhere
     return last;
@@ -722,6 +751,7 @@ function openMenu() {
   $('mDailySub').textContent = d ? ToppleI18n.t('sub.dailyDone', { date: fmtDate(t), n: d.moves, moves: potez(d.moves) }) : ToppleI18n.t('sub.dailyNew', { date: fmtDate(t) });
   $('mEndlessSub').textContent = ToppleI18n.t('sub.endless', { n: prog.endless.next, s: prog.endless.stars }) + (!signedInNow() ? ToppleI18n.t('sub.endlessGuest', { n: GUEST.endless }) : '');
   const stars = Object.values(best).reduce((a, b) => a + b, 0);
+  $('mSkinsSub').textContent = ToppleI18n.t('menu.skinsSub', { n: SKINS.filter(skinUnlocked).length, total: SKINS.length });
   $('mLevelsSub').textContent = ToppleI18n.t('sub.levels', { done: Object.keys(best).length, total: LEVELS.length, s: stars, max: LEVELS.length * 3 });
   $('who').innerHTML = signedInNow() ? `${ToppleI18n.t('who.signed')} <b></b> · <button class="link" id="account" type="button">${ToppleI18n.t('who.account')}</button>`
     : `${ToppleI18n.t('who.guest')} <b></b> · <button class="link" id="login" type="button">${ToppleI18n.t('who.login')}</button>`;
@@ -896,6 +926,37 @@ $('lbList').addEventListener('click', e => { if (e.target.closest('[data-login]'
 $('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
 
 // Levels are grouped in chapters of 10 (names for chapters 1-10, ready for 100 levels).
+// --- red block looks, unlocked by solving the last level of a chapter (SKINS in content.js) ---
+const SKINS = ToppleContent.SKINS;
+const skinUnlocked = sk => sk.level === 0 || best[sk.level - 1] > 0;
+function currentSkin() {
+  const id = store.get('skin', 'classic'), sk = SKINS.find(x => x.id === id);
+  return sk && skinUnlocked(sk) ? id : 'classic';
+}
+function setSkin(id) {
+  store.set('skin', id);
+  const ri = blocks.findIndex(b => b.t === 'r');
+  if (ri >= 0 && els[ri]) els[ri].className = els[ri].className.replace(/\bskin-\S+/, 'skin-' + id);
+  if (signedInNow()) api('/api/account', { method: 'POST', body: JSON.stringify({ skin: id }) }).catch(() => {});
+}
+function openSkins() {
+  const cur = currentSkin();
+  $('skinGrid').innerHTML = SKINS.map(sk => {
+    const open = skinUnlocked(sk), name = t('skin.' + sk.id);
+    const note = !open ? t('skins.locked', { n: sk.level }) : sk.id === cur ? t('skins.selected') : t('skins.pick');
+    return `<button class="skin${sk.id === cur ? ' on' : ''}${open ? '' : ' locked'}" type="button" data-skin="${sk.id}" ${open ? '' : 'aria-disabled="true"'}>
+      <div class="blk sw r skin-${sk.id}"><div class="face"></div><div class="eyes"><span class="eye"></span><span class="eye"></span></div></div>
+      <span>${open ? '' : '🔒 '}${name}</span><small>${note}</small></button>`;
+  }).join('');
+  showOnly('skinBox');
+}
+$('skinGrid').addEventListener('click', e => {
+  const b = e.target.closest('.skin');
+  if (!b || b.classList.contains('locked')) return;
+  setSkin(b.dataset.skin); fx.tap(); openSkins();
+});
+$('skinClose').onclick = openMenu;
+$('mSkins').onclick = openSkins;
 const chapterName = c => ToppleI18n.chapters[c] || t('chapter', { n: c + 1 });
 function openLevels() {
   const cur = ctx && ctx.mode === 'campaign' ? ctx.key : -1;

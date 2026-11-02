@@ -28,6 +28,11 @@ for (const t of used) assert.ok(K.TYPE_ORDER.includes(t), `Vrsta bloka '${t}' ni
 for (const t of K.TYPE_ORDER) assert.ok(K.TYPES[t], `TYPE_ORDER sadrži '${t}' bez opisa.`);
 const css = fs.readFileSync(path.join(__dirname, '../web/theme.css'), 'utf8');
 for (const t of K.TYPE_ORDER) assert.ok(css.includes(`.blk.${t} .face`), `Vrsta bloka '${t}' nema stil u web/theme.css.`);
+for (const sk of K.SKINS) {
+  assert.ok(I.S.hr['skin.' + sk.id], `Izgled '${sk.id}' nema naziv u i18n.js (skin.${sk.id}).`);
+  if (sk.id !== 'classic') assert.ok(css.includes(`.skin-${sk.id}`), `Izgled '${sk.id}' nema stil u web/theme.css.`);
+  assert.ok(sk.level === 0 || (sk.level >= 1 && sk.level <= LEVELS.length), `Izgled '${sk.id}' se otključava razinom ${sk.level}, a ona ne postoji.`);
+}
 assert.strictEqual(K.stats.levels, LEVELS.length);
 for (const page of ['index.html', 'igra.html']) {
   const html = fs.readFileSync(path.join(__dirname, '../web', page), 'utf8');
