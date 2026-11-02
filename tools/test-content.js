@@ -16,6 +16,7 @@ for (const lang of langs) {
   assert.ok(T, `content.js nema jezik '${lang}'.`);
   for (const t of used) assert.ok(T.TYPES[t], `Vrsta bloka '${t}' nema opis na jeziku '${lang}' u web/content.js.`);
   for (const t of K.TYPE_ORDER) assert.ok(T.TYPES[t], `TYPE_ORDER sadrži '${t}' bez opisa na jeziku '${lang}'.`);
+  for (const sk of K.SKINS) assert.ok(T.SKIN_TEXT && T.SKIN_TEXT[sk.id], `Izgled '${sk.id}' nema opis (SKIN_TEXT) na jeziku '${lang}' u web/content.js.`);
   for (const key of ['RULES', 'MODES', 'FEATURES']) {
     assert.strictEqual(T[key].length, K.TEXT.hr[key].length, `${key} na jeziku '${lang}' nema isto stavki kao hrvatski.`);
     for (const [h, p] of T[key]) assert.ok(h && p && !/undefined|NaN/.test(h + p), `Prazan ili neispravan tekst (${lang}): ${h}`);

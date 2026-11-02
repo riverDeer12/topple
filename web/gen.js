@@ -75,9 +75,12 @@
   }
 
   // Try random boards until one matches the spec. Deterministic for a given ri.
-  function search(spec, ri, { maxStates = 60000, maxTries = 400000 } = {}) {
-    let tries = 0;
+  // onTry(tries) runs before each try without touching the random numbers, so a caller can
+  // checkpoint its generator state and resume later with identical results.
+  function search(spec, ri, { maxStates = 60000, maxTries = 400000, startTries = 0, onTry } = {}) {
+    let tries = startTries;
     while (tries < maxTries) {
+      if (onTry) onTry(tries);
       tries++;
       const L = make(spec, ri);
       if (!L) continue;
