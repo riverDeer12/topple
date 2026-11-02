@@ -158,7 +158,14 @@ Postojećem igraču postavi e-mail i lozinku (kao da se tako registrirao):
 node C:\inetpub\wwwroot\topple\server\admin.js set-login Ime ime@example.com "lozinka" --db C:\inetpub\topple-data\topple.db
 ```
 
-Samo nova lozinka: `set-password Ime "lozinka"`. Lozinku stavi u navodnike ako sadrži znakove poput `#` ili razmaka.
+Samo nova lozinka: `set-password Ime "lozinka"`.
+
+Brisanje igrača i svih njegovih podataka (rezultati, ljestvice, prijave na uređajima). Bez `--yes` samo pokaže što bi se obrisalo:
+
+```powershell
+node C:\inetpub\wwwroot\topple\server\admin.js delete Ime --db C:\inetpub\topple-data\topple.db
+node C:\inetpub\wwwroot\topple\server\admin.js delete Ime --yes --db C:\inetpub\topple-data\topple.db
+``` Lozinku stavi u navodnike ako sadrži znakove poput `#` ili razmaka.
 
 ## Postavke API-ja
 

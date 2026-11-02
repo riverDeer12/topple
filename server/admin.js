@@ -2,6 +2,7 @@
 //   node server/admin.js list                                   (players and their sign-in methods)
 //   node server/admin.js set-login <name> <email> <password>    (as if the player had registered with them)
 //   node server/admin.js set-password <name> <password>
+//   node server/admin.js delete <name> [--yes]                  (removes the player and all their data; without --yes only shows what would go)
 // Uses DB_PATH, or --db <path>. On the Windows server: --db C:\inetpub\topple-data\topple.db
 const args = process.argv.slice(2);
 const dbAt = args.indexOf('--db');
@@ -30,6 +31,21 @@ if (cmd === 'list') {
   if (email) db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, u.id);
   db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hashPassword(password), u.id);
   console.log(`Gotovo: ${u.name} se sada može prijaviti ${email ? `e-mailom ${email} ili ` : ''}korisničkim imenom i novom lozinkom.`);
+} else if (cmd === 'delete') {
+  const yes = rest.includes('--yes');
+  const name = rest.filter(a => a !== '--yes').join(' ');
+  if (!name) fail('Nedostaje ime. Primjer: node server/admin.js delete Ana --yes');
+  const u = findUser(name);
+  const count = t => db.prepare(`SELECT COUNT(*) AS n FROM ${t} WHERE user_id = ?`).get(u.id).n;
+  const summary = `${u.name} (${u.email || 'bez e-maila'}): razine ${count('campaign')}, dnevne ${count('daily')}, beskonačne ${count('endless')}, prijave na uređajima ${count('sessions')}`;
+  if (!yes) { console.log(`Bilo bi obrisano: ${summary}.\nZa brisanje ponovi naredbu s --yes na kraju.`); process.exit(0); }
+  db.exec('BEGIN');
+  try {
+    for (const t of ['campaign', 'daily', 'endless', 'sessions']) db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(u.id);
+    db.prepare('DELETE FROM users WHERE id = ?').run(u.id);
+    db.exec('COMMIT');
+  } catch (e) { db.exec('ROLLBACK'); throw e; }
+  console.log(`Obrisano: ${summary}.`);
 } else {
-  console.log('Naredbe: list | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka>   [--db putanja]');
+  console.log('Naredbe: list | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | delete <ime> [--yes]   [--db putanja]');
 }
