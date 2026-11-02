@@ -103,4 +103,32 @@ function solve(start, exitRow, maxStates = 200000) {
   }
   return -1;
 }
-if (typeof module !== 'undefined') module.exports = { W, H, grid, settle, range, won, moves, apply, solve, key };
+// Shortest solution as a list of moves [[block, dx], ...] (used for hints).
+// Returns [] if already won, null if unsolvable or over the state budget.
+function solvePath(start, exitRow, maxStates = 600000) {
+  if (won(start, exitRow)) return [];
+  const startKey = key(start);
+  const prev = new Map([[startKey, null]]); // state key -> [parent key, move]
+  let frontier = [start];
+  while (frontier.length) {
+    const next = [];
+    for (const s of frontier) {
+      const sk = key(s);
+      for (const m of moves(s)) {
+        const n = apply(s, m), k = key(n);
+        if (prev.has(k)) continue;
+        prev.set(k, [sk, m]);
+        if (won(n, exitRow)) {
+          const path = [];
+          for (let c = k; c !== startKey; c = prev.get(c)[0]) path.unshift(prev.get(c)[1]);
+          return path;
+        }
+        next.push(n);
+        if (prev.size > maxStates) return null;
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
+if (typeof module !== 'undefined') module.exports = { W, H, grid, settle, range, won, moves, apply, solve, solvePath, key };
