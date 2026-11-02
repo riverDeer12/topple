@@ -171,7 +171,7 @@ const SPECS = [
   { opt: 9, max: 10, n: 5, fixed: 1, ice: 0, spring: 1, arrow: 2 },
   { opt: 9, max: 11, n: 6, fixed: 1, ice: 1, spring: 2, arrow: 1 },
   { opt: 10, max: 12, n: 5, fixed: 1, ice: 0, spring: 2, arrow: 2, balloon: 1 },
-  { opt: 10, max: 12, n: 6, fixed: 1, ice: 1, spring: 2, arrow: 2, heavy: 1, fragile: 1 },
+  { opt: 9, max: 12, n: 6, fixed: 1, ice: 1, spring: 2, arrow: 2 },
 ];
 
 const make = spec => G.make(spec, ri);
