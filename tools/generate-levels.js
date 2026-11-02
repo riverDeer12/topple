@@ -87,7 +87,7 @@ const SPECS = [
   { opt: 9, max: 10, n: 7, fixed: 2, ice: 1, heavy: 1, fragile: 2 },
   { opt: 9, max: 10, n: 8, fixed: 1, ice: 1, balloon: 2 },
   { opt: 9, max: 11, n: 9, fixed: 2, ice: 2 },
-  { opt: 9, max: 11, n: 7, fixed: 1, ice: 1, heavy: 2, fragile: 2, balloon: 1 },
+  { opt: 9, max: 11, n: 7, fixed: 1, ice: 1, heavy: 2, fragile: 2 }, // balloon dropped: no match in 1.5 h
   { opt: 9, max: 11, n: 8, fixed: 1, ice: 2, heavy: 1, fragile: 2 },
   { opt: 9, max: 11, n: 8, fixed: 2, ice: 1, balloon: 1 },
   { opt: 10, max: 11, n: 8, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
