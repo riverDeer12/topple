@@ -146,9 +146,9 @@ const SPECS = [
   { opt: 9, max: 13, n: 6, fixed: 1, ice: 1, heavy: 1, fragile: 1, balloon: 1 },
   { opt: 10, max: 13, n: 9, fixed: 2, ice: 2 },
   { opt: 11, max: 14, n: 8, fixed: 1, ice: 1, balloon: 2 },
-  { opt: 11, max: 14, n: 7, fixed: 2, ice: 1, heavy: 2, fragile: 2 },
+  { opt: 10, max: 14, n: 7, fixed: 2, ice: 1, heavy: 2, fragile: 2 },
   { opt: 11, max: 14, n: 6, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
-  { opt: 12, max: 15, n: 9, fixed: 2, ice: 2 },
+  { opt: 11, max: 15, n: 9, fixed: 2, ice: 2 },
   { opt: 12, max: 16, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2, balloon: 1 },
   // Chapter 11 (101-110), one-way street: arrow blocks slide only one way.
   { opt: 6, max: 7, n: 5, fixed: 1, ice: 0, arrow: 2 },
