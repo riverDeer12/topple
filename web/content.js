@@ -15,6 +15,7 @@ const ToppleContent = (() => {
   const SKINS = [
     { id: 'classic', level: 0 }, { id: 'cat', level: 10 }, { id: 'robot', level: 20 }, { id: 'melon', level: 30 },
     { id: 'rainbow', level: 40 }, { id: 'gold', level: 50 }, { id: 'king', level: 60 },
+    { id: 'frog', level: 70 }, { id: 'ghost', level: 80 }, { id: 'dragon', level: 90 }, { id: 'cosmos', level: 100 },
   ];
 
   const TEXT = {
@@ -28,7 +29,7 @@ const ToppleContent = (() => {
         k: ['Ispucali blok', 'Miče se i pada kao obični, ali ga teški blok u padu razbije i on nestane.'],
         b: ['Balon', 'Ne pada nego se diže, dok ne udari u nešto iznad sebe. Drugi blokovi mogu stajati na njemu.'],
       },
-      SKIN_TEXT: { classic: 'Izvorni crveni blok s velikim očima.', cat: 'Narančasti mačak s ušima i mačjim zjenicama.', robot: 'Metalni robot s antenom i svjetlećim očima.', melon: 'Sočna kriška lubenice sa sjemenkama.', rainbow: 'Sve boje duge u jednom bloku.', gold: 'Sjajni zlatni blok za uporne.', king: 'Kraljevski crveni blok sa zlatnom krunom, za one koji prođu sve.' },
+      SKIN_TEXT: { classic: 'Izvorni crveni blok s velikim očima.', cat: 'Narančasti mačak s ušima i mačjim zjenicama.', robot: 'Metalni robot s antenom i svjetlećim očima.', melon: 'Sočna kriška lubenice sa sjemenkama.', rainbow: 'Sve boje duge u jednom bloku.', gold: 'Sjajni zlatni blok za uporne.', king: 'Kraljevski crveni blok sa zlatnom krunom.', frog: 'Zelena žaba s okruglim izbočinama na glavi i rumenim obrazima.', ghost: 'Bijeli duh s valovitim rubom i tamnim očima.', dragon: 'Zeleni zmaj sa zlatnim šiljcima i zmijskim zjenicama.', cosmos: 'Komadić svemira sa zvijezdama i zlatnom zvijezdom na vrhu, za one koji prođu svih 100 razina.' },
       RULES: [
         ['Cilj', 'Izvedi crveni blok kroz izlaz, strelicu na desnom rubu ploče. Crveni mora biti u istom redu kao strelica i dotaknuti desni rub.'],
         ['Potez', 'Povuci blok prstom ili mišem lijevo ili desno. Klizi za koliko god slobodnih polja želiš, ali nikad gore ili dolje. Na tipkovnici odaberi blok tipkom Tab i miči ga strelicama.'],
@@ -65,7 +66,7 @@ const ToppleContent = (() => {
         k: ['Cracked block', 'Moves and falls like a plain block, but a falling heavy block breaks it and it disappears.'],
         b: ['Balloon', 'It does not fall, it rises until it hits something above. Other blocks can stand on it.'],
       },
-      SKIN_TEXT: { classic: 'The original red block with big eyes.', cat: 'An orange cat with ears and cat-like pupils.', robot: 'A metal robot with an antenna and glowing eyes.', melon: 'A juicy slice of watermelon, seeds and all.', rainbow: 'Every colour of the rainbow in one block.', gold: 'A shiny gold block for the persistent.', king: 'A royal red block with a golden crown, for those who beat it all.' },
+      SKIN_TEXT: { classic: 'The original red block with big eyes.', cat: 'An orange cat with ears and cat-like pupils.', robot: 'A metal robot with an antenna and glowing eyes.', melon: 'A juicy slice of watermelon, seeds and all.', rainbow: 'Every colour of the rainbow in one block.', gold: 'A shiny gold block for the persistent.', king: 'A royal red block with a golden crown.', frog: 'A green frog with round bumps on its head and rosy cheeks.', ghost: 'A white ghost with a wavy hem and dark eyes.', dragon: 'A green dragon with golden spikes and reptile pupils.', cosmos: 'A piece of outer space full of stars, with a golden star on top, for those who beat all 100 levels.' },
       RULES: [
         ['Goal', 'Get the red block out through the exit, the arrow on the right edge of the board. The red block has to be in the arrow’s row and touch the right edge.'],
         ['Moves', 'Drag a block left or right with your finger or mouse. It slides as many free cells as you like, but never up or down. With a keyboard, pick a block with Tab and move it with the arrow keys.'],
@@ -102,7 +103,7 @@ const ToppleContent = (() => {
         k: ['Blocco crepato', 'Si muove e cade come un blocco normale, ma un blocco pesante in caduta lo rompe e sparisce.'],
         b: ['Palloncino', 'Non cade, sale finché non urta qualcosa sopra di sé. Altri blocchi possono appoggiarsi su di lui.'],
       },
-      SKIN_TEXT: { classic: 'Il blocco rosso originale con gli occhioni.', cat: 'Un gatto arancione con orecchie e pupille da gatto.', robot: 'Un robot di metallo con antenna e occhi luminosi.', melon: 'Una succosa fetta di anguria con i semi.', rainbow: 'Tutti i colori dell’arcobaleno in un blocco.', gold: 'Un lucente blocco d’oro per i più tenaci.', king: 'Un regale blocco rosso con corona d’oro, per chi supera tutto.' },
+      SKIN_TEXT: { classic: 'Il blocco rosso originale con gli occhioni.', cat: 'Un gatto arancione con orecchie e pupille da gatto.', robot: 'Un robot di metallo con antenna e occhi luminosi.', melon: 'Una succosa fetta di anguria con i semi.', rainbow: 'Tutti i colori dell’arcobaleno in un blocco.', gold: 'Un lucente blocco d’oro per i più tenaci.', king: 'Un regale blocco rosso con corona d’oro.', frog: 'Una rana verde con due gobbe tonde in testa e le guance rosa.', ghost: 'Un fantasma bianco con l’orlo ondulato e occhi scuri.', dragon: 'Un drago verde con punte d’oro e pupille da rettile.', cosmos: 'Un pezzo di cielo stellato con una stella d’oro in cima, per chi supera tutti i 100 livelli.' },
       RULES: [
         ['Obiettivo', 'Fai uscire il blocco rosso dall’uscita, la freccia sul bordo destro della tavola. Il rosso deve essere nella riga della freccia e toccare il bordo destro.'],
         ['Mosse', 'Trascina un blocco a sinistra o a destra con il dito o il mouse. Scorre di quante caselle libere vuoi, ma mai in su o in giù. Con la tastiera scegli un blocco con Tab e muovilo con le frecce.'],
@@ -139,7 +140,7 @@ const ToppleContent = (() => {
         k: ['Rissiger Block', 'Bewegt sich und fällt wie ein normaler Block, aber ein fallender schwerer Block zerbricht ihn, und er verschwindet.'],
         b: ['Ballon', 'Er fällt nicht, sondern steigt, bis er oben auf etwas trifft. Andere Blöcke können auf ihm stehen.'],
       },
-      SKIN_TEXT: { classic: 'Der ursprüngliche rote Block mit großen Augen.', cat: 'Eine orange Katze mit Ohren und Katzenpupillen.', robot: 'Ein Metallroboter mit Antenne und leuchtenden Augen.', melon: 'Eine saftige Scheibe Wassermelone mit Kernen.', rainbow: 'Alle Farben des Regenbogens in einem Block.', gold: 'Ein glänzender Goldblock für Ausdauernde.', king: 'Ein königlicher roter Block mit goldener Krone, für alle, die alles schaffen.' },
+      SKIN_TEXT: { classic: 'Der ursprüngliche rote Block mit großen Augen.', cat: 'Eine orange Katze mit Ohren und Katzenpupillen.', robot: 'Ein Metallroboter mit Antenne und leuchtenden Augen.', melon: 'Eine saftige Scheibe Wassermelone mit Kernen.', rainbow: 'Alle Farben des Regenbogens in einem Block.', gold: 'Ein glänzender Goldblock für Ausdauernde.', king: 'Ein königlicher roter Block mit goldener Krone.', frog: 'Ein grüner Frosch mit runden Höckern auf dem Kopf und rosigen Wangen.', ghost: 'Ein weißes Gespenst mit welligem Saum und dunklen Augen.', dragon: 'Ein grüner Drache mit goldenen Zacken und Reptilienpupillen.', cosmos: 'Ein Stück Weltall voller Sterne, mit einem goldenen Stern obendrauf, für alle, die alle 100 Level schaffen.' },
       RULES: [
         ['Ziel', 'Bring den roten Block durch den Ausgang hinaus, den Pfeil am rechten Rand des Bretts. Der rote Block muss in der Reihe des Pfeils sein und den rechten Rand berühren.'],
         ['Züge', 'Zieh einen Block mit Finger oder Maus nach links oder rechts. Er gleitet beliebig viele freie Felder, aber nie nach oben oder unten. Mit der Tastatur wählst du einen Block mit Tab und bewegst ihn mit den Pfeiltasten.'],

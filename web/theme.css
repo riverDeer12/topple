@@ -114,3 +114,34 @@
 .blk.r.skin-gold .face { background: linear-gradient(135deg, #FFE08A 0%, #F2B632 42%, #FFF3C2 52%, #D99A1E 100%); box-shadow: inset 0 -5px 0 #A86F0E, inset 0 2px 0 rgba(255,255,255,.6); }
 .blk.r.skin-king .face { background: linear-gradient(180deg, #E2513A, #B8341F); box-shadow: inset 0 -5px 0 #7E2010, inset 0 2px 0 rgba(255,255,255,.3); }
 .blk.r.skin-king::before { content: ""; position: absolute; left: 50%; top: -13px; width: 28px; height: 15px; margin-left: -14px; background: linear-gradient(180deg, #FFE08A, #E0A21E); clip-path: polygon(0 100%, 0 25%, 25% 62%, 50% 0, 75% 62%, 100% 25%, 100% 100%); }
+/* frog: green with two round bumps on top and rosy cheeks */
+.blk.r.skin-frog .face { background:
+    radial-gradient(ellipse 6px 4px at 14% 62%, rgba(255,120,140,.55) 60%, transparent 70%),
+    radial-gradient(ellipse 6px 4px at 86% 62%, rgba(255,120,140,.55) 60%, transparent 70%), #6CC24A;
+  box-shadow: inset 0 -5px 0 #3F8A28, inset 0 2px 0 rgba(255,255,255,.35); }
+.blk.r.skin-frog::before, .blk.r.skin-frog::after { content: ""; position: absolute; top: -6px; width: 14px; height: 12px; border-radius: 50% 50% 0 0; background: #6CC24A; box-shadow: inset 0 2px 0 rgba(255,255,255,.35); }
+.blk.r.skin-frog::before { left: 18%; }
+.blk.r.skin-frog::after { right: 18%; }
+/* ghost: pale body, wavy hem, dark eyes */
+.blk.r.skin-ghost .face { border-radius: 16px 16px 3px 3px; background: linear-gradient(180deg, #FFFFFF, #DCE3F0); box-shadow: inset 0 0 0 1px #C3CCDD, inset 0 2px 0 rgba(255,255,255,.8), inset 0 -3px 0 #C3CCDD; }
+.blk.r.skin-ghost::after { content: ""; position: absolute; left: 0; right: 0; bottom: -5px; height: 6px; background: radial-gradient(circle at 50% 0, #C3CCDD 4.5px, transparent 5px) 0 0 / 12px 6px repeat-x; }
+.blk.r.skin-ghost .eye { background: #1E2233; border-radius: 50% 50% 45% 45%; }
+.blk.r.skin-ghost .eye::after { width: 30%; height: 30%; background: #fff; top: 20%; }
+/* dragon: green scales, golden spikes, slit pupils */
+.blk.r.skin-dragon .face { background:
+    radial-gradient(circle at 25% 75%, rgba(255,255,255,.12) 3px, transparent 3.5px) 0 0 / 12px 10px,
+    linear-gradient(180deg, #3FA36B, #2A7A4C);
+  box-shadow: inset 0 -5px 0 #1D5636, inset 0 2px 0 rgba(255,255,255,.25); }
+.blk.r.skin-dragon::before { content: ""; position: absolute; left: 15%; right: 15%; top: -8px; height: 9px; background: linear-gradient(180deg, #FFE08A, #E0A21E);
+  clip-path: polygon(0 100%, 10% 0, 20% 100%, 30% 0, 40% 100%, 50% 0, 60% 100%, 70% 0, 80% 100%, 90% 0, 100% 100%); }
+.blk.r.skin-dragon .eye { background: #FFD94A; }
+.blk.r.skin-dragon .eye::after { width: 20%; height: 80%; top: 10%; left: calc(40% + var(--look, 0) * 20%); border-radius: 50%; background: #1A1A0E; }
+/* cosmos: night sky with stars and a golden star on top */
+.blk.r.skin-cosmos .face { background:
+    radial-gradient(circle at 12% 30%, #fff 1px, transparent 1.5px), radial-gradient(circle at 30% 75%, #fff .8px, transparent 1.3px),
+    radial-gradient(circle at 70% 20%, #fff 1px, transparent 1.5px), radial-gradient(circle at 88% 70%, #fff .8px, transparent 1.3px),
+    radial-gradient(circle at 55% 85%, #C9B8FF 1px, transparent 1.5px),
+    radial-gradient(ellipse 60% 80% at 80% 100%, rgba(155,108,255,.55), transparent 70%), linear-gradient(135deg, #1B1F4B, #2E1A5C);
+  box-shadow: inset 0 -5px 0 #120F33, inset 0 2px 0 rgba(255,255,255,.2), 0 0 10px rgba(155,108,255,.45); }
+.blk.r.skin-cosmos::before { content: ""; position: absolute; left: 50%; top: -11px; width: 16px; height: 16px; margin-left: -8px; background: linear-gradient(180deg, #FFE08A, #E0A21E);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); filter: drop-shadow(0 0 3px #FFE08A); }
