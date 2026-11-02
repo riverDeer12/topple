@@ -35,6 +35,9 @@ h1 { font: 600 clamp(2.6rem, 6vw, 4.2rem) var(--display); line-height: 1; margin
 .facts { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 30px; }
 .facts div { display: flex; flex-direction: column; }
 .facts b { font: 500 1.6rem var(--mono); line-height: 1.1; }
+.facts .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #2E9E5B; margin: 0 8px 0 2px; vertical-align: .25em; animation: onl 2s ease-in-out infinite; }
+@keyframes onl { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .facts .dot { animation: none; } }
 .facts small { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 
 .demo { justify-self: center; position: relative; background: var(--board); border-radius: 16px; box-shadow: inset 0 0 0 6px var(--board-edge), 0 18px 40px -18px rgba(10,30,26,.6); }
@@ -244,7 +247,9 @@ async function boards() {
     fill('lbCampaign', c, x => `★${x.stars}`);
     $('lbSub').textContent = t('home.stats', { players: s.players, playersWord: P.players(s.players) }) + ' ' + (!s.dailyToday ? t('home.statsNone')
       : s.dailyToday === 1 ? t('home.statsOne') : t('home.statsMany', { n: s.dailyToday, playersWord: P.players(s.dailyToday) }));
-    $('facts').insertAdjacentHTML('beforeend', `<div><b>${s.players}</b><small>${esc(t('home.factPlayers'))}</small></div>`);
+    $('facts').insertAdjacentHTML('beforeend', `<div><b>${s.players}</b><small>${esc(t('home.factPlayers'))}</small></div>`
+      + `<div class="online"><b><span class="dot"></span><span id="onlineN">${s.online || 0}</span></b><small>${esc(t('home.factOnline'))}</small></div>`);
+    setInterval(async () => { try { $('onlineN').textContent = (await get('/api/stats')).online || 0; } catch (e) {} }, 60e3);
   } catch (err) { off(t('home.lbDown')); }
 }
 ['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = `<li class="empty">${esc(t('home.loading'))}</li>`; });
