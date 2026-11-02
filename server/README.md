@@ -198,6 +198,18 @@ node C:\inetpub\wwwroot\topple\server\admin.js delete Ime --db C:\inetpub\topple
 node C:\inetpub\wwwroot\topple\server\admin.js delete Ime --yes --db C:\inetpub\topple-data\topple.db
 ``` Lozinku stavi u navodnike ako sadrži znakove poput `#` ili razmaka.
 
+## Administracija (/admin)
+
+Na `https://topple.rdd.software/admin` je pregled za vlasnika: koliko ih trenutno igra, registrirani igrači i gosti, aktivnost po danima, koliko je igrača riješilo svaku razinu, tko je najdalje stigao, novi igrači i gosti. Osvježava se svake minute.
+
+Prijava nije u kodu (repozitorij je javan): administratora postavi na serveru. Lozinku u PowerShellu stavi u **jednostruke** navodnike (zbog `$`), najmanje 10 znakova:
+
+```powershell
+node C:\inetpub\wwwroot\topple\server\admin.js set-admin Ime 'lozinka' --db C:\inetpub\topple-data\topple.db
+```
+
+Ista naredba mijenja lozinku i odjavljuje sve stare prijave tog administratora. Prijava traje 7 dana.
+
 ## Postavke API-ja
 
 | Varijabla | Zadano | Značenje |
@@ -223,6 +235,8 @@ Promjena postavki: `nssm edit topple` (kartica Environment), pa `Restart-Service
 | `POST /api/account` `{email?, password?, currentPassword?}` | dodaj ili promijeni e-mail i lozinku |
 | `POST /api/logout` | odjava s ovog uređaja |
 | `GET /api/stats` | broj igrača i riješenih zagonetki |
+| `POST /api/admin/login` `{user, password}` | prijava administratora (tablica `admins`), vraća `{token}` |
+| `GET /api/admin/stats` | statistika za /admin (Bearer token administratora) |
 | `GET /api/me` | profil i napredak (zaglavlje `Authorization: Bearer <token>`) |
 | `POST /api/score` `{mode, level/date/n, moves, timeMs}` | rezultat; server provjerava poteze |
 | `GET /api/leaderboard?mode=daily&date=YYYY-MM-DD` | dnevna ljestvica (najmanje poteza, pa najbrže) |

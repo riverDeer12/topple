@@ -88,6 +88,21 @@ if (db.prepare('PRAGMA user_version').get().user_version < 3) {
     PRAGMA user_version = 3;
   `);
 }
+// Schema v4: when a player was last seen (for the admin page), and admin accounts.
+// Admins are not players: their password hash is set on the server with
+// `node server/admin.js set-admin <name> <password>`, never stored in the code.
+if (db.prepare('PRAGMA user_version').get().user_version < 4) {
+  if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'last_seen')) db.exec('ALTER TABLE users ADD COLUMN last_seen INTEGER');
+  db.exec(`
+    UPDATE users SET last_seen = MAX(created_at,
+      COALESCE((SELECT MAX(updated_at) FROM campaign WHERE user_id = users.id), 0),
+      COALESCE((SELECT MAX(updated_at) FROM daily WHERE user_id = users.id), 0),
+      COALESCE((SELECT MAX(updated_at) FROM endless WHERE user_id = users.id), 0));
+    CREATE TABLE IF NOT EXISTS admins (name TEXT PRIMARY KEY COLLATE NOCASE, password_hash TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS admin_sessions (token_hash TEXT PRIMARY KEY, admin TEXT NOT NULL, created_at INTEGER NOT NULL);
+    PRAGMA user_version = 4;
+  `);
+}
 const GUEST_ID = /^[A-Za-z0-9_-]{16,64}$/;
 function linkGuest(guestId, userId) {
   if (typeof guestId === 'string' && GUEST_ID.test(guestId)) db.prepare('UPDATE guests SET user_id = ? WHERE id = ? AND user_id IS NULL').run(userId, guestId);
@@ -212,7 +227,17 @@ function readJson(req) {
 }
 function userFrom(req) {
   const m = /^Bearer ([A-Za-z0-9_-]{20,100})$/.exec(req.headers.authorization || '');
-  return m ? db.prepare('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?').get(sha(m[1])) : null;
+  const u = m ? db.prepare('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?').get(sha(m[1])) : null;
+  // Remember when the player was last here (at most one write per 5 minutes).
+  if (u && !(u.last_seen > Date.now() - 5 * 60e3)) db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').run(Date.now(), u.id);
+  return u;
+}
+const ADMIN_DAYS = 7;
+function adminFrom(req) {
+  const m = /^Bearer ([A-Za-z0-9_-]{20,100})$/.exec(req.headers.authorization || '');
+  if (!m) return null;
+  const s = db.prepare('SELECT a.name, s.created_at FROM admin_sessions s JOIN admins a ON a.name = s.admin WHERE s.token_hash = ?').get(sha(m[1]));
+  return s && s.created_at > Date.now() - ADMIN_DAYS * 864e5 ? s.name : null;
 }
 // Simple in-memory rate limit per IP and bucket.
 const hits = new Map();
@@ -282,6 +307,67 @@ function profile(u) {
   };
 }
 
+// --- admin statistics ---------------------------------------------------------
+function adminStats() {
+  const now = Date.now(), since = d => now - d * 864e5, ONLINE = 15 * 60e3;
+  const n = (q, ...a) => db.prepare(q).get(...a).n;
+  const method = u => u.google_sub && u.password_hash ? 'both' : u.google_sub ? 'google' : u.password_hash ? 'password' : 'device';
+  const users = db.prepare(`SELECT u.id, u.name, u.email, u.password_hash, u.google_sub, u.created_at, u.last_seen, u.skin,
+      u.endless_next - 1 AS endless, u.endless_stars,
+      COALESCE(c.levels, 0) AS levels, COALESCE(c.stars, 0) AS stars, COALESCE(c.top, 0) AS top,
+      (SELECT COUNT(*) FROM daily WHERE user_id = u.id) AS daily
+    FROM users u LEFT JOIN (SELECT user_id, COUNT(*) AS levels, SUM(stars) AS stars, MAX(level) AS top FROM campaign GROUP BY user_id) c ON c.user_id = u.id`).all();
+  const player = u => ({ name: u.name, method: method(u), createdAt: u.created_at, lastSeen: u.last_seen, top: u.top, levels: u.levels, stars: u.stars, endless: u.endless, daily: u.daily });
+
+  // Activity per day (game time zone), last 14 days.
+  const days = [];
+  for (let i = 13; i >= 0; i--) days.push({ date: G.today(TZ, new Date(now - i * 864e5)), newUsers: 0, newGuests: 0, players: 0, daily: 0 });
+  const byDate = Object.fromEntries(days.map(d => [d.date, d]));
+  const dayOf = t => byDate[G.today(TZ, new Date(t))];
+  const from = since(15);
+  for (const r of db.prepare('SELECT created_at AS t FROM users WHERE created_at > ?').all(from)) { const d = dayOf(r.t); if (d) d.newUsers++; }
+  for (const r of db.prepare('SELECT first_seen AS t FROM guests WHERE first_seen > ? AND user_id IS NULL').all(from)) { const d = dayOf(r.t); if (d) d.newGuests++; }
+  const active = {};
+  for (const r of db.prepare(`SELECT user_id AS u, updated_at AS t FROM campaign WHERE updated_at > ?1
+      UNION ALL SELECT user_id, updated_at FROM daily WHERE updated_at > ?1 UNION ALL SELECT user_id, updated_at FROM endless WHERE updated_at > ?1`).all(from)) {
+    const d = dayOf(r.t); if (d) (active[d.date] = active[d.date] || new Set()).add(r.u);
+  }
+  for (const d of days) { d.players = active[d.date] ? active[d.date].size : 0; d.daily = n('SELECT COUNT(*) AS n FROM daily WHERE date = ?', d.date); }
+
+  // How many signed-in players solved each level, and how far guests got.
+  const solvedBy = Object.fromEntries(db.prepare('SELECT level, COUNT(*) AS c FROM campaign GROUP BY level').all().map(r => [r.level, r.c]));
+  const levels = LEVELS.map((lv, i) => ({ level: i + 1, players: solvedBy[i + 1] || 0 }));
+  const guestLevels = db.prepare('SELECT levels, COUNT(*) AS c FROM guests WHERE user_id IS NULL GROUP BY levels ORDER BY levels').all().map(r => ({ levels: r.levels, guests: r.c }));
+  const count = (rows, key) => Object.entries(rows.reduce((m, r) => { const k = key(r) || '?'; m[k] = (m[k] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]);
+  const guestRows = db.prepare('SELECT lang FROM guests WHERE user_id IS NULL').all();
+
+  return {
+    now, today: G.today(TZ), levelCount: LEVELS.length,
+    online: { users: users.filter(u => u.last_seen > now - ONLINE).length, guests: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND last_seen > ?', now - ONLINE) },
+    totals: {
+      users: users.length,
+      guests: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL'),
+      converted: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NOT NULL'),
+      campaign: n('SELECT COUNT(*) AS n FROM campaign'), daily: n('SELECT COUNT(*) AS n FROM daily'), endless: n('SELECT COUNT(*) AS n FROM endless'),
+      guestVisits: n('SELECT COALESCE(SUM(visits), 0) AS n FROM guests'),
+    },
+    windows: [1, 7, 30].map(d => ({
+      days: d,
+      activeUsers: users.filter(u => u.last_seen > since(d)).length,
+      newUsers: users.filter(u => u.created_at > since(d)).length,
+      activeGuests: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND last_seen > ?', since(d)),
+      newGuests: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND first_seen > ?', since(d)),
+    })),
+    days, levels, guestLevels,
+    top: users.filter(u => u.levels || u.endless || u.daily)
+      .sort((a, b) => b.top - a.top || b.stars - a.stars || b.endless - a.endless || b.daily - a.daily).slice(0, 20).map(player),
+    methods: count(users, method), skins: count(users, u => u.skin || 'classic'), langs: count(guestRows, r => r.lang),
+    recentUsers: users.sort((a, b) => b.created_at - a.created_at).slice(0, 15).map(player),
+    recentGuests: db.prepare(`SELECT name, lang, first_seen AS firstSeen, last_seen AS lastSeen, visits, levels, stars, endless, daily
+      FROM guests WHERE user_id IS NULL ORDER BY last_seen DESC LIMIT 15`).all(),
+  };
+}
+
 // --- routes ----------------------------------------------------------------
 async function route(req, res) {
   const url = new URL(req.url, 'http://x');
@@ -318,6 +404,28 @@ async function route(req, res) {
       solved: db.prepare('SELECT (SELECT COUNT(*) FROM campaign) + (SELECT COUNT(*) FROM daily) + (SELECT COUNT(*) FROM endless) AS n').get().n,
       today,
     });
+  }
+
+  // Admin page (web/admin/): sign in, sign out, statistics.
+  if (req.method === 'POST' && p === '/api/admin/login') {
+    if (limited(req, 'admin', 10, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
+    const { user, password } = await readJson(req);
+    const a = db.prepare('SELECT * FROM admins WHERE name = ?').get(String(user || '').trim());
+    if (!a || !checkPassword(password, a.password_hash)) return send(res, 401, { error: 'Pogrešno ime ili lozinka.', code: 'bad_login' });
+    db.prepare('DELETE FROM admin_sessions WHERE created_at < ?').run(Date.now() - ADMIN_DAYS * 864e5);
+    const token = crypto.randomBytes(24).toString('base64url');
+    db.prepare('INSERT INTO admin_sessions (token_hash, admin, created_at) VALUES (?, ?, ?)').run(sha(token), a.name, Date.now());
+    return send(res, 200, { name: a.name, token });
+  }
+  if (req.method === 'POST' && p === '/api/admin/logout') {
+    const m = /^Bearer ([A-Za-z0-9_-]{20,100})$/.exec(req.headers.authorization || '');
+    if (m) db.prepare('DELETE FROM admin_sessions WHERE token_hash = ?').run(sha(m[1]));
+    return send(res, 200, { ok: true });
+  }
+  if (req.method === 'GET' && p === '/api/admin/stats') {
+    const admin = adminFrom(req);
+    if (!admin) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
+    return send(res, 200, { admin, ...adminStats() });
   }
 
   if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null });

@@ -157,6 +157,24 @@ function solution(level) {
   r = await call('/api/stats');
   assert.strictEqual(r.body.players, 5); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 7); ok('stats');
 
+  r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
+  r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
+  r = await call('/api/admin/stats', null, ana); assert.strictEqual(r.status, 401);
+  sdb.prepare('INSERT INTO admins (name, password_hash) VALUES (?, ?)').run('Boss', require('../server/server.js').hashPassword('dugaLozinka!1'));
+  r = await call('/api/admin/login', { user: 'boss', password: 'kriva' }); assert.strictEqual(r.status, 401);
+  r = await call('/api/admin/login', { user: 'boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 200);
+  const adm = r.body.token;
+  r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 200);
+  const st = r.body;
+  assert.strictEqual(st.totals.users, 5); assert.strictEqual(st.totals.converted, 1); assert.strictEqual(st.totals.guests, 0);
+  assert.ok(st.online.users >= 1); assert.strictEqual(st.days.length, 14); assert.strictEqual(st.days[13].date, st.today);
+  assert.ok(st.days[13].players >= 2); assert.strictEqual(st.days[13].daily, 2); assert.strictEqual(st.days[13].newUsers, 5);
+  assert.strictEqual(st.levels.length, LEVELS.length); assert.strictEqual(st.levels[9].players, 1);
+  assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 5);
+  assert.ok(!JSON.stringify(st).includes('password_hash') && !JSON.stringify(st).includes('@'), 'no secrets or e-mails in admin stats');
+  r = await call('/api/admin/logout', {}, adm); r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 401);
+  ok('admin: sign-in from the admins table, stats, logout');
+
   server.close();
   console.log('Svi testovi servera prolaze.');
 })().catch(e => { console.error('FAIL', e); process.exit(1); });

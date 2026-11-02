@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Topple · Administracija</title>
+<!-- Internal page for the owner only (Croatian), so its texts are not in i18n.js.
+     Sign-in: admin accounts set on the server with `node server/admin.js set-admin`. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lexend:wght@400;500;600&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="../theme.css">
+<style>
+  :root { --bar: #2F7A6E; --bar-hover: #1F5A51; --grid: rgba(0,0,0,.08); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bar: #5FB3A4; --bar-hover: #86CFC2; --grid: rgba(255,255,255,.08); } }
+  :root[data-theme="dark"] { --bar: #5FB3A4; --bar-hover: #86CFC2; --grid: rgba(255,255,255,.08); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.45 var(--body); }
+  h1, h2 { font-family: var(--display); font-weight: 600; margin: 0; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.1rem; margin-bottom: 12px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
+  .top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .top h1 span { color: var(--hero); }
+  .top .grow { flex: 1; }
+  .muted { color: var(--muted); }
+  .small { font-size: .85rem; }
+  button { font: 500 .9rem var(--body); border: 1px solid var(--panel-line); background: var(--panel); color: var(--ink); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button.primary { background: var(--hero); border-color: var(--hero-edge); color: #fff; }
+  .card { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 16px; padding: 16px; min-width: 0; }
+  .grid { display: grid; gap: 14px; margin-bottom: 14px; }
+  .tiles { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .two { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+  .three { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .tile .label { font-size: .85rem; color: var(--muted); }
+  .tile .value { font: 600 2rem/1.15 var(--display); margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .tile .sub { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2E9E5B; margin-right: 6px; vertical-align: middle; animation: pulse 2s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--panel-line); white-space: nowrap; }
+  th { font-weight: 500; color: var(--muted); font-size: .8rem; }
+  td.n, th.n { text-align: right; }
+  tr:last-child td { border-bottom: 0; }
+  .scroll { overflow-x: auto; }
+  /* bar charts: one series each, so the card title names it and no legend is needed */
+  .chart { position: relative; display: flex; align-items: stretch; gap: 2px; height: 150px; padding-top: 6px;
+    background: linear-gradient(var(--grid) 1px, transparent 1px) 0 6px / 100% 25%; border-bottom: 1px solid var(--panel-line); }
+  .chart .col { flex: 1; min-width: 0; display: flex; align-items: flex-end; cursor: default; }
+  .chart .bar { width: 100%; background: var(--bar); border-radius: 4px 4px 0 0; min-height: 0; }
+  .chart .col:hover .bar, .chart .col:focus .bar { background: var(--bar-hover); }
+  .chart .col.zero .bar { height: 2px !important; background: var(--panel-line); border-radius: 1px; }
+  .axis { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); margin-top: 4px; }
+  .axis.ticks { position: relative; height: 1.2em; }
+  .axis.ticks span { position: absolute; transform: translateX(-50%); }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .chart-head .max { font-size: .75rem; color: var(--muted); }
+  .tip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--page); font-size: .8rem; padding: 6px 9px; border-radius: 8px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); }
+  .hbars { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 10px; align-items: center; font-size: .9rem; }
+  .hbars .track { height: 10px; background: var(--grid); border-radius: 5px; overflow: hidden; }
+  .hbars .fill { height: 100%; background: var(--bar); border-radius: 5px; }
+  .hbars .v { font-variant-numeric: tabular-nums; color: var(--muted); }
+  .login { max-width: 360px; margin: 12vh auto 0; }
+  .login label { display: block; font-size: .85rem; color: var(--muted); margin: 12px 0 4px; }
+  .login input { width: 100%; font: 1rem var(--body); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--panel-line); background: var(--page); color: var(--ink); }
+  .login button { width: 100%; margin-top: 16px; padding: 11px; }
+  .err { color: var(--hero); font-size: .9rem; min-height: 1.3em; margin-top: 10px; }
+  .badge { display: inline-block; font-size: .75rem; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--panel-line); color: var(--muted); }
+  .on { color: #2E9E5B; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <form class="card login" id="loginBox" hidden>
+    <h1>Topple <span style="color:var(--hero)">admin</span></h1>
+    <label for="user">Korisničko ime</label>
+    <input id="user" autocomplete="username" required>
+    <label for="pass">Lozinka</label>
+    <input id="pass" type="password" autocomplete="current-password" required>
+    <button class="primary" type="submit">Prijava</button>
+    <div class="err" id="loginErr" role="alert"></div>
+  </form>
+
+  <main id="dash" hidden>
+    <div class="top">
+      <h1>Topple <span>admin</span></h1>
+      <div class="grow"></div>
+      <span class="muted small" id="updated"></span>
+      <button id="refresh" type="button">Osvježi</button>
+      <button id="logout" type="button">Odjava</button>
+    </div>
+
+    <div class="grid tiles" id="tiles"></div>
+
+    <div class="grid two">
+      <section class="card">
+        <h2>Aktivnost po razdobljima</h2>
+        <div class="scroll"><table id="windows"></table></div>
+      </section>
+      <section class="card">
+        <h2>Riješeno ukupno</h2>
+        <div class="hbars" id="solved"></div>
+        <p class="muted small" style="margin:12px 0 0">Brojke uključuju samo prijavljene igrače (server sprema rezultate samo uz račun).</p>
+      </section>
+    </div>
+
+    <div class="grid three" id="dayCharts"></div>
+
+    <section class="card grid" style="margin-bottom:14px">
+      <div class="chart-head"><h2>Koliko je prijavljenih igrača riješilo svaku razinu</h2><span class="max" id="levelsMax"></span></div>
+      <div class="chart" id="levelsChart" style="height:170px" role="img"></div>
+      <div class="axis ticks" id="levelsAxis"></div>
+    </section>
+
+    <div class="grid two">
+      <section class="card">
+        <h2>Najdalje stigli</h2>
+        <div class="scroll"><table id="top"></table></div>
+      </section>
+      <section class="card">
+        <div class="chart-head"><h2>Gosti po broju riješenih razina</h2><span class="max" id="guestMax"></span></div>
+        <div class="chart" id="guestChart" role="img"></div>
+        <div class="axis" id="guestAxis"></div>
+        <div class="grid three" style="margin:18px 0 0">
+          <div><h2>Prijava</h2><div class="hbars" id="methods"></div></div>
+          <div><h2>Jezik gostiju</h2><div class="hbars" id="langs"></div></div>
+          <div><h2>Likovi</h2><div class="hbars" id="skins"></div></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid two">
+      <section class="card">
+        <h2>Novi igrači</h2>
+        <div class="scroll"><table id="recentUsers"></table></div>
+      </section>
+      <section class="card">
+        <h2>Gosti nedavno</h2>
+        <div class="scroll"><table id="recentGuests"></table></div>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script src="../config.js"></script>
+<script src="../i18n.js"></script>
+<script>
+const API = (window.TOPPLE_API || '') + '/api/admin/';
+const KEY = 'topple-admin';
+const $ = id => document.getElementById(id);
+let token = null, timer = null;
+try { token = localStorage.getItem(KEY); } catch (e) {}
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = n => Number(n || 0).toLocaleString('hr-HR');
+const pct = (a, b) => b ? Math.round(100 * a / b) + ' %' : '–';
+function ago(t) {
+  if (!t) return '–';
+  const s = (Date.now() - t) / 1000;
+  if (s < 90) return 'upravo';
+  if (s < 3600) return `prije ${Math.round(s / 60)} min`;
+  if (s < 86400) return `prije ${Math.round(s / 3600)} h`;
+  if (s < 30 * 86400) return `prije ${Math.round(s / 86400)} d`;
+  return new Date(t).toLocaleDateString('hr-HR');
+}
+const date = t => t ? new Date(t).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric', year: '2-digit' }) : '–';
+const shortDay = d => { const [, m, day] = d.split('-'); return `${+day}. ${+m}.`; };
+const METHOD = { password: 'lozinka', google: 'Google', both: 'lozinka + Google', device: 'samo uređaj' };
+const LANG = { hr: 'hrvatski', en: 'engleski', it: 'talijanski', de: 'njemački', '?': 'nepoznat' };
+const skinName = k => (typeof ToppleI18n !== 'undefined' && ToppleI18n.S.hr['skin.' + k]) || k;
+
+async function call(path, body) {
+  const res = await fetch(API + path, { method: body ? 'POST' : 'GET', body: body && JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) } });
+  const data = await res.json().catch(() => ({}));
+  return { status: res.status, data };
+}
+
+function showLogin(msg) {
+  clearInterval(timer);
+  $('dash').hidden = true; $('loginBox').hidden = false; $('loginErr').textContent = msg || '';
+  $('user').focus();
+}
+$('loginBox').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('loginErr').textContent = '';
+  try {
+    const r = await call('login', { user: $('user').value, password: $('pass').value });
+    if (r.status !== 200) return showLogin(r.data.error || 'Prijava nije uspjela.');
+    token = r.data.token;
+    try { localStorage.setItem(KEY, token); } catch (e) {}
+    $('pass').value = '';
+    load();
+  } catch (err) { showLogin('Server nije dostupan.'); }
+});
+$('logout').onclick = async () => {
+  try { await call('logout', {}); } catch (e) {}
+  token = null; try { localStorage.removeItem(KEY); } catch (e) {}
+  showLogin();
+};
+$('refresh').onclick = () => load();
+
+async function load() {
+  if (!token) return showLogin();
+  let r;
+  try { r = await call('stats'); } catch (e) { $('updated').textContent = 'Server nije dostupan, pokušavam ponovno…'; return; }
+  if (r.status === 401) { token = null; try { localStorage.removeItem(KEY); } catch (e) {} return showLogin(); }
+  if (r.status !== 200) { $('updated').textContent = r.data.error || 'Greška.'; return; }
+  $('loginBox').hidden = true; $('dash').hidden = false;
+  render(r.data);
+  $('updated').textContent = `${esc(r.data.admin)} · osvježeno ${new Date().toLocaleTimeString('hr-HR', { hour: '2-digit', minute: '2-digit' })}`;
+  clearInterval(timer);
+  timer = setInterval(() => { if (!document.hidden) load(); }, 60e3);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && token && !$('dash').hidden) load(); });
+
+// --- charts ---------------------------------------------------------------
+const tip = $('tip');
+function bars(el, items) { // items: [{ value, tip }]
+  const max = Math.max(1, ...items.map(i => i.value));
+  el.innerHTML = items.map((it, k) => `<div class="col${it.value ? '' : ' zero'}" tabindex="0" data-k="${k}" aria-label="${esc(it.tip)}"><div class="bar" style="height:${(100 * it.value / max).toFixed(1)}%"></div></div>`).join('');
+  el.setAttribute('aria-label', items.map(i => i.tip).join('; '));
+  const show = e => {
+    const col = e.target.closest('.col'); if (!col) return;
+    const r = col.getBoundingClientRect();
+    tip.textContent = items[col.dataset.k].tip; tip.hidden = false;
+    tip.style.left = Math.min(Math.max(r.left + r.width / 2, 80), innerWidth - 80) + 'px';
+    tip.style.top = (r.top + r.height - col.firstChild.offsetHeight) + 'px';
+  };
+  el.onmouseover = show; el.onfocusin = show;
+  el.onmouseleave = el.onfocusout = () => { tip.hidden = true; };
+  return max;
+}
+function hbars(el, rows, label) {
+  const max = Math.max(1, ...rows.map(r => r[1]));
+  el.innerHTML = rows.length ? rows.map(([k, v]) => `<span>${esc(label(k))}</span><div class="track"><div class="fill" style="width:${100 * v / max}%"></div></div><span class="v">${num(v)}</span>`).join('')
+    : '<span class="muted small">Još nema podataka.</span>';
+}
+function table(el, head, rows, empty) {
+  el.innerHTML = `<thead><tr>${head.map(h => `<th class="${h[1] || ''}">${h[0]}</th>`).join('')}</tr></thead><tbody>${
+    rows.length ? rows.map(r => `<tr>${r.map((c, i) => `<td class="${head[i][1] || ''}">${c}</td>`).join('')}</tr>`).join('')
+      : `<tr><td colspan="${head.length}" class="muted">${empty}</td></tr>`}</tbody>`;
+}
+
+function render(s) {
+  const T = s.totals, guestsAll = T.guests + T.converted, w1 = s.windows[0];
+  const tile = (label, value, sub, live) => `<div class="card tile"><div class="label">${live ? '<span class="live"></span>' : ''}${label}</div><div class="value">${value}</div><div class="sub">${sub || '&nbsp;'}</div></div>`;
+  $('tiles').innerHTML = [
+    tile('Trenutno igraju', num(s.online.users + s.online.guests), `${num(s.online.users)} prijavljenih · ${num(s.online.guests)} gostiju (15 min)`, true),
+    tile('Registrirani igrači', num(T.users), `+${num(w1.newUsers)} u zadnja 24 h`),
+    tile('Gosti bez računa', num(T.guests), `+${num(w1.newGuests)} u zadnja 24 h`),
+    tile('Gosti koji su napravili račun', num(T.converted), `${pct(T.converted, guestsAll)} svih gostiju`),
+    tile('Aktivni danas', num(w1.activeUsers + w1.activeGuests), `${num(w1.activeUsers)} igrača · ${num(w1.activeGuests)} gostiju`),
+    tile('Dnevna zagonetka danas', num(s.days[s.days.length - 1].daily), 'prijavljenih igrača riješilo'),
+  ].join('');
+
+  table($('windows'), [['Razdoblje'], ['Aktivni igrači', 'n'], ['Novi igrači', 'n'], ['Aktivni gosti', 'n'], ['Novi gosti', 'n']],
+    s.windows.map(w => [w.days === 1 ? '24 sata' : `${w.days} dana`, num(w.activeUsers), num(w.newUsers), num(w.activeGuests), num(w.newGuests)]), '');
+  hbars($('solved'), [['Razine', T.campaign], ['Dnevne zagonetke', T.daily], ['Beskonačne zagonetke', T.endless], ['Posjete gostiju', T.guestVisits]], k => k);
+
+  // Activity per day: three small charts, one series each.
+  const d = s.days, first = shortDay(d[0].date), last = 'danas';
+  $('dayCharts').innerHTML = [['newGuests', 'Novi gosti po danu'], ['newUsers', 'Novi igrači po danu'], ['players', 'Igrači koji su nešto riješili']]
+    .map(([k, title]) => `<section class="card"><div class="chart-head"><h2>${title}</h2><span class="max" data-max="${k}"></span></div><div class="chart" data-chart="${k}" role="img"></div><div class="axis"><span>${first}</span><span>${last}</span></div></section>`).join('');
+  for (const k of ['newGuests', 'newUsers', 'players']) {
+    const max = bars(document.querySelector(`[data-chart="${k}"]`), d.map(x => ({ value: x[k], tip: `${shortDay(x.date)}: ${num(x[k])}` })));
+    document.querySelector(`[data-max="${k}"]`).textContent = `vrh ljestvice: ${num(max)}`;
+  }
+
+  const lmax = bars($('levelsChart'), s.levels.map(l => ({ value: l.players, tip: `Razina ${l.level} · igrača: ${num(l.players)}` })));
+  $('levelsMax').textContent = `vrh ljestvice: ${num(lmax)}`;
+  const n = s.levelCount, ticks = [1, ...[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].filter(t => t < n), n];
+  $('levelsAxis').innerHTML = ticks.map(t => `<span style="left:${(100 * (t - .5) / n).toFixed(2)}%">${t}</span>`).join('');
+
+  const gl = Array.from({ length: Math.max(11, ...s.guestLevels.map(g => g.levels + 1)) }, (_, i) => ({ levels: i, guests: (s.guestLevels.find(g => g.levels === i) || {}).guests || 0 }));
+  const gmax = bars($('guestChart'), gl.map(g => ({ value: g.guests, tip: `Riješenih razina ${g.levels} · gostiju: ${num(g.guests)}` })));
+  $('guestMax').textContent = `vrh ljestvice: ${num(gmax)}`;
+  $('guestAxis').innerHTML = `<span>0 razina</span><span>${gl.length - 1} razina</span>`;
+
+  hbars($('methods'), s.methods, k => METHOD[k] || k);
+  hbars($('langs'), s.langs, k => LANG[k] || k);
+  hbars($('skins'), s.skins, skinName);
+
+  table($('top'), [['#', 'n'], ['Igrač'], ['Najviša razina', 'n'], ['Razina', 'n'], ['★', 'n'], ['Beskonačne', 'n'], ['Dnevne', 'n'], ['Zadnji put']],
+    s.top.map((u, i) => [i + 1, esc(u.name), `<b>${u.top || '–'}</b>`, num(u.levels), num(u.stars), num(u.endless), num(u.daily), seen(u.lastSeen)]), 'Još nitko nije riješio razinu.');
+  table($('recentUsers'), [['Igrač'], ['Račun od'], ['Prijava'], ['Razina', 'n'], ['Zadnji put']],
+    s.recentUsers.map(u => [esc(u.name), date(u.createdAt), `<span class="badge">${METHOD[u.method]}</span>`, num(u.levels), seen(u.lastSeen)]), 'Još nema igrača.');
+  table($('recentGuests'), [['Gost'], ['Jezik'], ['Prvi put'], ['Posjeta', 'n'], ['Razina', 'n'], ['Beskonačne', 'n'], ['Zadnji put']],
+    s.recentGuests.map(g => [esc(g.name || '–'), esc(g.lang || '?'), date(g.firstSeen), num(g.visits), num(g.levels), num(g.endless), seen(g.lastSeen)]), 'Još nema gostiju.');
+}
+const seen = t => t > Date.now() - 15 * 60e3 ? '<span class="on">sada</span>' : ago(t);
+
+load();
+</script>
+</body>
+</html>
