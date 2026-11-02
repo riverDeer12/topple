@@ -129,7 +129,7 @@ const SPECS = [
   { opt: 9, max: 12, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2 },
   { opt: 10, max: 12, n: 7, fixed: 1, ice: 0, heavy: 2, fragile: 3 },
   { opt: 10, max: 12, n: 7, fixed: 2, ice: 1, heavy: 1, fragile: 2 },
-  { opt: 10, max: 12, n: 6, fixed: 1, ice: 1, heavy: 2, fragile: 2 },
+  { opt: 9, max: 12, n: 6, fixed: 1, ice: 1, heavy: 2, fragile: 2 },
   { opt: 10, max: 13, n: 7, fixed: 1, ice: 2, heavy: 1, fragile: 3 },
   { opt: 10, max: 13, n: 7, fixed: 2, ice: 0, heavy: 2, fragile: 2 },
   { opt: 11, max: 13, n: 7, fixed: 1, ice: 1, heavy: 1, fragile: 2 },
