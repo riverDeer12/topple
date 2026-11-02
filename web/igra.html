@@ -429,6 +429,26 @@ function guestName() {
   if (!n) { n = ToppleI18n.guestName(); store.set('guestName', n); }
   return n;
 }
+// Anonymous id of this browser, so the server can count guests and see how far they get
+// (no personal data; linked to the account if the guest signs up). See privatnost.html.
+function guestId() {
+  let id = store.get('gid', '');
+  if (!id) {
+    const b = new Uint8Array(16); crypto.getRandomValues(b);
+    id = btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    store.set('gid', id);
+  }
+  return id;
+}
+function reportGuest() {
+  if (!API || signedInNow()) return;
+  const body = {
+    id: guestId(), name: guestName(), lang: ToppleI18n.lang,
+    levels: Object.keys(best).length, stars: Object.values(best).reduce((a, b) => a + b, 0),
+    endless: prog.endless.next - 1, daily: Object.keys(prog.daily).length,
+  };
+  fetch(API + '/api/guest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(() => {});
+}
 // Explains what needs an account and offers to sign in.
 function needAccount(what) {
   openLogin();
@@ -706,6 +726,7 @@ function win() {
   const unlockedBefore = SKINS.filter(skinUnlocked).map(x => x.id);
   const s = record(ctx.mode, ctx.key, moveLog.slice(), timeMs);
   const fresh = SKINS.filter(x => skinUnlocked(x) && !unlockedBefore.includes(x.id));
+  reportGuest();
   $('winUnlock').hidden = !fresh.length;
   if (fresh.length) $('winUnlock').textContent = t('win.unlock', { name: fresh.map(x => t('skin.' + x.id)).join(', ') });
   $('winRank').textContent = '';
@@ -849,10 +870,10 @@ $('loginForm').addEventListener('submit', async e => {
     const name = $('lName').value.trim().replace(/\s+/g, ' ');
     if (!NAME_RE.test(name)) { err.textContent = t('err.name'); return; }
     if (pass.length < 6) { err.textContent = t('err.password'); return; }
-    path = '/api/register'; body = { name, password: pass, email: $('lEmail').value.trim() };
+    path = '/api/register'; body = { name, password: pass, email: $('lEmail').value.trim(), guest: guestId() };
   } else {
     if (!$('lLogin').value.trim() || !pass) { err.textContent = t('err.loginEmpty'); return; }
-    path = '/api/login'; body = { login: $('lLogin').value.trim(), password: pass };
+    path = '/api/login'; body = { login: $('lLogin').value.trim(), password: pass, guest: guestId() };
   }
   $('loginGo').disabled = true;
   try { signedIn(await api(path, { method: 'POST', body: JSON.stringify(body) })); }
@@ -862,7 +883,7 @@ $('loginForm').addEventListener('submit', async e => {
 async function onGoogle(credential) {
   const linking = user && user.token;
   try {
-    const r = await api('/api/google', { method: 'POST', body: JSON.stringify({ credential }) });
+    const r = await api('/api/google', { method: 'POST', body: JSON.stringify({ credential, guest: guestId() }) });
     if (linking) openAccount(); else signedIn(r);
   } catch (x) { (linking ? $('accErr') : $('loginErr')).textContent = errText(x); }
 }
@@ -1197,6 +1218,7 @@ function start() {
   openCampaign(i);
   if (!signedInNow() && !store.get('asked', false)) openLogin(); else openMenu();
   started = true;
+  reportGuest(); // count this visit if playing without an account
   sync();
 }
 start();
