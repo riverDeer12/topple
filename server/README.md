@@ -165,6 +165,8 @@ Igra nudi reklamu s nagradom kad igraču nestane savjeta. Dok AdSense nije uklju
 5. U `web/config.js` upiši svoj ID: `window.TOPPLE_ADS = { client: 'ca-pub-…', test: true, simulate: true };`. S `test: true` Google prikazuje probne reklame. Kad AdSense odobri stranicu, stavi `test: false`.
 6. Napravi datoteku `web/ads.txt` s jednim retkom (AdSense ga traži): `google.com, pub-…, DIRECT, f08c47fec0942fa0` (tvoj broj bez `ca-`).
 
+Stanje: AdSense račun `pub-8378829605116517`, stranica `rdd.software` (pokriva i poddomenu). `ads.txt` i oznaka `google-adsense-account` su u repozitoriju riverDeer12/rdd i u `web/ads.txt` ovdje; `config.js` ima ID uz `test: true`. Kad AdSense odobri stranicu, stavi `test: false`.
+
 Promjene pushaj na `main`; server ih preuzme sam. Pravila privatnosti su na `privatnost.html`.
 
 ## Upravljanje računima

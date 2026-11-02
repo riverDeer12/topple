@@ -8,4 +8,4 @@ window.TOPPLE_API = location.hostname === 'topple.rdd.software' ? location.origi
 //   client:   your AdSense publisher ID, e.g. 'ca-pub-1234567890123456'. Empty = no Google ads.
 //   test:     true shows Google's test ads (keep true until AdSense approves the site).
 //   simulate: with no client, show a short placeholder "ad" so the hint flow can be tried.
-window.TOPPLE_ADS = { client: '', test: true, simulate: true };
+window.TOPPLE_ADS = { client: 'ca-pub-8378829605116517', test: true, simulate: true };

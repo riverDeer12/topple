@@ -1052,12 +1052,19 @@ function openHintShop() {
   showOnly('hintBox');
   if (ADS.client) {
     $('adStatus').textContent = t('shop.loading');
-    let musicWas = false;
+    let musicWas = false, offered = false;
+    // No ad offered in time (site not approved yet, ad blocker, no inventory): fall back to
+    // the placeholder while `simulate` is on, otherwise say no ad is available.
+    setTimeout(() => {
+      if (offered || $('hintBox').hidden) return;
+      if (ADS.simulate !== false) { btn.disabled = false; btn.onclick = simulateAd; $('adStatus').textContent = ''; }
+      else $('adStatus').textContent = t('shop.unavailable');
+    }, 8000);
     window.adBreak({
       type: 'reward', name: 'hint',
       beforeAd: () => { musicWas = ToppleAudio.music; ToppleAudio.setMusic(false); },
       afterAd: () => { if (musicWas) ToppleAudio.setMusic(true); },
-      beforeReward: showAdFn => { btn.disabled = false; $('adStatus').textContent = ''; btn.onclick = () => showAdFn(); },
+      beforeReward: showAdFn => { offered = true; btn.disabled = false; $('adStatus').textContent = ''; btn.onclick = () => showAdFn(); },
       adDismissed: () => { $('adStatus').textContent = t('shop.dismissed'); },
       adViewed: grantHint,
       adBreakDone: info => { if (info && !['viewed', 'dismissed'].includes(info.breakStatus)) { btn.disabled = true; $('adStatus').textContent = t('shop.unavailable'); } },
