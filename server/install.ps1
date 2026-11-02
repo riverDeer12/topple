@@ -24,6 +24,10 @@ function Fail($msg) { Write-Host "GREŠKA: $msg" -ForegroundColor Red; exit 1 }
 # --- 0. Administrator and prerequisites ------------------------------------------
 $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $admin) { Fail 'Pokreni PowerShell kao Administrator.' }
+# A Google client ID looks like 1234-abc.apps.googleusercontent.com (the suffix once).
+if ($GoogleClientId -and $GoogleClientId -notmatch '^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$') {
+  Fail "Google Client ID nije ispravan: $GoogleClientId`nTreba izgledati ovako: 123456789-abcdef.apps.googleusercontent.com (nastavak samo jednom)."
+}
 
 Step 'Provjera programa'
 $node = (Get-Command node -ErrorAction SilentlyContinue).Source
@@ -98,16 +102,14 @@ if (-not (Test-Path 'IIS:\Sites\topple')) {
 # Let the app pool identity read the game files.
 & icacls $web /grant "IIS AppPool\topple:(OI)(CI)RX" /T /Q | Out-Null
 Start-Website -Name topple -ErrorAction SilentlyContinue
-try {
-  $r = Invoke-WebRequest "http://$HostName/api/health" -UseBasicParsing -MaximumRedirection 0 -ErrorAction Stop
-  Write-Host "IIS prosljeđuje /api/: $($r.StatusCode)"
-} catch {
-  $code = $null
-  if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode }
-  if ($code -eq 301) { Write-Host 'IIS radi i preusmjerava na HTTPS (certifikat se dodaje u sljedećem koraku).' }
-  elseif ($code) { Write-Host "Upozorenje: IIS je vratio $code. Provjeri da je stranica 'topple' pokrenuta u IIS Manageru." -ForegroundColor Yellow }
-  else { Write-Host "Upozorenje: $HostName se ne otvara s ovog servera. Provjeri DNS (A zapis topple -> IP servera)." -ForegroundColor Yellow }
-}
+# curl.exe (built into Windows) reports redirects plainly; Invoke-WebRequest in PowerShell 5.1 does not.
+$code = ''
+$curl = (Get-Command curl.exe -ErrorAction SilentlyContinue).Source
+if ($curl) { $code = (& $curl -s -o NUL -w '%{http_code}' --max-time 10 "http://$HostName/api/health") }
+if ($code -eq '200') { Write-Host 'IIS prosljeđuje /api/ na API.' }
+elseif ($code -match '^30[1278]$') { Write-Host 'IIS radi i preusmjerava na HTTPS.' }
+elseif ($code -and $code -ne '000') { Write-Host "Upozorenje: IIS je vratio $code. Provjeri da je stranica 'topple' pokrenuta u IIS Manageru." -ForegroundColor Yellow }
+else { Write-Host "Napomena: $HostName se ne otvara sa samog servera (to je čest slučaj iza routera). Provjeri u pregledniku: https://$HostName" -ForegroundColor Yellow }
 
 # --- 6. Automatic updates every 2 minutes -------------------------------------------------------
 Step 'Automatsko ažuriranje (zakazani zadatak "Topple update")'
