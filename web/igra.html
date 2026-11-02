@@ -114,6 +114,21 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 .langsel:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .form { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .form input.nick { text-align: left; }
+.card.scroll { max-height: calc(100dvh - 32px); overflow-y: auto; }
+.phead { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; }
+.phead h2 { margin: 0; overflow-wrap: anywhere; }
+.phead p { margin: 2px 0 0; }
+.avatar { flex: none; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--hero); color: #fff; font: 600 1.6rem var(--display); box-shadow: inset 0 -4px 0 var(--hero-edge); }
+.pstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+.pstat { background: var(--page); border: 1px solid var(--panel-line); border-radius: 12px; padding: 10px; text-align: left; min-width: 0; }
+.pstat small { display: block; font-size: .66rem; letter-spacing: .03em; overflow-wrap: anywhere; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.pstat b { display: block; font: 500 1.25rem var(--mono); margin-top: 2px; }
+.pstat span { font-size: .78rem; color: var(--muted); }
+.pstat.wide2 { grid-column: 1 / -1; }
+.pstat.wide2 b { font: 500 .95rem var(--mono); }
+.psec { font: 600 1.05rem var(--display); margin: 6px 0 0; width: 100%; text-align: left; }
+.lbl { font-size: .78rem; font-weight: 600; color: var(--muted); text-align: left; margin-top: 4px; }
+.small { margin: 0; font-size: .8rem; text-align: left; }
 .gbtn { display: flex; justify-content: center; min-height: 44px; width: 100%; }
 .or { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--muted); font-size: .8rem; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--panel-line); }
@@ -210,10 +225,17 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 </div>
 
 <div class="overlay" id="accBox" hidden>
-  <div class="card">
-    <h2 data-i18n="acc.title">Račun</h2>
-    <p id="accInfo"></p>
+  <div class="card wide scroll">
+    <div class="phead">
+      <div class="avatar" id="pAvatar" aria-hidden="true"></div>
+      <div><h2 id="pName" data-i18n="prof.title">Profil</h2><p id="pSince"></p></div>
+    </div>
+    <div class="pstats" id="pStats"></div>
+    <h3 class="psec" data-i18n="prof.edit">Uredi profil</h3>
     <form id="accForm" class="form">
+      <label class="lbl" for="aName" data-i18n="ph.name">Korisničko ime</label>
+      <input class="nick" id="aName" maxlength="16" autocomplete="username">
+      <p class="small" id="accInfo"></p>
       <input class="nick" id="aEmail" type="email" autocomplete="email" placeholder="E-mail" data-i18n-ph="ph.emailAcc" data-i18n-aria="ph.emailAcc">
       <input class="nick" id="aCur" type="password" autocomplete="current-password" placeholder="Trenutna lozinka" data-i18n-ph="ph.current" data-i18n-aria="ph.current">
       <input class="nick" id="aPass" type="password" autocomplete="new-password" placeholder="Nova lozinka" data-i18n-aria="ph.newOpt">
@@ -791,10 +813,25 @@ let account = null;
 async function openAccount() {
   $('accErr').textContent = ''; $('aCur').value = ''; $('aPass').value = '';
   showOnly('accBox');
-  $('accInfo').textContent = t('acc.loading');
-  try { account = await api('/api/me'); } catch (e) { $('accInfo').textContent = t('err.server'); return; }
+  $('pAvatar').textContent = (user && user.name || '?').slice(0, 1).toUpperCase();
+  $('pName').textContent = user ? user.name : t('prof.title');
+  $('pStats').innerHTML = ''; $('pSince').textContent = t('acc.loading');
+  try { account = await api('/api/me'); } catch (e) { $('pSince').textContent = t('err.server'); return; }
+  if (account.name !== user.name) { user.name = account.name; store.set('user', user); }
+  const st = account.stats, rk = r => (r ? t('prof.rank', { r }) : '–');
+  $('pAvatar').textContent = account.name.slice(0, 1).toUpperCase();
+  $('pName').textContent = account.name;
+  $('pSince').textContent = t('prof.since', { date: new Date(account.createdAt).toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', year: 'numeric' }) });
+  const h = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const tile = (label, value, note, cls = '') => `<div class="pstat ${cls}"><small>${h(label)}</small><b>${h(value)}</b><span>${h(note)}</span></div>`;
+  $('pStats').innerHTML =
+    tile(t('prof.levels'), `${st.levels}/${LEVELS.length}`, `★ ${st.stars}/${LEVELS.length * 3}`) +
+    tile(t('prof.endless'), `#${st.endlessSolved}`, `★ ${st.endlessStars}`) +
+    tile(t('prof.daily'), String(st.dailySolved), t('prof.solved')) +
+    tile(t('prof.ranks'), t('prof.rankLine', { d: rk(account.ranks.daily), e: rk(account.ranks.endless), c: rk(account.ranks.campaign) }), '', 'wide2');
   const ways = [account.hasPassword && t('acc.wayPassword'), account.email && account.hasPassword && t('acc.wayEmail'), account.google && 'Google'].filter(Boolean);
-  $('accInfo').textContent = t('acc.signedAs', { name: account.name }) + ' ' + (ways.length ? t('acc.ways', { ways: ways.join(', ') }) : t('acc.onlyDevice'));
+  $('accInfo').textContent = ways.length ? t('acc.ways', { ways: ways.join(', ') }) : t('acc.onlyDevice');
+  $('aName').value = account.name;
   $('aEmail').value = account.email || '';
   $('aCur').hidden = !account.hasPassword;
   $('aPass').placeholder = account.hasPassword ? t('ph.newOpt') : t('ph.passwordNew');
@@ -803,13 +840,21 @@ async function openAccount() {
 $('accForm').addEventListener('submit', async e => {
   e.preventDefault();
   const body = {}, err = $('accErr');
+  const name = $('aName').value.trim().replace(/\s+/g, ' ');
+  if (account && name !== account.name) {
+    if (!NAME_RE.test(name)) { err.textContent = t('err.name'); return; }
+    body.name = name;
+  }
   if ($('aEmail').value.trim() !== (account && account.email || '')) body.email = $('aEmail').value.trim();
   if ($('aPass').value) { body.password = $('aPass').value; body.currentPassword = $('aCur').value; }
   if (!Object.keys(body).length) { err.textContent = t('acc.noChanges'); return; }
   if (body.password && body.password.length < 6) { err.textContent = t('err.password'); return; }
   $('accGo').disabled = true;
-  try { await api('/api/account', { method: 'POST', body: JSON.stringify(body) }); await openAccount(); $('accErr').textContent = t('acc.saved'); }
-  catch (x) { err.textContent = errText(x); }
+  try {
+    const r = await api('/api/account', { method: 'POST', body: JSON.stringify(body) });
+    user.name = r.name; store.set('user', user);
+    await openAccount(); $('accErr').textContent = t('acc.saved');
+  } catch (x) { err.textContent = errText(x); }
   finally { $('accGo').disabled = false; }
 });
 $('accLogout').onclick = async () => {

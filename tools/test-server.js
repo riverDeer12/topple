@@ -123,6 +123,18 @@ function solution(level) {
   r = await call('/api/leaderboard?mode=campaign', null, duro);
   assert.strictEqual(r.body.rows[0].stars, 3); assert.strictEqual(r.body.mine, null); ok('campaign leaderboard');
 
+  r = await call('/api/me', null, ana);
+  assert.strictEqual(r.body.stats.levels, 1); assert.strictEqual(r.body.stats.stars, 3); assert.strictEqual(r.body.stats.endlessSolved, 3);
+  assert.strictEqual(r.body.stats.dailySolved, 1); assert.deepStrictEqual(r.body.ranks, { daily: 2, endless: 1, campaign: 1 }); assert.ok(r.body.createdAt > 0);
+  ok('profile: stats and ranks');
+  r = await call('/api/account', { name: 'Đuro Č' }, ana); assert.strictEqual(r.status, 409);
+  r = await call('/api/account', { name: 'x' }, ana); assert.strictEqual(r.status, 400);
+  r = await call('/api/account', { name: '  Ana  Nova ' }, ana); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.name, 'Ana Nova');
+  r = await call('/api/account', { name: 'ana nova' }, ana); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.name, 'ana nova');
+  r = await call('/api/leaderboard?mode=daily&date=' + today, null, ana); assert.ok(r.body.rows.some(x => x.name === 'ana nova' && x.me));
+  r = await call('/api/login', { login: 'ana nova', password: 'nova1234' }); assert.strictEqual(r.status, 200);
+  ok('account: change username (unique, validated; own name in other case allowed), shown on leaderboards');
+
   r = await call('/api/stats');
   assert.strictEqual(r.body.players, 4); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 6); ok('stats');
 

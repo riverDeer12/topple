@@ -8,6 +8,7 @@ const ToppleI18n = (() => {
 
   const S = {
     hr: {
+      'prof.title': 'Profil', 'prof.since': 'Igra od {date}', 'prof.levels': 'Razine', 'prof.endless': 'Beskonačno', 'prof.daily': 'Dnevne zagonetke', 'prof.solved': 'riješeno', 'prof.ranks': 'Mjesto na ljestvici', 'prof.rankLine': 'dnevna {d} · beskonačno {e} · razine {c}', 'prof.rank': '{r}.', 'prof.edit': 'Uredi profil', 'prof.signin': 'Prijava na drugim uređajima',
       'lvl.level': 'Razina {n} od {total}', 'lvl.daily': 'Dnevna · {date}', 'lvl.endless': 'Beskonačno #{n}',
       'stat.moves': 'Potezi', 'stat.par': 'Cilj',
       'btn.undo': 'Vrati', 'btn.reset': 'Ponovi', 'btn.menu': 'Izbornik',
@@ -15,7 +16,7 @@ const ToppleI18n = (() => {
       'menu.sfx': 'Zvukovi', 'menu.music': 'Glazba', 'menu.help': 'Kako se igra', 'menu.home': 'Početna stranica i ljestvica', 'menu.back': 'Natrag na igru', 'menu.lang': 'Jezik',
       'sub.dailyNew': '{date} · nova', 'sub.dailyDone': '{date} · riješeno u {n} {moves}', 'sub.endless': 'Zagonetka #{n} · ★ {s}', 'sub.endlessGuest': ' · gost do #{n}',
       'sub.levels': '{done} od {total} riješeno · ★ {s}/{max}',
-      'who.signed': 'Igraš kao', 'who.account': 'račun', 'who.guest': 'Gost', 'who.login': 'prijavi se',
+      'who.signed': 'Igraš kao', 'who.account': 'profil', 'who.guest': 'Gost', 'who.login': 'prijavi se',
       'login.title': 'Dobro došli!', 'login.intro': 'Prijavi se za ljestvicu i nastavi igrati na svim svojim uređajima.', 'login.offline': 'Prijava i ljestvica rade na topple.rdd.software.',
       'login.tabLogin': 'Prijava', 'login.tabRegister': 'Novi račun', 'login.or': 'ili',
       'ph.login': 'Korisničko ime ili e-mail', 'ph.name': 'Korisničko ime', 'ph.email': 'E-mail (neobavezno)', 'ph.password': 'Lozinka', 'ph.passwordNew': 'Lozinka (najmanje 6 znakova)',
@@ -72,6 +73,7 @@ const ToppleI18n = (() => {
       'home.foot': '{levels} razina · {chapters} poglavlja · {types} vrsta blokova',
     },
     en: {
+      'prof.title': 'Profile', 'prof.since': 'Playing since {date}', 'prof.levels': 'Levels', 'prof.endless': 'Endless', 'prof.daily': 'Daily puzzles', 'prof.solved': 'solved', 'prof.ranks': 'Leaderboard place', 'prof.rankLine': 'daily {d} · endless {e} · levels {c}', 'prof.rank': '#{r}', 'prof.edit': 'Edit profile', 'prof.signin': 'Sign-in on other devices',
       'lvl.level': 'Level {n} of {total}', 'lvl.daily': 'Daily · {date}', 'lvl.endless': 'Endless #{n}',
       'stat.moves': 'Moves', 'stat.par': 'Target',
       'btn.undo': 'Undo', 'btn.reset': 'Restart', 'btn.menu': 'Menu',
@@ -79,7 +81,7 @@ const ToppleI18n = (() => {
       'menu.sfx': 'Sounds', 'menu.music': 'Music', 'menu.help': 'How to play', 'menu.home': 'Home page and leaderboard', 'menu.back': 'Back to the game', 'menu.lang': 'Language',
       'sub.dailyNew': '{date} · new', 'sub.dailyDone': '{date} · solved in {n} {moves}', 'sub.endless': 'Puzzle #{n} · ★ {s}', 'sub.endlessGuest': ' · guests up to #{n}',
       'sub.levels': '{done} of {total} solved · ★ {s}/{max}',
-      'who.signed': 'Playing as', 'who.account': 'account', 'who.guest': 'Guest', 'who.login': 'sign in',
+      'who.signed': 'Playing as', 'who.account': 'profile', 'who.guest': 'Guest', 'who.login': 'sign in',
       'login.title': 'Welcome!', 'login.intro': 'Sign in for the leaderboard and keep playing on all your devices.', 'login.offline': 'Sign-in and the leaderboard work on topple.rdd.software.',
       'login.tabLogin': 'Sign in', 'login.tabRegister': 'New account', 'login.or': 'or',
       'ph.login': 'Username or e-mail', 'ph.name': 'Username', 'ph.email': 'E-mail (optional)', 'ph.password': 'Password', 'ph.passwordNew': 'Password (at least 6 characters)',
@@ -135,6 +137,7 @@ const ToppleI18n = (() => {
       'home.foot': '{levels} levels · {chapters} chapters · {types} block types',
     },
     it: {
+      'prof.title': 'Profilo', 'prof.since': 'Gioca dal {date}', 'prof.levels': 'Livelli', 'prof.endless': 'Infinito', 'prof.daily': 'Rompicapi del giorno', 'prof.solved': 'risolti', 'prof.ranks': 'Posizione in classifica', 'prof.rankLine': 'giorno {d} · infinito {e} · livelli {c}', 'prof.rank': '{r}°', 'prof.edit': 'Modifica profilo', 'prof.signin': 'Accesso da altri dispositivi',
       'lvl.level': 'Livello {n} di {total}', 'lvl.daily': 'Giornaliero · {date}', 'lvl.endless': 'Infinito #{n}',
       'stat.moves': 'Mosse', 'stat.par': 'Obiettivo',
       'btn.undo': 'Annulla', 'btn.reset': 'Ricomincia', 'btn.menu': 'Menu',
@@ -142,7 +145,7 @@ const ToppleI18n = (() => {
       'menu.sfx': 'Suoni', 'menu.music': 'Musica', 'menu.help': 'Come si gioca', 'menu.home': 'Pagina iniziale e classifica', 'menu.back': 'Torna al gioco', 'menu.lang': 'Lingua',
       'sub.dailyNew': '{date} · nuovo', 'sub.dailyDone': '{date} · risolto in {n} {moves}', 'sub.endless': 'Rompicapo #{n} · ★ {s}', 'sub.endlessGuest': ' · ospiti fino al #{n}',
       'sub.levels': '{done} di {total} risolti · ★ {s}/{max}',
-      'who.signed': 'Giochi come', 'who.account': 'account', 'who.guest': 'Ospite', 'who.login': 'accedi',
+      'who.signed': 'Giochi come', 'who.account': 'profilo', 'who.guest': 'Ospite', 'who.login': 'accedi',
       'login.title': 'Benvenuto!', 'login.intro': 'Accedi per la classifica e continua a giocare su tutti i tuoi dispositivi.', 'login.offline': 'Accesso e classifica funzionano su topple.rdd.software.',
       'login.tabLogin': 'Accedi', 'login.tabRegister': 'Nuovo account', 'login.or': 'oppure',
       'ph.login': 'Nome utente o e-mail', 'ph.name': 'Nome utente', 'ph.email': 'E-mail (facoltativa)', 'ph.password': 'Password', 'ph.passwordNew': 'Password (almeno 6 caratteri)',
@@ -198,6 +201,7 @@ const ToppleI18n = (() => {
       'home.foot': '{levels} livelli · {chapters} capitoli · {types} tipi di blocchi',
     },
     de: {
+      'prof.title': 'Profil', 'prof.since': 'Spielt seit {date}', 'prof.levels': 'Level', 'prof.endless': 'Endlos', 'prof.daily': 'Tagesrätsel', 'prof.solved': 'gelöst', 'prof.ranks': 'Ranglistenplatz', 'prof.rankLine': 'täglich {d} · endlos {e} · Level {c}', 'prof.rank': '{r}.', 'prof.edit': 'Profil bearbeiten', 'prof.signin': 'Anmeldung auf anderen Geräten',
       'lvl.level': 'Level {n} von {total}', 'lvl.daily': 'Täglich · {date}', 'lvl.endless': 'Endlos #{n}',
       'stat.moves': 'Züge', 'stat.par': 'Ziel',
       'btn.undo': 'Zurück', 'btn.reset': 'Neu', 'btn.menu': 'Menü',
@@ -205,7 +209,7 @@ const ToppleI18n = (() => {
       'menu.sfx': 'Geräusche', 'menu.music': 'Musik', 'menu.help': 'Spielanleitung', 'menu.home': 'Startseite und Rangliste', 'menu.back': 'Zurück zum Spiel', 'menu.lang': 'Sprache',
       'sub.dailyNew': '{date} · neu', 'sub.dailyDone': '{date} · gelöst in {n} {moves}', 'sub.endless': 'Rätsel #{n} · ★ {s}', 'sub.endlessGuest': ' · Gäste bis #{n}',
       'sub.levels': '{done} von {total} gelöst · ★ {s}/{max}',
-      'who.signed': 'Du spielst als', 'who.account': 'Konto', 'who.guest': 'Gast', 'who.login': 'anmelden',
+      'who.signed': 'Du spielst als', 'who.account': 'Profil', 'who.guest': 'Gast', 'who.login': 'anmelden',
       'login.title': 'Willkommen!', 'login.intro': 'Melde dich für die Rangliste an und spiel auf all deinen Geräten weiter.', 'login.offline': 'Anmeldung und Rangliste funktionieren auf topple.rdd.software.',
       'login.tabLogin': 'Anmelden', 'login.tabRegister': 'Neues Konto', 'login.or': 'oder',
       'ph.login': 'Benutzername oder E-Mail', 'ph.name': 'Benutzername', 'ph.email': 'E-Mail (optional)', 'ph.password': 'Passwort', 'ph.passwordNew': 'Passwort (mindestens 6 Zeichen)',
