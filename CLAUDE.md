@@ -14,6 +14,7 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 - `web/audio.js` — sintetizirani zvukovi drveta i glazba (Bach, Preludij u C-duru BWV 846), bez audio datoteka.
 - `web/gen.js` — deterministički generator zagonetki (mulberry32 + seed). Koriste ga igra, worker (`gen-worker.js`), server i alati.
 - `web/puzzles.js` — unaprijed generirane zagonetke: 300 beskonačnih i dnevne za godinu dana (`npm run puzzles`). Iza kraja datoteke igra i server generiraju iste ploče iz `gen.js`.
+- `web/admin/index.html` — administracija za vlasnika (`/admin`): igrači, gosti, aktivnost, napredak po razinama.
 - `web/config.js` — adresa API servera (`TOPPLE_API`); prazno = igra bez servera.
 - `web/core.js` — čista logika igre (bez DOM-a): mreža, gravitacija (`settle`), dopušteni potezi, provjera pobjede, BFS solver. Koriste je i igra i alati.
 - `web/levels.js` — podaci razina. Generira se, ne uređuj ručno bez `npm run verify`.
@@ -56,6 +57,7 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 - Savjeti (`useHint` u `igra.html`): sljedeći potez najkraćeg rješenja iz trenutnog stanja (`solvePath` u `core.js`, računa se u workeru, plan se priprema čim se razina učita). 3 na početku, +1 dnevno do 10, dodatni za reklamu s nagradom (Google H5 Games Ads, `TOPPLE_ADS` u `config.js`; bez AdSense ID-ja probni prozor). U dnevnoj zagonetki nema savjeta. Pravne stranice (4 jezika): `web/privatnost.html`, `web/uvjeti.html`, `web/kontakt.html` (kontakt info@rdd.software, podaci obrta kao na rdd.software) — ažuriraj ih ako se mijenja što se sprema, dijeli ili nudi.
 - Sigurnosne kopije: `server/backup.js` (dnevno u 4:30, lokalno 7 dana) šalje kopiju i na Google Drive vlasnika (RDD/DB_Backups/Topple, zadnjih 30) preko `server/gdrive.js` (drive.file, bez npm-a); povezivanje jednom sa `server/gdrive-auth.js`, testovi `tools/test-gdrive.js`.
 - Gosti: igra šalje anonimni ID (`gid` u localStorageu) i napredak na `/api/guest` (tablica `guests`, schema v3), pri prijavi se ID poveže s računom; pregled `admin.js stats`. Opisano u pravilima privatnosti.
+- Administracija: `web/admin/index.html` (samo hrvatski, interni alat, `noindex`, nije povezana s javnih stranica) čita `/api/admin/stats` (`adminStats` u `server.js`). Prijava iz tablice `admins` (schema v4, uz `users.last_seen`), postavlja se samo na serveru: `admin.js set-admin <ime> '<lozinka>'`. Lozinke administratora nikad ne upisuj u repozitorij.
 - Server mora ostati bez npm ovisnosti. Svaki rezultat se provjerava ponovnim igranjem poteza (`replay`).
 - `index.html` i `igra.html` moraju raditi otvoreni izravno iz datoteke i preko GitHub Pagesa, bez build koraka i bez npm ovisnosti u pregledniku.
 - Testiranje u pregledniku: `npm run serve`, pa otvori http://localhost:8080.

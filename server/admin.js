@@ -3,6 +3,7 @@
 //   node server/admin.js set-login <name> <email> <password>    (as if the player had registered with them)
 //   node server/admin.js set-password <name> <password>
 //   node server/admin.js stats                                  (players, guests, activity, how far guests get)
+//   node server/admin.js set-admin <name> <password>            (sign-in for the admin page /admin; again to change the password)
 //   node server/admin.js delete <name> [--yes]                  (removes the player and all their data; without --yes only shows what would go)
 // Uses DB_PATH, or --db <path>. On the Windows server: --db C:\inetpub\topple-data\topple.db
 const args = process.argv.slice(2);
@@ -46,6 +47,13 @@ if (cmd === 'list') {
   for (const r of db.prepare(`SELECT CASE WHEN levels = 0 THEN '0' WHEN levels <= 3 THEN '1-3' WHEN levels <= 9 THEN '4-9' ELSE '10+' END AS b, COUNT(*) AS c FROM guests GROUP BY b ORDER BY MIN(levels)`).all()) console.log(`  ${r.b.padEnd(5)} ${r.c}`);
   console.log('Gosti po jeziku: ' + db.prepare('SELECT COALESCE(lang, \'?\') AS l, COUNT(*) AS c FROM guests GROUP BY l ORDER BY c DESC').all().map(r => `${r.l} ${r.c}`).join(', '));
   console.log(`Prosječno posjeta po gostu: ${guests ? (n('SELECT SUM(visits) AS n FROM guests') / guests).toFixed(1) : 0}`);
+} else if (cmd === 'set-admin') {
+  const [name, password] = rest;
+  if (!name || !password) fail('Nedostaju podaci. Primjer: node server/admin.js set-admin Ana \'duga-lozinka\'');
+  if (password.length < 10) fail('Lozinka administratora mora imati najmanje 10 znakova.');
+  db.prepare('INSERT INTO admins (name, password_hash) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET password_hash = excluded.password_hash').run(name, hashPassword(password));
+  db.prepare('DELETE FROM admin_sessions WHERE admin = ?').run(name); // a new password signs out old admin sessions
+  console.log(`Gotovo: administrator ${name} se može prijaviti na /admin.`);
 } else if (cmd === 'delete') {
   const yes = rest.includes('--yes');
   const name = rest.filter(a => a !== '--yes').join(' ');
@@ -57,10 +65,11 @@ if (cmd === 'list') {
   db.exec('BEGIN');
   try {
     for (const t of ['campaign', 'daily', 'endless', 'sessions']) db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(u.id);
+    db.prepare('UPDATE guests SET user_id = NULL WHERE user_id = ?').run(u.id);
     db.prepare('DELETE FROM users WHERE id = ?').run(u.id);
     db.exec('COMMIT');
   } catch (e) { db.exec('ROLLBACK'); throw e; }
   console.log(`Obrisano: ${summary}.`);
 } else {
-  console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | delete <ime> [--yes]   [--db putanja]');
+  console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | set-admin <ime> <lozinka> | delete <ime> [--yes]   [--db putanja]');
 }
