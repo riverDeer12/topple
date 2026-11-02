@@ -368,7 +368,7 @@ const store = {
 // Browser storage belongs to one address, so the old copies (GitHub Pages) send the
 // player to the new address with their progress in the URL, and the new address merges it.
 const HOME = 'https://topple.rdd.software/igra.html';
-const MIGRATE_KEYS = ['best', 'progress', 'solutions', 'seen', 'settings', 'user', 'asked', 'last'];
+const MIGRATE_KEYS = ['best', 'progress', 'solutions', 'seen', 'settings', 'user', 'asked', 'last', 'rules'];
 const oldHost = /(^|\.)github\.io$/.test(location.hostname) || /^(www\.)?rdd\.software$/.test(location.hostname);
 if (oldHost) {
   const data = {};
@@ -559,8 +559,20 @@ function showTypes(types, title, rules = false) {
 }
 let introBack = null; // what the "Razumijem" button returns to
 let started = false;  // the board loaded behind the start menu must not use up its intro
+// The rules pop up once, the first time a new player starts a puzzle (players who
+// already solved something or opened "How to play" have seen them).
+let rulesSeen = store.get('rules', false) || Object.keys(best).length > 0;
 function maybeIntro(level) {
   if (!started) return;
+  if (!rulesSeen) {
+    rulesSeen = true; store.set('rules', true);
+    const types = TYPE_ORDER.filter(t => level.blocks.some(b => b[3] === t));
+    for (const t of types) if (!seen.includes(t)) seen.push(t);
+    store.set('seen', seen);
+    introBack = null;
+    showTypes(types, t('help.title'), true);
+    return;
+  }
   const fresh = TYPE_ORDER.filter(t => !seen.includes(t) && level.blocks.some(b => b[3] === t));
   if (!fresh.length) return;
   seen.push(...fresh); store.set('seen', seen);
@@ -568,8 +580,9 @@ function maybeIntro(level) {
   showTypes(fresh, fresh.length === 1 ? t('intro.new1') : t('intro.newN'));
 }
 $('introOk').onclick = () => (introBack ? introBack() : showOnly(null));
-$('mTypes').onclick = () => { introBack = openMenu; showTypes(TYPE_ORDER, t('help.title'), true); };
-$('help').onclick = () => { if (busy) return; introBack = won_ ? () => showOnly('winBox') : null; showTypes(TYPE_ORDER, t('help.title'), true); };
+const rulesRead = () => { rulesSeen = true; store.set('rules', true); };
+$('mTypes').onclick = () => { rulesRead(); introBack = openMenu; showTypes(TYPE_ORDER, t('help.title'), true); };
+$('help').onclick = () => { if (busy) return; rulesRead(); introBack = won_ ? () => showOnly('winBox') : null; showTypes(TYPE_ORDER, t('help.title'), true); };
 function update() {
   $('mv').textContent = hist.length;
   $('undo').disabled = !hist.length || won_;
