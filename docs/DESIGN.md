@@ -26,7 +26,7 @@ Klasična klizna slagalica, ali s gravitacijom: kad pomakneš blok, sve što je 
 
 ## Razine
 
-Razine se ne dizajniraju ručno. Generator slaže nasumične ploče, BFS solver za svaku izračuna minimalan broj poteza, a zadržavaju se ploče koje odgovaraju krivulji težine. Trenutno 20 razina. Kamen se uvodi na 3. razini, led na 6., teški i krhki na 11., baloni na 14., a od 17. su sve mehanike zajedno. Za razine s teškim blokom ili balonom generator provjerava da je mehanika stvarno potrebna: ako se ti blokovi zamijene običnima, optimalan broj poteza mora biti drukčiji.
+Razine se ne dizajniraju ručno. Generator slaže nasumične ploče, BFS solver za svaku izračuna minimalan broj poteza, a zadržavaju se ploče koje odgovaraju krivulji težine. Trenutno 60 razina u 6 poglavlja po 10. Kamen se uvodi na 3. razini, led na 6., teški i krhki na 11., baloni na 14., a od 17. su sve mehanike zajedno. Poglavlja 3–6 (razine 21–60) imaju ciljeve od 5 do 14 poteza i u svakom poglavlju izmjenjuju ploče s kamenom i ledom, teškim blokovima, balonima i svime zajedno. Najteže razine traže se i do dva sata po razini; kad se ne nađu, cilj se proširi ili ploča pojednostavi (vidi komentare u generatoru). Za razine s teškim blokom ili balonom generator provjerava da je mehanika stvarno potrebna: ako se ti blokovi zamijene običnima, optimalan broj poteza mora biti drukčiji.
 
 ## Načini igre
 
@@ -52,7 +52,7 @@ Svi zvukovi su sintetizirani u pregledniku (Web Audio): udarci i struganje drvet
 
 ## Plan prema iOS-u
 
-1. Dovršiti mehanike i 40–60 razina u web prototipu, testirati na mobitelu preko GitHub Pagesa.
+1. Dovršiti mehanike i 100 razina u web prototipu (60 gotovo), testirati na mobitelu.
 2. Prenijeti `core.js` u Swift paket (`ToppleCore`) s istim testovima kao `verify-levels.js`.
 3. SpriteKit scena za ploču, SwiftUI za izbornike.
 4. Haptika (UIImpactFeedbackGenerator), Game Center ljestvica za dnevnu zagonetku.
