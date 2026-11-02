@@ -131,6 +131,19 @@ powershell -ExecutionPolicy Bypass -File C:\inetpub\wwwroot\topple\server\instal
 
 Skripta postavi `GOOGLE_CLIENT_ID` za API i ponovno ga pokrene. Gumb se u igri pojavi sam. Server mora moći dohvatiti `https://www.googleapis.com/oauth2/v3/certs` (Googleovi javni ključevi za provjeru prijave).
 
+## Reklame za savjete (Google AdSense)
+
+Igra nudi reklamu s nagradom kad igraču nestane savjeta. Dok AdSense nije uključen, umjesto reklame se prikazuje probni prozor od 5 sekundi (`simulate: true` u `web/config.js`).
+
+1. Otvori https://adsense.google.com i napravi račun (podaci i bankovni račun za isplatu).
+2. **Sites → Add site:** `topple.rdd.software`. AdSense provjeri stranicu; to može trajati od nekoliko dana do par tjedana.
+3. Prijavi se za reklame u igrama (**H5 Games Ads**, obrazac u AdSense pomoći pod „Ad Placement API”).
+4. **Privacy & messaging → European regulations:** napravi i objavi Googleov obrazac privole (besplatan). Prikazuje se igračima u EU-u prije reklama.
+5. U `web/config.js` upiši svoj ID: `window.TOPPLE_ADS = { client: 'ca-pub-…', test: true, simulate: true };`. S `test: true` Google prikazuje probne reklame. Kad AdSense odobri stranicu, stavi `test: false`.
+6. Napravi datoteku `web/ads.txt` s jednim retkom (AdSense ga traži): `google.com, pub-…, DIRECT, f08c47fec0942fa0` (tvoj broj bez `ca-`).
+
+Promjene pushaj na `main`; server ih preuzme sam. Pravila privatnosti su na `privatnost.html`.
+
 ## Upravljanje računima
 
 Popis igrača i načina prijave:

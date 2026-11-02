@@ -148,6 +148,13 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 .rules h3, .types h3 { font: 600 1.05rem var(--display); letter-spacing: .01em; margin: 4px 0 0; }
 .rules p { margin: 0; font-size: .85rem; line-height: 1.4; }
 .help { font: 600 1.1rem var(--display); width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--panel-line); background: var(--panel); color: var(--ink); cursor: pointer; padding: 0; align-self: center; }
+.hintbtn { position: relative; display: grid; place-items: center; }
+.hintbtn svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.hintbtn .badge { position: absolute; top: -5px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; background: var(--hero); color: #fff; font: 600 .68rem/18px var(--body); }
+.blk.hinted .face { box-shadow: 0 0 0 3px var(--gold), 0 0 14px 2px var(--gold); animation: hintpulse 1s ease-in-out infinite; }
+@keyframes hintpulse { 50% { filter: brightness(1.12); } }
+.ghost { position: absolute; left: 0; top: 0; box-sizing: border-box; border-radius: 9px; border: 3px dashed var(--gold); pointer-events: none; opacity: .9; }
+.adsim { font: 600 2.4rem var(--mono); color: var(--hero); }
 .help:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .exit svg, .stars svg.on { animation: none; } .blk.land .face { animation: none; } .blk.breaking .face { animation-duration: .05s; } }
 </style>
@@ -163,6 +170,7 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
     <div class="stats">
       <div class="stat"><b id="mv">0</b><small data-i18n="stat.moves">Potezi</small></div>
       <div class="stat"><b id="par">2</b><small data-i18n="stat.par">Cilj</small></div>
+      <button class="help hintbtn" id="hintBtn" type="button" data-i18n-aria="hint.btn" aria-label="Savjet"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.3 1.1 2.2h5c0-.9.5-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg><span class="badge" id="hintCount">3</span></button>
       <button class="help" id="help" type="button" data-i18n-aria="aria.help" aria-label="Kako se igra">?</button>
     </div>
   </header>
@@ -209,6 +217,7 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
     </div>
     <button class="link" id="mTypes" type="button" data-i18n="menu.help">Kako se igra</button>
     <a class="link" href="./" data-i18n="menu.home">Početna stranica i ljestvica</a>
+    <a class="link" href="privatnost.html" data-i18n="privacy.link">Pravila privatnosti</a>
     <div class="row" id="langRow"></div>
     <button class="link" id="menuClose" type="button" data-i18n="menu.back">Natrag na igru</button>
   </div>
@@ -302,6 +311,22 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
     <p data-i18n="skins.intro"></p>
     <div class="skins" id="skinGrid"></div>
     <button class="link" id="skinClose" type="button" data-i18n="lv.close">Zatvori</button>
+  </div>
+</div>
+<div class="overlay" id="hintBox" hidden>
+  <div class="card">
+    <h2 data-i18n="shop.title">Nema više savjeta</h2>
+    <p id="shopText"></p>
+    <button class="go" id="adBtn" type="button" data-i18n="shop.watch">Pogledaj reklamu za savjet</button>
+    <p class="small" id="adStatus" role="status"></p>
+    <button class="link" id="shopClose" type="button" data-i18n="shop.close">Zatvori</button>
+  </div>
+</div>
+<div class="overlay" id="adBox" hidden>
+  <div class="card">
+    <h2 data-i18n="adsim.title">Probna reklama</h2>
+    <div class="adsim" id="adCount">5</div>
+    <p id="adText"></p>
   </div>
 </div>
 <div class="overlay" id="lvBox" hidden>
@@ -412,7 +437,7 @@ const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => ToppleI18n.plural.moves(n);
-const showOnly = id => ['menuBox', 'loginBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox'].forEach(b => { $(b).hidden = b !== id; });
+const showOnly = id => ['menuBox', 'loginBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'hintBox', 'adBox'].forEach(b => { $(b).hidden = b !== id; });
 
 // --- layout & rendering ------------------------------------------------------
 function layout() {
@@ -443,6 +468,7 @@ function place(ms, only) {
 }
 
 function show(c) {
+  clearHint();
   ctx = c; won_ = false; busy = false;
   blocks = c.level.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
   hist = []; moveLog = []; t0 = Date.now();
@@ -473,6 +499,7 @@ function show(c) {
   update();
   layout();
   store.set('last', { mode: c.mode, key: c.key });
+  plan = canPrefetch ? makePlan(blocks) : null; // start working out the solution in the background
   maybeIntro(c.level);
 }
 
@@ -596,6 +623,7 @@ function onKey(e, k) {
 }
 
 function commit(k, d, travel) {
+  clearHint();
   busy = true;
   hist.push(blocks.map(b => ({ ...b })));
   moveLog.push([k, d]);
@@ -926,6 +954,133 @@ $('lbList').addEventListener('click', e => { if (e.target.closest('[data-login]'
 $('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
 
 // Levels are grouped in chapters of 10 (names for chapters 1-10, ready for 100 levels).
+// --- hints: the next move of a shortest solution from the current position ------------------
+// Players get 3 hints to start and one more each day (up to HINT_MAX). More come from rewarded ads.
+const HINT_START = 3, HINT_DAILY = 1, HINT_MAX = 10;
+let hints = null, plan = null, hintWorker = null, hintReq = 0;
+const canPrefetch = typeof Worker !== 'undefined' && location.protocol !== 'file:';
+function refreshHints() {
+  const d = today();
+  hints = store.get('hints', null) || { count: HINT_START, day: d };
+  if (hints.day !== d) { hints.count = Math.max(hints.count, Math.min(HINT_MAX, hints.count + HINT_DAILY)); hints.day = d; }
+  store.set('hints', hints);
+  $('hintCount').textContent = hints.count;
+  $('hintBtn').setAttribute('aria-label', t('hint.btn') + ', ' + hints.count);
+}
+function solveAsync(bs, exit) {
+  return new Promise(resolve => {
+    const onMain = () => setTimeout(() => resolve(solvePath(bs, exit)), 30);
+    if (!canPrefetch) return onMain();
+    try {
+      hintWorker = hintWorker || new Worker('gen-worker.js');
+      const id = ++hintReq;
+      hintWorker.onmessage = e => { if (id === hintReq) resolve(e.data.hint); };
+      hintWorker.onerror = e => { e.preventDefault(); hintWorker = null; onMain(); };
+      hintWorker.postMessage({ kind: 'hint', arg: { blocks: bs, exit } });
+    } catch (e) { onMain(); }
+  });
+}
+// A plan is a shortest solution from some position, with the state key after each move,
+// so a hint is instant while the player stays on it.
+function makePlan(bs) {
+  const startBlocks = bs.map(b => ({ ...b })), p = { startKey: key(startBlocks), exit: ctx.level.exit };
+  p.promise = solveAsync(startBlocks, p.exit).then(path => {
+    if (!path) return null;
+    let s = startBlocks.map(b => ({ ...b }));
+    p.keys = [key(s)];
+    for (const m of path) { s = apply(s, m); p.keys.push(key(s)); }
+    p.moves = path;
+    return p;
+  });
+  return p;
+}
+function clearHint() {
+  board.querySelectorAll('.ghost').forEach(g => g.remove());
+  els.forEach(el => el.classList.remove('hinted'));
+}
+async function useHint() {
+  if (!ctx || busy || won_) return;
+  if (ctx.mode === 'daily') { $('hint').textContent = t('hint.dailyOff'); return; }
+  refreshHints();
+  if (hints.count <= 0) return openHintShop();
+  const c = ctx, cur = key(blocks);
+  if (!plan || plan.exit !== c.level.exit || (plan.startKey !== cur && !(plan.keys && plan.keys.includes(cur)))) plan = makePlan(blocks);
+  $('hint').textContent = t('hint.thinking');
+  const p = await plan.promise;
+  if (ctx !== c || busy || won_) return;
+  if (!p) { $('hint').textContent = t('hint.none'); return; }
+  const i = p.keys.indexOf(key(blocks));
+  if (i < 0 || i >= p.moves.length) { plan = null; return useHint(); } // the board changed meanwhile
+  const [b, d] = p.moves[i];
+  hints.count--; store.set('hints', hints); refreshHints();
+  clearHint();
+  els[b].classList.add('hinted');
+  const g = document.createElement('div');
+  g.className = 'ghost';
+  g.style.width = blocks[b].w * cell - GAP * 2 + 'px'; g.style.height = cell - GAP * 2 + 'px';
+  g.style.transform = pos(blocks[b], d);
+  board.appendChild(g);
+  $('hint').textContent = t('hint.move', { dir: d < 0 ? t('hint.left') : t('hint.right'), n: Math.abs(d) });
+}
+$('hintBtn').onclick = useHint;
+
+// --- rewarded ads: watch an ad, get a hint (Google H5 Games Ads; see config.js) ---------------
+const ADS = window.TOPPLE_ADS || {};
+if (ADS.client) {
+  const sc = document.createElement('script');
+  sc.async = true; sc.crossOrigin = 'anonymous';
+  sc.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(ADS.client);
+  sc.setAttribute('data-ad-client', ADS.client);
+  if (ADS.test) sc.setAttribute('data-adbreak-test', 'on');
+  document.head.appendChild(sc);
+  window.adsbygoogle = window.adsbygoogle || [];
+  window.adBreak = window.adConfig = o => window.adsbygoogle.push(o);
+  window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
+}
+function grantHint() {
+  refreshHints();
+  hints.count++; store.set('hints', hints); refreshHints();
+  showOnly(null);
+  useHint();
+}
+function openHintShop() {
+  $('shopText').textContent = t('shop.text', { max: HINT_MAX });
+  $('adStatus').textContent = '';
+  const btn = $('adBtn');
+  btn.hidden = !ADS.client && ADS.simulate === false;
+  btn.disabled = true; btn.onclick = null;
+  showOnly('hintBox');
+  if (ADS.client) {
+    $('adStatus').textContent = t('shop.loading');
+    let musicWas = false;
+    window.adBreak({
+      type: 'reward', name: 'hint',
+      beforeAd: () => { musicWas = ToppleAudio.music; ToppleAudio.setMusic(false); },
+      afterAd: () => { if (musicWas) ToppleAudio.setMusic(true); },
+      beforeReward: showAdFn => { btn.disabled = false; $('adStatus').textContent = ''; btn.onclick = () => showAdFn(); },
+      adDismissed: () => { $('adStatus').textContent = t('shop.dismissed'); },
+      adViewed: grantHint,
+      adBreakDone: info => { if (info && !['viewed', 'dismissed'].includes(info.breakStatus)) { btn.disabled = true; $('adStatus').textContent = t('shop.unavailable'); } },
+    });
+  } else if (ADS.simulate !== false) {
+    btn.disabled = false;
+    btn.onclick = simulateAd;
+  }
+}
+// Stand-in until AdSense is approved: a 5-second placeholder, then the reward.
+function simulateAd() {
+  let n = 5;
+  const tick = () => {
+    $('adCount').textContent = n;
+    $('adText').textContent = t('adsim.text', { n });
+    if (n-- <= 0) return grantHint();
+    setTimeout(tick, 1000);
+  };
+  showOnly('adBox');
+  tick();
+}
+$('shopClose').onclick = () => showOnly(null);
+
 // --- red block looks, unlocked by solving the last level of a chapter (SKINS in content.js) ---
 const SKINS = ToppleContent.SKINS;
 const skinUnlocked = sk => sk.level === 0 || best[sk.level - 1] > 0;
@@ -994,6 +1149,7 @@ $('menuClose').onclick = () => { showOnly(null); if (ctx) maybeIntro(ctx.level);
 $('menu').onclick = () => { if (!busy) openMenu(); };
 $('winMenu').onclick = openMenu;
 $('undo').onclick = () => {
+  clearHint();
   if (busy || !hist.length || won_) return;
   blocks.splice(0, blocks.length, ...hist.pop()); moveLog.pop();
   place(160); update(); fx.undo();
@@ -1017,6 +1173,7 @@ addEventListener('pointerdown', unlock, true);
 addEventListener('keydown', unlock, true);
 
 function start() {
+  refreshHints();
   ToppleI18n.apply();
   $('langRow').appendChild(ToppleI18n.picker());
   // The Google button needs the client ID from the server; draw it once that arrives.

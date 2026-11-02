@@ -70,6 +70,20 @@ const tests = {
     assert.ok(n[0].g);
     assert.strictEqual(n[2].y, 7);
   },
+  'solvePath returns an optimal, valid solution'() {
+    const LEVELS = require('../web/levels.js');
+    for (const i of [0, 9, 16, 30]) {
+      const L = LEVELS[i];
+      let bs = L.blocks.map(([x, y, w, t]) => ({ x, y, w, t }));
+      const path = C.solvePath(bs, L.exit);
+      assert.strictEqual(path.length, L.opt, `level ${i + 1}`);
+      for (const m of path) { assert.ok(C.moves(bs).some(([b, d]) => b === m[0] && d === m[1])); bs = C.apply(bs, m); }
+      assert.ok(C.won(bs, L.exit));
+    }
+  },
+  'solvePath from a solved board is empty'() {
+    assert.deepStrictEqual(C.solvePath([B(4, 7, 2, 'r')], 7), []);
+  },
 };
 
 let fail = 0;
