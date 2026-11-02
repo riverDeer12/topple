@@ -36,6 +36,7 @@ const ToppleContent = (() => {
       FEATURES: [
         ['Ljestvica', 'Natječi se na dnevnoj ljestvici, u beskonačnom nizu i u zvjezdicama iz razina.'],
         ['Prijava i više uređaja', 'Prijavi se Google računom, e-mailom ili korisničkim imenom i lozinkom. Napredak te prati na mobitelu i na računalu.'],
+        ['Profil', 'Pregled tvojih razina, zvjezdica, beskonačnog niza i mjesta na ljestvicama. Korisničko ime možeš promijeniti kad god želiš.'],
         ['Pošteni rezultati', 'Server ponovno odigra svako poslano rješenje i sprema samo ispravna. Na ljestvicu se ne može upisati izmišljeni rezultat.'],
         ['Neograničeno „Vrati”', 'Eksperimentiraj bez kazne: svaki potez se može poništiti, a ploča vratiti na početak.'],
         ['Zvuk i glazba', 'Zvukovi drveta za klizanje, slijetanje i pucanje, a u pozadini Bachov Preludij u C-duru. Oboje se može isključiti.'],
@@ -69,6 +70,7 @@ const ToppleContent = (() => {
       FEATURES: [
         ['Leaderboard', 'Compete on the daily leaderboard, in the endless run and in stars from the levels.'],
         ['Sign-in and devices', 'Sign in with Google, e-mail or a username and password. Your progress follows you from phone to computer.'],
+        ['Profile', 'See your levels, stars, endless run and leaderboard places. You can change your username at any time.'],
         ['Fair results', 'The server replays every submitted solution and keeps only valid ones. Nobody can put a made-up score on the leaderboard.'],
         ['Unlimited undo', 'Experiment without penalty: every move can be undone and the board reset.'],
         ['Sound and music', 'Wooden sounds for sliding, landing and cracking, and Bach’s Prelude in C major in the background. Both can be switched off.'],
@@ -102,6 +104,7 @@ const ToppleContent = (() => {
       FEATURES: [
         ['Classifica', 'Sfida gli altri nella classifica del giorno, nella serie infinita e nelle stelle dei livelli.'],
         ['Accesso e dispositivi', 'Accedi con Google, e-mail o nome utente e password. I tuoi progressi ti seguono dal telefono al computer.'],
+        ['Profilo', 'Vedi i tuoi livelli, le stelle, la serie infinita e le posizioni in classifica. Puoi cambiare il nome utente quando vuoi.'],
         ['Risultati onesti', 'Il server rigioca ogni soluzione inviata e salva solo quelle valide. Nessuno può mettere in classifica un risultato inventato.'],
         ['Annulla senza limiti', 'Sperimenta senza penalità: ogni mossa si può annullare e la tavola si può ricominciare.'],
         ['Suoni e musica', 'Suoni di legno per scivolate, atterraggi e rotture, e in sottofondo il Preludio in do maggiore di Bach. Si possono disattivare entrambi.'],
@@ -135,6 +138,7 @@ const ToppleContent = (() => {
       FEATURES: [
         ['Rangliste', 'Miss dich in der Tagesrangliste, im Endlosmodus und mit den Sternen aus den Leveln.'],
         ['Anmeldung und Geräte', 'Melde dich mit Google, E-Mail oder Benutzername und Passwort an. Dein Fortschritt begleitet dich vom Handy zum Computer.'],
+        ['Profil', 'Sieh deine Level, Sterne, deinen Endlos-Lauf und deine Ranglistenplätze. Deinen Benutzernamen kannst du jederzeit ändern.'],
         ['Faire Ergebnisse', 'Der Server spielt jede eingereichte Lösung nach und speichert nur gültige. Niemand kann ein erfundenes Ergebnis in die Rangliste bringen.'],
         ['Unbegrenztes Zurück', 'Probier ohne Strafe aus: Jeder Zug lässt sich zurücknehmen und das Brett neu starten.'],
         ['Klang und Musik', 'Holzgeräusche für Gleiten, Landen und Zerbrechen, im Hintergrund Bachs Präludium in C-Dur. Beides lässt sich ausschalten.'],

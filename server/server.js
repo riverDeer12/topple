@@ -239,6 +239,19 @@ function profile(u) {
     endless: { next: u.endless_next, stars: u.endless_stars },
     campaign: Object.fromEntries(db.prepare('SELECT level, stars FROM campaign WHERE user_id = ?').all(u.id).map(r => [r.level, r.stars])),
     daily: Object.fromEntries(db.prepare('SELECT date, moves FROM daily WHERE user_id = ? ORDER BY date DESC LIMIT 30').all(u.id).map(r => [r.date, r.moves])),
+    createdAt: u.created_at,
+    stats: {
+      levels: db.prepare('SELECT COUNT(*) AS n FROM campaign WHERE user_id = ?').get(u.id).n,
+      stars: db.prepare('SELECT COALESCE(SUM(stars), 0) AS n FROM campaign WHERE user_id = ?').get(u.id).n,
+      endlessSolved: u.endless_next - 1,
+      endlessStars: u.endless_stars,
+      dailySolved: db.prepare('SELECT COUNT(*) AS n FROM daily WHERE user_id = ?').get(u.id).n,
+    },
+    // Current place on each leaderboard (null when not on it).
+    ranks: Object.fromEntries(['daily', 'endless', 'campaign'].map(m => {
+      const mine = board(m, m === 'daily' ? G.today(TZ) : null, u).mine;
+      return [m, mine ? mine.rank : null];
+    })),
   };
 }
 
@@ -321,8 +334,14 @@ async function route(req, res) {
   if (req.method === 'POST' && p === '/api/account') {
     const u = userFrom(req);
     if (!u) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
-    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
-    const { password, currentPassword, email } = await readJson(req);
+    if (limited(req, 'account', 30, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
+    const { password, currentPassword, email, name } = await readJson(req);
+    if (name !== undefined) {
+      const n = String(name || '').trim().replace(/\s+/g, ' ');
+      if (!NAME_RE.test(n)) return send(res, 400, { error: 'Korisničko ime mora imati 2–16 znakova: slova, brojke, razmak, _ . -', code: 'name_invalid' });
+      if (db.prepare('SELECT 1 FROM users WHERE name = ? AND id <> ?').get(n, u.id)) return send(res, 409, { error: 'To korisničko ime je zauzeto.', code: 'name_taken' });
+      db.prepare('UPDATE users SET name = ? WHERE id = ?').run(n, u.id);
+    }
     if (password !== undefined) {
       if (!validPassword(password)) return send(res, 400, { error: PW_ERR, code: 'password_short' });
       if (u.password_hash && !checkPassword(currentPassword, u.password_hash)) return send(res, 401, { error: 'Trenutna lozinka nije točna.', code: 'current_password' });
