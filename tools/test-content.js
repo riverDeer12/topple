@@ -32,7 +32,7 @@ for (const t of K.TYPE_ORDER) assert.ok(css.includes(`.blk.${t} .face`), `Vrsta 
 for (const sk of K.SKINS) {
   assert.ok(I.S.hr['skin.' + sk.id], `Izgled '${sk.id}' nema naziv u i18n.js (skin.${sk.id}).`);
   if (sk.id !== 'classic') assert.ok(css.includes(`.skin-${sk.id}`), `Izgled '${sk.id}' nema stil u web/theme.css.`);
-  assert.ok(sk.level === 0 || (sk.level >= 1 && sk.level <= LEVELS.length), `Izgled '${sk.id}' se otključava razinom ${sk.level}, a ona ne postoji.`);
+  assert.ok(sk.level === 0 || (sk.level >= 1 && sk.level <= I.CHAPTERS.hr.length * 10), `Izgled '${sk.id}' se otključava razinom ${sk.level}, a ona nije ni planirana (${I.CHAPTERS.hr.length} poglavlja po 10 razina).`);
 }
 assert.strictEqual(K.stats.levels, LEVELS.length);
 for (const page of ['index.html', 'igra.html']) {
