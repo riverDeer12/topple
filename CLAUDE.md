@@ -25,7 +25,7 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 - `tools/test-content.js` — provjerava da je svaka vrsta bloka iz razina i zagonetki opisana u `content.js` i ima stil u `theme.css` (`npm test`).
 - `tools/generate-puzzles.js` — generira `web/puzzles.js` na svim jezgrama, s cacheom.
 - `server/server.js` — API (Node 22.5+, `node:http` + `node:sqlite`, bez npm paketa): računi po uređaju, provjereni rezultati, ljestvice. Upute u `server/README.md`, testovi `npm run test:server`.
-- `ios/` — iOS aplikacija: SwiftUI ljuska (WKWebView) oko `web/`, spakirane u aplikaciju i posluženo na `topple://app/`; nativno haptika, dijeljenje, lokalni podsjetnik, Game Center. Projekt iz `ios/project.yml` (XcodeGen), upute u `ios/README.md`. Igra zna da je u aplikaciji po `APP` u `igra.html` (`location.protocol === 'topple:'`) i šalje poruke `native({type})`; u aplikaciji nema Google prijave ni web reklama.
+- `ios/` — iOS aplikacija: SwiftUI ljuska (WKWebView) oko `web/`, spakirane u aplikaciju i posluženo na `topple://app/`; nativno haptika, dijeljenje, lokalni podsjetnik, Game Center. Projekt iz `ios/project.yml` (XcodeGen), upute u `ios/README.md`. Igra zna da je u aplikaciji po `APP` u `igra.html` (`location.protocol === 'topple:'`) i šalje poruke `native({type})`; u aplikaciji nema web reklama, a prijava s Appleom i Googleom ide nativno (`SignIn.swift` → `window.toppleSignedIn` → `/api/apple`, `/api/google`; server prihvaća `GOOGLE_IOS_CLIENT_ID` i `APPLE_BUNDLE_ID`, stupac `users.apple_sub`, schema v9).
 - `docs/DESIGN.md` — dizajn igre i plan.
 
 ## Pravila igre (izvor istine je `web/core.js`)

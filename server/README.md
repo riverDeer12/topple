@@ -245,6 +245,8 @@ Ista naredba mijenja lozinku i odjavljuje sve stare prijave tog administratora. 
 | `TZ_GAME` | `Europe/Zagreb` | vremenska zona za dnevnu zagonetku |
 | `GOOGLE_CLIENT_ID` | (prazno) | Google OAuth Client ID; prazno = bez gumba „Prijava s Googleom” |
 | `REMIND_HOUR` | `17` | sat (po `TZ_GAME`) kad se šalje podsjetnik za dnevnu zagonetku |
+| `GOOGLE_IOS_CLIENT_ID` | (prazno) | Google OAuth Client ID iOS aplikacije (`install.ps1 -GoogleIosClientId`) |
+| `APPLE_BUNDLE_ID` | `software.rdd.topple` | bundle ID iOS aplikacije za Sign in with Apple |
 | `PUBLIC_URL` | `https://topple.rdd.software` | adresa igre u e-mailu za novu lozinku |
 | `SMTP_HOST` … | (prazno) | umjesto `smtp.json`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` |
 
@@ -266,6 +268,7 @@ Promjena postavki: `nssm edit topple` (kartica Environment), pa `Restart-Service
 | `GET /api/admin/stats` | statistika za /admin (Bearer token administratora) |
 | `POST /api/forgot` `{login, lang}` | e-mail s poveznicom za novu lozinku (isti odgovor i kad računa nema) |
 | `POST /api/reset` `{token, password}` | nova lozinka iz poveznice, vraća `{name, token}` |
+| `POST /api/apple` `{identityToken, name?}` | Sign in with Apple (iOS aplikacija) |
 | `GET /api/me` | profil i napredak (zaglavlje `Authorization: Bearer <token>`) |
 | `POST /api/score` `{mode, level/date/n, moves, timeMs}` | rezultat; server provjerava poteze |
 | `GET /api/leaderboard?mode=daily&date=YYYY-MM-DD` | dnevna ljestvica (najmanje poteza, pa najbrže) |

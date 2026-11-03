@@ -14,6 +14,7 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     DEVELOPMENT_TEAM: ""        # your Apple team ID (Xcode → Signing & Capabilities), or set it there
+    GOOGLE_IOS_CLIENT_ID: ""    # iOS OAuth client ID from Google Cloud (ends in .apps.googleusercontent.com), see ios/README.md
 targets:
   Topple:
     type: application
@@ -37,10 +38,12 @@ targets:
         UIStatusBarStyle: UIStatusBarStyleDefault
         ITSAppUsesNonExemptEncryption: false
         GKGameCenterBadgingDisabled: false
+        GoogleIOSClientID: $(GOOGLE_IOS_CLIENT_ID)
     entitlements:
       path: Topple/Topple.entitlements
       properties:
         com.apple.developer.game-center: true
+        com.apple.developer.applesignin: [Default]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: software.rdd.topple

@@ -163,6 +163,13 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
 .ach .bar { height: 5px; border-radius: 3px; background: var(--panel-line); margin-top: 5px; overflow: hidden; }
 .ach .bar i { display: block; height: 100%; background: var(--gold); }
 .streakBest { margin: 0; font-size: .85rem; color: var(--muted); }
+.appsign { display: grid; gap: 8px; width: 100%; }
+.appsign button { display: flex; align-items: center; justify-content: center; gap: 8px; height: 46px; border-radius: 999px; font: 600 1rem -apple-system, system-ui, sans-serif; cursor: pointer; }
+.appsign .apple { background: #000; color: #fff; border: 0; }
+.appsign .apple .logo { width: 17px; height: 19px; margin-top: -3px; }
+.appsign .google { background: #fff; color: #1f1f1f; border: 1px solid #747775; }
+.appsign .google svg { width: 18px; height: 18px; }
+@media (prefers-color-scheme: dark) { .appsign .apple { background: #fff; color: #000; } }
 .gbtn { display: flex; justify-content: center; min-height: 44px; width: 100%; }
 .or { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--muted); font-size: .8rem; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--panel-line); }
@@ -266,6 +273,10 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
       <button class="tab" role="tab" data-t="register" type="button" data-i18n="login.tabRegister">Novi račun</button>
     </div>
     <div class="gbtn" id="gBtn" hidden></div>
+    <div class="appsign" id="appSign" hidden>
+      <button class="apple" id="appleBtn" type="button"><svg class="logo" viewBox="0 0 22 24" aria-hidden="true"><path fill="currentColor" d="M17.37 12.6c-.03-2.7 2.2-4 2.3-4.07-1.25-1.83-3.2-2.08-3.9-2.1-1.66-.17-3.24.98-4.08.98-.85 0-2.14-.96-3.52-.93-1.8.03-3.47 1.05-4.4 2.67-1.88 3.26-.48 8.08 1.35 10.73.9 1.3 1.96 2.75 3.36 2.7 1.35-.06 1.86-.87 3.49-.87 1.62 0 2.08.87 3.5.84 1.45-.02 2.37-1.32 3.25-2.62 1.03-1.5 1.45-2.96 1.47-3.04-.03-.01-2.82-1.08-2.85-4.3zM14.7 4.67c.74-.9 1.24-2.15 1.1-3.4-1.07.04-2.37.71-3.14 1.61-.69.8-1.29 2.08-1.13 3.3 1.2.09 2.42-.6 3.17-1.5z"/></svg><span data-i18n="login.apple">Nastavi s Appleom</span></button>
+      <button class="google" id="googleAppBtn" type="button" hidden><svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.6 13.2l7.8 6.1C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 7l7.4 5.7c4.3-4 6.9-9.9 6.9-17.2z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.3.8-4.7l-7.8-6.1C.9 16.6 0 20.2 0 24s.9 7.4 2.6 10.8l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span data-i18n="login.google">Nastavi s Googleom</span></button>
+    </div>
     <div class="or" id="gOr" hidden data-i18n="login.or">ili</div>
     <form id="loginForm" class="form">
       <input class="nick" id="lLogin" autocomplete="username" placeholder="Korisničko ime ili e-mail" data-i18n-ph="ph.login" data-i18n-aria="ph.login">
@@ -956,9 +967,10 @@ $('who').addEventListener('click', e => {
 let loginTab = 'login', googleId = null, googleLoaded = null;
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u;
 let resetOn = false; // the server can send password reset e-mails
+let googleIos = false; // the server accepts Google sign-in from the iOS app
 let pushKey = null, remindHour = 17; // public VAPID key and local hour of the daily reminder
 async function loadConfig() {
-  if (API) try { const c = await api('/api/config'); googleId = c.googleClientId; resetOn = !!c.passwordReset; pushKey = c.pushKey || null; remindHour = c.remindHour ?? 17; } catch (e) {}
+  if (API) try { const c = await api('/api/config'); googleId = c.googleClientId; resetOn = !!c.passwordReset; pushKey = c.pushKey || null; remindHour = c.remindHour ?? 17; googleIos = !!c.googleIos; } catch (e) {}
   initRemind();
   $('forgot').hidden = !resetOn || loginTab !== 'login';
 }
@@ -998,7 +1010,8 @@ function openLogin() {
   setLoginTab(imported ? 'register' : loginTab);
   if (imported && !$('lName').value) $('lName').value = imported;
   showOnly('loginBox');
-  googleButton($('gBtn')); $('gOr').hidden = !googleId || !online;
+  googleButton($('gBtn')); $('gOr').hidden = !(googleId || APP) || !online;
+  $('appSign').hidden = !APP || !online; $('googleAppBtn').hidden = !googleIos;
   if (online) (loginTab === 'register' ? $('lName') : $('lLogin')).focus();
 }
 // --- forgotten password: ask for a link by e-mail, then set a new password from the link ---
@@ -1072,6 +1085,18 @@ async function onGoogle(credential) {
   } catch (x) { (linking ? $('accErr') : $('loginErr')).textContent = errText(x); }
 }
 $('loginSkip').onclick = () => { store.set('asked', true); openMenu(); };
+// iOS app: Sign in with Apple / Google happen natively (SignIn.swift), which calls back here.
+$('appleBtn').onclick = () => { $('loginErr').textContent = ''; native({ type: 'signin', provider: 'apple' }); };
+$('googleAppBtn').onclick = () => { $('loginErr').textContent = ''; native({ type: 'signin', provider: 'google' }); };
+window.toppleSignedIn = async d => {
+  if (!d || d.error) { if (!d || d.error !== 'cancel') $('loginErr').textContent = t(d && d.error === 'google_off' ? 'srv.google_off' : 'login.socialFailed'); return; }
+  try {
+    const r = d.provider === 'apple'
+      ? await api('/api/apple', { method: 'POST', body: JSON.stringify({ identityToken: d.token, name: d.name || '', guest: guestId() }) })
+      : await api('/api/google', { method: 'POST', body: JSON.stringify({ credential: d.token, guest: guestId() }) });
+    signedIn(r);
+  } catch (x) { $('loginErr').textContent = errText(x); }
+};
 
 // --- account: add or change e-mail and password, link Google, sign out ------------------
 let account = null;

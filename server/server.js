@@ -150,6 +150,11 @@ if (db.prepare('PRAGMA user_version').get().user_version < 8) {
     PRAGMA user_version = 8;
   `);
 }
+// Schema v9: Sign in with Apple (the iOS app).
+if (db.prepare('PRAGMA user_version').get().user_version < 9) {
+  if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'apple_sub')) db.exec('ALTER TABLE users ADD COLUMN apple_sub TEXT');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS users_apple ON users (apple_sub) WHERE apple_sub IS NOT NULL; PRAGMA user_version = 9;');
+}
 const push = require('./push.js');
 const REMIND_HOUR = Number(process.env.REMIND_HOUR || 17); // local time (TZ_GAME) of the daily reminder
 const REMIND = {
@@ -201,8 +206,8 @@ function newSession(userId) {
 }
 function createUser(name, fields = {}) {
   // users.token_hash is a legacy NOT NULL column; new accounts sign in through sessions.
-  const r = db.prepare('INSERT INTO users (name, token_hash, created_at, email, password_hash, google_sub) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(name, sha(crypto.randomBytes(24).toString('base64url')), Date.now(), fields.email || null, fields.password_hash || null, fields.google_sub || null);
+  const r = db.prepare('INSERT INTO users (name, token_hash, created_at, email, password_hash, google_sub, apple_sub) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .run(name, sha(crypto.randomBytes(24).toString('base64url')), Date.now(), fields.email || null, fields.password_hash || null, fields.google_sub || null, fields.apple_sub || null);
   return Number(r.lastInsertRowid);
 }
 const scrypt = (pw, salt) => crypto.scryptSync(pw, salt, 32, { N: 16384, r: 8, p: 1 });
@@ -224,29 +229,64 @@ const validPassword = pw => typeof pw === 'string' && pw.length >= 6 && pw.lengt
 // Google Sign-In: the browser gets an ID token (JWT) from Google; we check its
 // signature with Google's public keys and that it was issued for our client ID.
 let GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-let googleKeys = null, googleKeysUntil = 0;
-async function googleKey(kid) {
-  if (!googleKeys || Date.now() > googleKeysUntil || !googleKeys[kid]) {
-    const res = await fetch('https://www.googleapis.com/oauth2/v3/certs');
-    const { keys } = await res.json();
-    const age = /max-age=(\d+)/.exec(res.headers.get('cache-control') || '');
-    googleKeys = Object.fromEntries(keys.map(k => [k.kid, crypto.createPublicKey({ key: k, format: 'jwk' })]));
-    googleKeysUntil = Date.now() + (age ? Number(age[1]) * 1000 : 3600e3);
-  }
-  return googleKeys[kid];
+// The iOS app signs in with its own Google client (GOOGLE_IOS_CLIENT_ID) and with Apple
+// (identity tokens for the app's bundle ID, APPLE_BUNDLE_ID).
+const GOOGLE_IOS_CLIENT_IDS = (process.env.GOOGLE_IOS_CLIENT_ID || '').split(',').map(x => x.trim()).filter(Boolean);
+let APPLE_AUDS = (process.env.APPLE_BUNDLE_ID || 'software.rdd.topple').split(',').map(x => x.trim()).filter(Boolean);
+const googleAuds = () => [GOOGLE_CLIENT_ID, ...GOOGLE_IOS_CLIENT_IDS].filter(Boolean);
+// Public keys of a sign-in provider (JWKS), cached as long as the provider allows.
+function jwks(url) {
+  const c = { keys: null, until: 0 };
+  return async kid => {
+    if (!c.keys || Date.now() > c.until || !c.keys[kid]) {
+      const res = await fetch(url);
+      const { keys } = await res.json();
+      const age = /max-age=(\d+)/.exec(res.headers.get('cache-control') || '');
+      c.keys = Object.fromEntries(keys.map(k => [k.kid, crypto.createPublicKey({ key: k, format: 'jwk' })]));
+      c.until = Date.now() + (age ? Number(age[1]) * 1000 : 3600e3);
+    }
+    return c.keys[kid];
+  };
 }
-async function verifyGoogle(credential) {
-  const parts = String(credential || '').split('.');
+let googleKey = jwks('https://www.googleapis.com/oauth2/v3/certs');
+let appleKey = jwks('https://appleid.apple.com/auth/keys');
+// Checks an RS256 ID token: signature, issuer, audience and expiry. Returns its claims or null.
+async function verifyIdToken(token, keyOf, issuers, auds) {
+  const parts = String(token || '').split('.');
   if (parts.length !== 3) return null;
   const [h, p, sig] = parts;
   let header, payload;
   try { header = JSON.parse(Buffer.from(h, 'base64url')); payload = JSON.parse(Buffer.from(p, 'base64url')); } catch (e) { return null; }
   if (header.alg !== 'RS256') return null;
-  const key = await googleKey(header.kid);
+  const key = await keyOf(header.kid);
   if (!key || !crypto.verify('RSA-SHA256', Buffer.from(h + '.' + p), key, Buffer.from(sig, 'base64url'))) return null;
-  if (!['accounts.google.com', 'https://accounts.google.com'].includes(payload.iss)) return null;
-  if (payload.aud !== GOOGLE_CLIENT_ID || !payload.sub || payload.exp * 1000 < Date.now()) return null;
+  if (!issuers.includes(payload.iss) || !auds.includes(payload.aud) || !payload.sub || payload.exp * 1000 < Date.now()) return null;
   return payload;
+}
+const verifyGoogle = t => verifyIdToken(t, googleKey, ['accounts.google.com', 'https://accounts.google.com'], googleAuds());
+const verifyApple = t => verifyIdToken(t, appleKey, ['https://appleid.apple.com'], APPLE_AUDS);
+
+// Signs in with a provider account (column google_sub or apple_sub): links it when already
+// signed in, finds the owner, or the account with the same verified e-mail, or makes a new one.
+function socialSignIn(req, res, col, sub, email, displayName, guest, codes) {
+  const me = userFrom(req), owner = db.prepare(`SELECT * FROM users WHERE ${col} = ?`).get(sub);
+  if (me) {
+    if (owner && owner.id !== me.id) return send(res, 409, { error: 'Taj račun je već povezan s drugim igračem.', code: codes.taken });
+    db.prepare(`UPDATE users SET ${col} = ? WHERE id = ?`).run(sub, me.id);
+    if (email && !me.email && !db.prepare('SELECT 1 FROM users WHERE email = ?').get(email)) db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, me.id);
+    return send(res, 200, { name: me.name, linked: true });
+  }
+  if (owner) { linkGuest(guest, owner.id); return send(res, 200, { name: owner.name, token: newSession(owner.id) }); }
+  const byEmail = email && db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+  if (byEmail) { // same verified e-mail: this is the same person
+    db.prepare(`UPDATE users SET ${col} = ? WHERE id = ?`).run(sub, byEmail.id);
+    linkGuest(guest, byEmail.id);
+    return send(res, 200, { name: byEmail.name, token: newSession(byEmail.id) });
+  }
+  const name = freeName(displayName || email.split('@')[0]);
+  const id = createUser(name, { email: email || null, [col]: sub });
+  linkGuest(guest, id);
+  return send(res, 201, { name, token: newSession(id), created: true });
 }
 // A free nickname based on the Google name: invalid characters dropped, number appended if taken.
 function freeName(base) {
@@ -569,7 +609,7 @@ async function route(req, res) {
     return send(res, 200, { admin, ...adminStats() });
   }
 
-  if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null, passwordReset: !!mail.config(), pushKey: push.vapidKeys().publicKey, remindHour: REMIND_HOUR });
+  if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null, googleIos: GOOGLE_IOS_CLIENT_IDS.length > 0, passwordReset: !!mail.config(), pushKey: push.vapidKeys().publicKey, remindHour: REMIND_HOUR });
 
   // Daily reminder: subscribe, unsubscribe, and tell the server today's puzzle is solved.
   if (req.method === 'POST' && p.startsWith('/api/push/')) {
@@ -660,30 +700,21 @@ async function route(req, res) {
 
   // Google: signs in, creates an account, or (when already signed in) links Google to this account.
   if (req.method === 'POST' && p === '/api/google') {
-    if (!GOOGLE_CLIENT_ID) return send(res, 503, { error: 'Prijava s Googleom nije postavljena.', code: 'google_off' });
+    if (!googleAuds().length) return send(res, 503, { error: 'Prijava s Googleom nije postavljena.', code: 'google_off' });
     if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
     const { credential, guest } = await readJson(req);
     const g = await verifyGoogle(credential);
     if (!g) return send(res, 401, { error: 'Google prijava nije uspjela.', code: 'google_failed' });
-    const email = g.email_verified ? cleanEmail(g.email) : '';
-    const me = userFrom(req), owner = db.prepare('SELECT * FROM users WHERE google_sub = ?').get(g.sub);
-    if (me) {
-      if (owner && owner.id !== me.id) return send(res, 409, { error: 'Taj Google račun je već povezan s drugim igračem.', code: 'google_taken' });
-      db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').run(g.sub, me.id);
-      if (email && !me.email && !db.prepare('SELECT 1 FROM users WHERE email = ?').get(email)) db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, me.id);
-      return send(res, 200, { name: me.name, linked: true });
-    }
-    if (owner) { linkGuest(guest, owner.id); return send(res, 200, { name: owner.name, token: newSession(owner.id) }); }
-    const byEmail = email && db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-    if (byEmail) { // same verified e-mail: this is the same person
-      db.prepare('UPDATE users SET google_sub = ? WHERE id = ?').run(g.sub, byEmail.id);
-      linkGuest(guest, byEmail.id);
-      return send(res, 200, { name: byEmail.name, token: newSession(byEmail.id) });
-    }
-    const name = freeName(g.given_name || g.name || email.split('@')[0]);
-    const id = createUser(name, { email: email || null, google_sub: g.sub });
-    linkGuest(guest, id);
-    return send(res, 201, { name, token: newSession(id), created: true });
+    return socialSignIn(req, res, 'google_sub', g.sub, g.email_verified ? cleanEmail(g.email) : '', g.given_name || g.name, guest, { taken: 'google_taken' });
+  }
+  // Sign in with Apple (iOS app). Apple gives the name only on the very first sign-in, so the app sends it along.
+  if (req.method === 'POST' && p === '/api/apple') {
+    if (limited(req, 'apple', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
+    const { identityToken, name, guest } = await readJson(req);
+    const a = await verifyApple(identityToken);
+    if (!a) return send(res, 401, { error: 'Prijava s Appleom nije uspjela.', code: 'apple_failed' });
+    const verified = a.email_verified === true || a.email_verified === 'true';
+    return socialSignIn(req, res, 'apple_sub', a.sub, verified ? cleanEmail(a.email) : '', String(name || '').slice(0, 40), guest, { taken: 'apple_taken' });
   }
 
   if (req.method === 'POST' && p === '/api/logout') {
@@ -827,5 +858,6 @@ if (require.main === module) {
   setInterval(remind, 10 * 60e3).unref(); setTimeout(remind, 60e3).unref();
 }
 // Test hook: use local keys and client ID instead of Google's.
-function setGoogleForTests(keys, clientId) { googleKeys = keys; googleKeysUntil = Infinity; GOOGLE_CLIENT_ID = clientId; }
-module.exports = { server, sendReminders, deleteUser, replay, puzzle, db, setGoogleForTests, hashPassword, checkPassword, EMAIL_RE, cleanEmail, validPassword };
+function setGoogleForTests(keys, clientId) { googleKey = async kid => keys[kid]; GOOGLE_CLIENT_ID = clientId; }
+function setAppleForTests(keys, bundleId) { appleKey = async kid => keys[kid]; APPLE_AUDS = [bundleId]; }
+module.exports = { server, sendReminders, deleteUser, replay, puzzle, db, setGoogleForTests, setAppleForTests, hashPassword, checkPassword, EMAIL_RE, cleanEmail, validPassword };

@@ -15,7 +15,8 @@ param(
   [string]$DataDir  = 'C:\inetpub\topple-data',     # database, logs, backups (not web-served)
   [string]$Repo     = 'https://github.com/riverDeer12/topple.git',
   [int]$Port        = 8787,
-  [string]$GoogleClientId = ''                       # optional, enables "Sign in with Google" (see README)
+  [string]$GoogleClientId = '',                      # optional, enables "Sign in with Google" (see README)
+  [string]$GoogleIosClientId = ''                    # optional, Google sign-in in the iOS app (see ios/README.md)
 )
 $ErrorActionPreference = 'Stop'
 function Step($msg) { Write-Host "`n== $msg" -ForegroundColor Cyan }
@@ -76,6 +77,7 @@ if (-not (Get-Service topple -ErrorAction SilentlyContinue)) {
 & $nssm set topple AppDirectory $AppDir | Out-Null
 $envVars = @("PORT=$Port", "DB_PATH=$(Join-Path $DataDir 'topple.db')", "ALLOWED_ORIGIN=https://$HostName,https://riverdeer12.github.io")
 if ($GoogleClientId) { $envVars += "GOOGLE_CLIENT_ID=$GoogleClientId" }
+if ($GoogleIosClientId) { $envVars += "GOOGLE_IOS_CLIENT_ID=$GoogleIosClientId" }
 & $nssm set topple AppEnvironmentExtra @envVars | Out-Null
 & $nssm set topple AppStdout (Join-Path $DataDir 'api.log') | Out-Null
 & $nssm set topple AppStderr (Join-Path $DataDir 'api.log') | Out-Null
