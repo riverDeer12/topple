@@ -4,6 +4,7 @@
 // so a score can only be recorded by actually solving the puzzle.
 //
 // Env: PORT (8787), HOST (127.0.0.1), DB_PATH (server/topple.db), TZ_GAME (Europe/Zagreb), GOOGLE_CLIENT_ID,
+//      SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM (password reset e-mails, see mail.js), PUBLIC_URL,
 //      ALLOWED_ORIGIN (* or a comma-separated list, e.g. https://topple.rdd.software,http://localhost:8080)
 const http = require('http');
 const path = require('path');
@@ -103,6 +104,24 @@ if (db.prepare('PRAGMA user_version').get().user_version < 4) {
     PRAGMA user_version = 4;
   `);
 }
+// Schema v5: one-time links for resetting a forgotten password (sent by e-mail, valid 1 hour).
+if (db.prepare('PRAGMA user_version').get().user_version < 5) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS password_resets (
+      token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), created_at INTEGER NOT NULL
+    );
+    PRAGMA user_version = 5;
+  `);
+}
+const mail = require('./mail.js');
+const PUBLIC_URL = (process.env.PUBLIC_URL || 'https://topple.rdd.software').replace(/\/+$/, '');
+const RESET_MS = 3600e3;
+const RESET_MAIL = {
+  hr: ['Topple: nova lozinka', 'Pozdrav {name},\n\nnetko je zatražio novu lozinku za tvoj Topple račun. Novu lozinku postavi na ovoj poveznici (vrijedi 1 sat):\n\n{link}\n\nAko to nisi ti, zanemari ovu poruku. Lozinka ostaje ista.\n\nTopple · topple.rdd.software'],
+  en: ['Topple: reset your password', 'Hi {name},\n\nsomeone asked for a new password for your Topple account. Set a new password here (the link works for 1 hour):\n\n{link}\n\nIf this was not you, ignore this e-mail. Your password stays the same.\n\nTopple · topple.rdd.software'],
+  it: ['Topple: nuova password', 'Ciao {name},\n\nqualcuno ha chiesto una nuova password per il tuo account Topple. Imposta la nuova password qui (il link vale 1 ora):\n\n{link}\n\nSe non hai fatto tu questa richiesta, ignora questa e-mail. La password resta la stessa.\n\nTopple · topple.rdd.software'],
+  de: ['Topple: neues Passwort', 'Hallo {name},\n\njemand hat ein neues Passwort für dein Topple-Konto angefordert. Hier setzt du ein neues Passwort (der Link gilt 1 Stunde):\n\n{link}\n\nWarst du das nicht, ignoriere diese E-Mail. Dein Passwort bleibt gleich.\n\nTopple · topple.rdd.software'],
+};
 const GUEST_ID = /^[A-Za-z0-9_-]{16,64}$/;
 function linkGuest(guestId, userId) {
   if (typeof guestId === 'string' && GUEST_ID.test(guestId)) db.prepare('UPDATE guests SET user_id = ? WHERE id = ? AND user_id IS NULL').run(userId, guestId);
@@ -430,7 +449,44 @@ async function route(req, res) {
     return send(res, 200, { admin, ...adminStats() });
   }
 
-  if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null });
+  if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null, passwordReset: !!mail.config() });
+
+  // Forgotten password: e-mails a one-time link. The answer is the same whether or not the
+  // account exists, so nobody can use it to find out who plays.
+  if (req.method === 'POST' && p === '/api/forgot') {
+    if (!mail.config()) return send(res, 503, { error: 'Slanje e-maila nije postavljeno.', code: 'reset_off' });
+    if (limited(req, 'forgot', 5, 3600e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj kasnije.', code: 'too_many' });
+    const { login, lang } = await readJson(req);
+    const l = String(login || '').trim();
+    const u = l.includes('@') ? db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail(l)) : db.prepare('SELECT * FROM users WHERE name = ?').get(l);
+    if (u && u.email) {
+      const recent = db.prepare('SELECT COUNT(*) AS n FROM password_resets WHERE user_id = ? AND created_at > ?').get(u.id, Date.now() - RESET_MS).n;
+      if (recent < 3) {
+        const token = crypto.randomBytes(24).toString('base64url');
+        db.prepare('DELETE FROM password_resets WHERE created_at < ?').run(Date.now() - RESET_MS);
+        db.prepare('INSERT INTO password_resets (token_hash, user_id, created_at) VALUES (?, ?, ?)').run(sha(token), u.id, Date.now());
+        const [subject, text] = RESET_MAIL[lang] || RESET_MAIL.hr;
+        const link = `${PUBLIC_URL}/igra.html#reset=${token}`;
+        mail.sendMail({ to: u.email, subject, text: text.replace('{name}', u.name).replace('{link}', link) })
+          .catch(e => console.error('Reset e-mail failed:', e.message));
+      }
+    }
+    return send(res, 200, { ok: true });
+  }
+  // Sets the new password from a reset link, signs out every device and signs in this one.
+  if (req.method === 'POST' && p === '/api/reset') {
+    if (limited(req, 'login', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
+    const { token, password } = await readJson(req);
+    const r = typeof token === 'string' && db.prepare('SELECT * FROM password_resets WHERE token_hash = ?').get(sha(token));
+    if (!r || r.created_at < Date.now() - RESET_MS) return send(res, 400, { error: 'Poveznica je istekla ili je već iskorištena. Zatraži novu.', code: 'reset_expired' });
+    if (!validPassword(password)) return send(res, 400, { error: PW_ERR, code: 'password_short' });
+    const u = db.prepare('SELECT * FROM users WHERE id = ?').get(r.user_id);
+    if (!u) return send(res, 400, { error: 'Poveznica je istekla ili je već iskorištena. Zatraži novu.', code: 'reset_expired' });
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hashPassword(password), u.id);
+    db.prepare('DELETE FROM password_resets WHERE user_id = ?').run(u.id);
+    db.prepare('DELETE FROM sessions WHERE user_id = ?').run(u.id);
+    return send(res, 200, { name: u.name, token: newSession(u.id) });
+  }
 
   // New account: nickname + password, e-mail optional (then it can be used to sign in too).
   if (req.method === 'POST' && p === '/api/register') {

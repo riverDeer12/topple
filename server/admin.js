@@ -4,6 +4,8 @@
 //   node server/admin.js set-password <name> <password>
 //   node server/admin.js stats                                  (players, guests, activity, how far guests get)
 //   node server/admin.js set-admin <name> <password>            (sign-in for the admin page /admin; again to change the password)
+//   node server/admin.js set-smtp <host> <port> <user> <password> "<from>"   (e-mail for "forgot password")
+//   node server/admin.js test-mail <email>                      (sends a test e-mail with those settings)
 //   node server/admin.js delete <name> [--yes]                  (removes the player and all their data; without --yes only shows what would go)
 // Uses DB_PATH, or --db <path>. On the Windows server: --db C:\inetpub\topple-data\topple.db
 const args = process.argv.slice(2);
@@ -54,6 +56,18 @@ if (cmd === 'list') {
   db.prepare('INSERT INTO admins (name, password_hash) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET password_hash = excluded.password_hash').run(name, hashPassword(password));
   db.prepare('DELETE FROM admin_sessions WHERE admin = ?').run(name); // a new password signs out old admin sessions
   console.log(`Gotovo: administrator ${name} se može prijaviti na /admin.`);
+} else if (cmd === 'set-smtp') {
+  const [host, port, user, pass, from] = rest;
+  if (!host || !port || !user || !pass) fail('Nedostaju podaci. Primjer: node server/admin.js set-smtp mail.example.com 587 info@rdd.software \'lozinka\' "Topple <info@rdd.software>"');
+  const mail = require('./mail.js');
+  require('fs').writeFileSync(mail.configFile(), JSON.stringify({ host, port: Number(port), user, pass, from: from || `Topple <${user}>` }, null, 2));
+  console.log(`Spremljeno u ${mail.configFile()}. Provjeri slanjem: node server/admin.js test-mail tvoj@email.com`);
+} else if (cmd === 'test-mail') {
+  const mail = require('./mail.js');
+  if (!rest[0]) fail('Nedostaje e-mail. Primjer: node server/admin.js test-mail tvoj@email.com');
+  if (!mail.config()) fail('SMTP nije postavljen (naredba set-smtp).');
+  mail.sendMail({ to: rest[0], subject: 'Topple: probni e-mail', text: 'Slanje e-maila za Topple radi. Igrači sada mogu zatražiti novu lozinku.' })
+    .then(() => console.log('Poslano na ' + rest[0] + '.'), e => fail('Slanje nije uspjelo: ' + e.message));
 } else if (cmd === 'delete') {
   const yes = rest.includes('--yes');
   const name = rest.filter(a => a !== '--yes').join(' ');
@@ -71,5 +85,5 @@ if (cmd === 'list') {
   } catch (e) { db.exec('ROLLBACK'); throw e; }
   console.log(`Obrisano: ${summary}.`);
 } else {
-  console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | set-admin <ime> <lozinka> | delete <ime> [--yes]   [--db putanja]');
+  console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | set-admin <ime> <lozinka> | set-smtp <host> <port> <korisnik> <lozinka> <od> | test-mail <email> | delete <ime> [--yes]   [--db putanja]');
 }
