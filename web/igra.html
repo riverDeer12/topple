@@ -113,6 +113,16 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 .lb li .r { font: 500 .8rem var(--mono); color: var(--muted); }
 .lb li .v { font: 500 .85rem var(--mono); }
 .lb li.me { background: color-mix(in srgb, var(--gold) 18%, transparent); border-radius: 8px; }
+.scope { display: flex; gap: 6px; justify-content: center; }
+.scope button { font: 600 .78rem var(--body); color: var(--muted); background: none; border: 1px solid var(--panel-line); border-radius: 999px; padding: 5px 14px; cursor: pointer; }
+.scope button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
+.friends { width: 100%; display: grid; gap: 8px; text-align: left; }
+.friends form { display: flex; gap: 6px; }
+.friends input { flex: 1; min-width: 0; }
+.friends form button { font: 600 .85rem var(--display); background: var(--hero); color: #fff; border: 0; border-radius: 999px; padding: 0 16px; cursor: pointer; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font: 500 .8rem var(--body); background: var(--page); border: 1px solid var(--panel-line); border-radius: 999px; padding: 3px 4px 3px 10px; }
+.chip button { background: none; border: 0; color: var(--muted); font-size: 1rem; line-height: 1; cursor: pointer; padding: 0 4px; }
 .lb .empty { display: block; text-align: center; color: var(--muted); border: 0; padding: 18px 6px; }
 .card.wide { width: min(400px, 100%); }
 .langsel { font: 600 .8rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 7px 12px; cursor: pointer; }
@@ -234,7 +244,9 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
     <div class="row">
       <button class="tog" id="tSfx" type="button" aria-pressed="true" data-i18n="menu.sfx">Zvukovi</button>
       <button class="tog" id="tMusic" type="button" aria-pressed="true" data-i18n="menu.music">Glazba</button>
+      <button class="tog" id="tRemind" type="button" aria-pressed="false" data-i18n="menu.remind" hidden>Podsjetnik</button>
     </div>
+    <p class="small" id="remindMsg" hidden style="text-align:center"></p>
     <button class="link" id="mTypes" type="button" data-i18n="menu.help">Kako se igra</button>
     <a class="link" href="./" data-i18n="menu.home">Početna stranica i ljestvica</a>
     <a class="link" href="privatnost.html" data-i18n="privacy.link">Pravila privatnosti</a>
@@ -314,8 +326,17 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
       <button class="tab" role="tab" data-m="endless" type="button" data-i18n="lb.endless">Beskonačno</button>
       <button class="tab" role="tab" data-m="campaign" type="button" data-i18n="lb.campaign">Razine</button>
     </div>
+    <div class="scope" id="lbScope" hidden>
+      <button type="button" data-s="all" data-i18n="lb.all">Svi</button>
+      <button type="button" data-s="friends" data-i18n="lb.friends">Prijatelji</button>
+    </div>
     <p id="lbSub"></p>
     <ul class="lb" id="lbList"></ul>
+    <div class="friends" id="frBox" hidden>
+      <form id="frForm"><input class="nick" id="frName" maxlength="16" autocomplete="off" placeholder="Korisničko ime prijatelja" data-i18n-ph="fr.ph" data-i18n-aria="fr.ph"><button type="submit" data-i18n="fr.add">Dodaj</button></form>
+      <div class="err" id="frErr" role="alert"></div>
+      <div class="chips" id="frList"></div>
+    </div>
     <button class="link" id="lbClose" type="button" data-i18n="lb.close">Zatvori</button>
   </div>
 </div>
@@ -817,6 +838,7 @@ function win() {
   $('winAch').hidden = !achNew.length;
   if (achNew.length) $('winAch').textContent = achNew.map(id => t('win.ach', { name: t('ach.' + id) })).join(' ');
   const st = ctx.mode === 'daily' ? streaks().current : 0;
+  if (ctx.mode === 'daily') pushSolved();
   $('winStreak').hidden = st < 2;
   if (st >= 2) $('winStreak').textContent = t('streak.win', { n: st });
   lastWin = { mode: ctx.mode, key: ctx.key, moves: hist.length, opt: ctx.level.opt, timeMs };
@@ -919,8 +941,10 @@ $('who').addEventListener('click', e => {
 let loginTab = 'login', googleId = null, googleLoaded = null;
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u;
 let resetOn = false; // the server can send password reset e-mails
+let pushKey = null, remindHour = 17; // public VAPID key and local hour of the daily reminder
 async function loadConfig() {
-  if (API) try { const c = await api('/api/config'); googleId = c.googleClientId; resetOn = !!c.passwordReset; } catch (e) {}
+  if (API) try { const c = await api('/api/config'); googleId = c.googleClientId; resetOn = !!c.passwordReset; pushKey = c.pushKey || null; remindHour = c.remindHour ?? 17; } catch (e) {}
+  initRemind();
   $('forgot').hidden = !resetOn || loginTab !== 'login';
 }
 function setLoginTab(tab) {
@@ -1000,7 +1024,8 @@ $('resetForm').addEventListener('submit', async e => {
   } catch (x) { err.textContent = errText(x); }
 });
 function signedIn(r) {
-  user = { name: r.name, token: r.token }; store.set('user', user); store.set('asked', true); store.set('importedName', '');
+  user = { name: r.name, token: r.token };
+  if (canPush()) pushSub().then(sub => { if (sub) sendSub(sub); }); // link the reminder to the account store.set('user', user); store.set('asked', true); store.set('importedName', '');
   $('lPass').value = '';
   sync();
   openMenu();
@@ -1088,9 +1113,14 @@ $('accLogout').onclick = async () => {
 };
 $('accClose').onclick = openMenu;
 
-let lbMode = 'daily';
+let lbMode = 'daily', lbScope = 'all';
 async function openBoard(mode = lbMode) {
   lbMode = mode;
+  const friends = lbScope === 'friends' && signedInNow();
+  $('lbScope').hidden = !signedInNow() || !API;
+  document.querySelectorAll('#lbScope button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === (friends ? 'friends' : 'all'))));
+  $('frBox').hidden = !friends;
+  if (friends) loadFriends();
   document.querySelectorAll('#lbBox .tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.m === mode)));
   $('lbSub').textContent = mode === 'daily' ? t('lb.subDaily', { date: fmtDate(today()) }) : mode === 'endless' ? t('lb.subEndless') : t('lb.subCampaign');
   const list = $('lbList');
@@ -1099,12 +1129,12 @@ async function openBoard(mode = lbMode) {
   if (!API) { list.innerHTML = empty(t('lb.offline')); return; }
   list.innerHTML = empty(t('lb.loading'));
   try {
-    const r = await api('/api/leaderboard?mode=' + mode + (mode === 'daily' ? '&date=' + today() : ''));
-    if (lbMode !== mode) return;
+    const r = await api('/api/leaderboard?mode=' + mode + (mode === 'daily' ? '&date=' + today() : '') + (friends ? '&friends=1' : ''));
+    if (lbMode !== mode || (lbScope === 'friends') !== friends) return;
     const val = x => mode === 'daily' ? `${x.moves} · ${fmtTime(x.timeMs)}` : mode === 'endless' ? `#${x.solved} · ★${x.stars}` : `★${x.stars}`;
     const rows = r.rows.slice();
     if (r.mine && !rows.some(x => x.me)) rows.push(r.mine);
-    list.innerHTML = rows.length ? '' : empty(t('lb.empty'));
+    list.innerHTML = rows.length ? '' : empty(t(friends ? 'fr.empty' : 'lb.empty'));
     for (const x of rows) {
       const li = document.createElement('li');
       if (x.me) li.className = 'me';
@@ -1116,6 +1146,27 @@ async function openBoard(mode = lbMode) {
   } catch (e) { list.innerHTML = empty(t('err.server')); }
 }
 document.querySelectorAll('#lbBox .tab').forEach(t => t.onclick = () => openBoard(t.dataset.m));
+document.querySelectorAll('#lbScope button').forEach(b => b.onclick = () => { lbScope = b.dataset.s; openBoard(); });
+// Friends: players you follow by username; the friends leaderboard shows only them and you.
+function drawFriends(names) {
+  const list = $('frList'); list.innerHTML = '';
+  if (!names.length) { list.textContent = t('fr.none'); return; }
+  for (const n of names) {
+    const c = document.createElement('span'); c.className = 'chip';
+    c.innerHTML = '<span></span><button type="button"></button>';
+    c.children[0].textContent = n; c.children[1].textContent = '×';
+    c.children[1].setAttribute('aria-label', t('fr.remove', { name: n }));
+    c.children[1].onclick = () => changeFriends({ remove: n });
+    list.appendChild(c);
+  }
+}
+async function loadFriends() { try { drawFriends((await api('/api/friends')).friends); } catch (e) {} }
+async function changeFriends(body) {
+  $('frErr').textContent = '';
+  try { drawFriends((await api('/api/friends', { method: 'POST', body: JSON.stringify(body) })).friends); $('frName').value = ''; openBoard(); }
+  catch (e) { $('frErr').textContent = errText(e); }
+}
+$('frForm').addEventListener('submit', e => { e.preventDefault(); const n = $('frName').value.trim(); if (n) changeFriends({ add: n }); });
 $('lbList').addEventListener('click', e => { if (e.target.closest('[data-login]')) needAccount(t('lb.needAccount')); });
 $('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
 
@@ -1432,6 +1483,49 @@ $('next').onclick = () => {
   else openCampaign(ctx.key + 1);
 };
 function setToggle(id, on) { $(id).setAttribute('aria-pressed', String(on)); }
+
+// --- daily reminder: a push notification in the evening if today's puzzle is not solved yet ---
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const canPush = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && location.protocol === 'https:';
+async function pushSub() { try { return await (await navigator.serviceWorker.ready).pushManager.getSubscription(); } catch (e) { return null; } }
+function remindInfo(text) { $('remindMsg').hidden = !text; $('remindMsg').textContent = text || ''; }
+async function initRemind() {
+  if (!API || !pushKey) return;
+  // On an iPhone, notifications only work once the game is on the home screen.
+  $('tRemind').hidden = !canPush() && !(isIOS && location.protocol === 'https:');
+  if (!canPush()) return;
+  const sub = await pushSub();
+  setToggle('tRemind', !!sub && Notification.permission === 'granted');
+  if (sub) sendSub(sub); // keeps language, account and streak up to date
+}
+const toB64 = b => new Uint8Array(atob(b.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - b.length % 4) % 4)).split('').map(c => c.charCodeAt(0)));
+function sendSub(sub) {
+  const t0 = today(), st = streaks();
+  return api('/api/push/subscribe', { method: 'POST', body: JSON.stringify({ sub: sub.toJSON(), lang: ToppleI18n.lang, guest: signedInNow() ? undefined : guestId(), solved: prog.daily[t0] ? t0 : Object.keys(prog.daily).sort().pop(), streak: st.current }) }).catch(() => {});
+}
+$('tRemind').onclick = async () => {
+  fx.tap(); remindInfo('');
+  if (!canPush()) { remindInfo(t('remind.ios')); return; }
+  const sub = await pushSub();
+  if (sub && $('tRemind').getAttribute('aria-pressed') === 'true') {
+    api('/api/push/unsubscribe', { method: 'POST', body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {});
+    await sub.unsubscribe().catch(() => {});
+    setToggle('tRemind', false); return;
+  }
+  if ((await Notification.requestPermission()) !== 'granted') { remindInfo(t('remind.denied')); return; }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const s2 = sub || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toB64(pushKey) });
+    await sendSub(s2);
+    setToggle('tRemind', true); remindInfo(t('remind.on', { h: String(remindHour).padStart(2, '0') + ':00' }));
+  } catch (e) { remindInfo(t('remind.failed')); }
+};
+// After today's daily: no reminder tonight, and the streak for tomorrow's message.
+async function pushSolved() {
+  if (!API || !canPush()) return;
+  const sub = await pushSub();
+  if (sub) api('/api/push/solved', { method: 'POST', body: JSON.stringify({ endpoint: sub.endpoint, date: today(), streak: streaks().current }) }).catch(() => {});
+}
 $('tSfx').onclick = () => { settings.sfx = !settings.sfx; ToppleAudio.setSfx(settings.sfx); setToggle('tSfx', settings.sfx); store.set('settings', settings); fx.tap(); };
 $('tMusic').onclick = () => { settings.music = !settings.music; ToppleAudio.setMusic(settings.music); setToggle('tMusic', settings.music); store.set('settings', settings); };
 addEventListener('resize', () => layout());

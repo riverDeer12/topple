@@ -80,6 +80,8 @@ if (cmd === 'list') {
   try {
     for (const t of ['campaign', 'daily', 'endless', 'sessions']) db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(u.id);
     db.prepare('UPDATE guests SET user_id = NULL WHERE user_id = ?').run(u.id);
+    db.prepare('DELETE FROM friends WHERE user_id = ? OR friend_id = ?').run(u.id, u.id);
+    db.prepare("DELETE FROM plays WHERE pid = ?").run('u' + u.id);
     db.prepare('DELETE FROM users WHERE id = ?').run(u.id);
     db.exec('COMMIT');
   } catch (e) { db.exec('ROLLBACK'); throw e; }
