@@ -331,6 +331,7 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
     <p id="winAch" class="unlock" hidden></p>
     <button class="go" id="next" type="button">Sljedeća razina</button>
     <button class="share" id="share" type="button"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span data-i18n="win.share">Podijeli rezultat</span></button>
+    <button class="link" id="watch" type="button" data-i18n="win.watch">Pogledaj najbolje rješenje</button>
     <button class="link" id="retry" type="button" data-i18n="win.retry">Pokušaj u manje poteza</button>
     <button class="link" id="winMenu" type="button" data-i18n="win.menu">Izbornik</button>
   </div>
@@ -762,7 +763,7 @@ function fall() {
     els.forEach(el => el.classList.remove('breaking'));
     const ri = blocks.findIndex(b => b.t === 'r');
     els[ri].style.setProperty('--look', 0);
-    if (won(blocks, ctx.level.exit)) win();
+    if (won(blocks, ctx.level.exit)) watching ? watchDone() : win();
   }, maxMs + 20);
 }
 
@@ -818,6 +819,7 @@ function win() {
       + (c.mode === 'daily' ? t('win.time', { t: fmtTime(timeMs) }) : '')
       + (!signedInNow() && c.mode !== 'campaign' ? t('win.guest') : '');
     $('retry').hidden = s === 3;
+    $('watch').hidden = c.mode === 'daily'; // no solutions for the daily puzzle, it has a leaderboard
     $('next').textContent = c.mode === 'daily' ? t('win.board') : c.mode === 'endless' ? t('win.nextPuzzle')
       : c.key === LEVELS.length - 1 ? t('win.allLevels') : t('win.nextLevel');
     showOnly('winBox');
@@ -1174,6 +1176,38 @@ async function useHint() {
 }
 $('hintBtn').onclick = useHint;
 
+// --- after a win: watch the shortest solution played from the start ------------------------
+let watching = 0; // id of the running replay, 0 when none
+function stopWatch() { if (watching) { watching = 0; $('hint').textContent = ''; } }
+async function watchBest() {
+  const c = ctx, id = watching = Date.now();
+  show(c); // back to the start position
+  won_ = true; // no input while it plays
+  $('hint').textContent = t('hint.thinking');
+  const path = await solveAsync(blocks.map(b => ({ ...b })), c.level.exit);
+  if (watching !== id || ctx !== c) return;
+  if (!path) { stopWatch(); return; }
+  for (let i = 0; i < path.length; i++) {
+    $('hint').textContent = t('best.step', { i: i + 1, n: path.length });
+    const [k, d] = path[i];
+    els[k].classList.add('hinted');
+    await new Promise(ok => setTimeout(ok, reduced ? 150 : 550));
+    if (watching !== id) return;
+    els[k].classList.remove('hinted');
+    commit(k, d, Math.min(Math.abs(d), 3));
+    await new Promise(ok => { const w = () => (busy ? setTimeout(w, 40) : ok()); w(); });
+    if (watching !== id) return;
+  }
+}
+function watchDone() { // the replay reached the exit
+  const n = hist.length;
+  watching = 0;
+  fx.win();
+  $('hint').textContent = t('best.done', { n, moves: potez(n) });
+  setTimeout(() => { if (!watching && won_) showOnly('winBox'); }, 1400);
+}
+$('watch').onclick = () => { fx.tap(); watchBest(); };
+
 // --- rewarded ads: watch an ad, get a hint (Google H5 Games Ads; see config.js) ---------------
 const ADS = window.TOPPLE_ADS || {};
 if (ADS.client) {
@@ -1364,7 +1398,7 @@ $('mEndless').onclick = openEndless;
 $('mLevels').onclick = openLevels;
 $('mBoard').onclick = () => openBoard('daily');
 $('menuClose').onclick = () => { showOnly(null); if (ctx) maybeIntro(ctx.level); };
-$('menu').onclick = () => { if (!busy) openMenu(); };
+$('menu').onclick = () => { if (!busy) { stopWatch(); openMenu(); } };
 $('winMenu').onclick = openMenu;
 $('undo').onclick = () => {
   clearHint();
@@ -1372,8 +1406,8 @@ $('undo').onclick = () => {
   blocks.splice(0, blocks.length, ...hist.pop()); moveLog.pop();
   place(160); update(); fx.undo();
 };
-$('reset').onclick = () => { if (!busy && ctx) show(ctx); };
-$('retry').onclick = () => show(ctx);
+$('reset').onclick = () => { if (!busy && ctx) { stopWatch(); show(ctx); } };
+$('retry').onclick = () => { stopWatch(); show(ctx); };
 $('next').onclick = () => {
   if (ctx.mode === 'daily') return openBoard('daily');
   if (ctx.mode === 'endless') return openEndless();
