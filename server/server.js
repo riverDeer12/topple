@@ -125,6 +125,57 @@ if (db.prepare('PRAGMA user_version').get().user_version < 6) {
     PRAGMA user_version = 6;
   `);
 }
+// Schema v7: friends (one way, like following): a player adds others by username and can
+// see a leaderboard with just them.
+if (db.prepare('PRAGMA user_version').get().user_version < 7) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS friends (
+      user_id INTEGER NOT NULL REFERENCES users(id), friend_id INTEGER NOT NULL REFERENCES users(id),
+      created_at INTEGER NOT NULL, PRIMARY KEY (user_id, friend_id)
+    );
+    CREATE INDEX IF NOT EXISTS friends_of ON friends (friend_id);
+    PRAGMA user_version = 7;
+  `);
+}
+const MAX_FRIENDS = 100;
+// Schema v8: push subscriptions for the daily puzzle reminder (account or guest).
+if (db.prepare('PRAGMA user_version').get().user_version < 8) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS push_subs (
+      endpoint TEXT PRIMARY KEY, p256dh TEXT NOT NULL, auth TEXT NOT NULL, user_id INTEGER, guest TEXT, lang TEXT,
+      last_solved TEXT, streak INTEGER NOT NULL DEFAULT 0, last_sent TEXT, created_at INTEGER NOT NULL
+    );
+    PRAGMA user_version = 8;
+  `);
+}
+const push = require('./push.js');
+const REMIND_HOUR = Number(process.env.REMIND_HOUR || 17); // local time (TZ_GAME) of the daily reminder
+const REMIND = {
+  hr: ['Topple: dnevna zagonetka', 'Današnja zagonetka te čeka. Treba ti samo par minuta.', 'Riješi današnju zagonetku i nastavi niz 🔥 {n}.'],
+  en: ['Topple: daily puzzle', 'Today’s puzzle is waiting for you. It only takes a few minutes.', 'Solve today’s puzzle and keep your 🔥 {n} streak going.'],
+  it: ['Topple: rompicapo del giorno', 'Il rompicapo di oggi ti aspetta. Bastano pochi minuti.', 'Risolvi il rompicapo di oggi e continua la serie 🔥 {n}.'],
+  de: ['Topple: Tagesrätsel', 'Das heutige Rätsel wartet auf dich. Es dauert nur ein paar Minuten.', 'Löse das heutige Rätsel und halte deine 🔥 {n}-Serie.'],
+};
+// Sends the reminder once a day to everyone who has not solved today's puzzle yet.
+async function sendReminders(now = new Date()) {
+  const today = G.today(TZ, now), yesterday = G.today(TZ, new Date(now.getTime() - 864e5));
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', hourCycle: 'h23' }).format(now));
+  if (hour < REMIND_HOUR) return 0;
+  const subs = db.prepare(`SELECT * FROM push_subs WHERE (last_sent IS NULL OR last_sent <> ?) AND (last_solved IS NULL OR last_solved <> ?)
+    AND (user_id IS NULL OR NOT EXISTS (SELECT 1 FROM daily WHERE user_id = push_subs.user_id AND date = ?))`).all(today, today, today);
+  let sent = 0;
+  for (const sub of subs) {
+    db.prepare('UPDATE push_subs SET last_sent = ? WHERE endpoint = ?').run(today, sub.endpoint);
+    const [title, plain, withStreak] = REMIND[sub.lang] || REMIND.hr;
+    const alive = sub.last_solved === yesterday && sub.streak > 0;
+    try {
+      const st = await push.sendPush(sub, { title, body: alive ? withStreak.replace('{n}', sub.streak) : plain, url: 'igra.html' });
+      if (st === 404 || st === 410) db.prepare('DELETE FROM push_subs WHERE endpoint = ?').run(sub.endpoint);
+      else if (st < 300) sent++;
+    } catch (e) { console.error('Push failed:', e.message); }
+  }
+  return sent;
+}
 const mail = require('./mail.js');
 const PUBLIC_URL = (process.env.PUBLIC_URL || 'https://topple.rdd.software').replace(/\/+$/, '');
 const RESET_MS = 3600e3;
@@ -290,30 +341,40 @@ function validDate(d) {
 }
 
 // --- leaderboards ----------------------------------------------------------
-function board(mode, date, me) {
-  let rows, mine = null;
+// Leaderboard. With `only` (user ids: the player and their friends) it lists just those
+// players, ranked among themselves.
+function board(mode, date, me, only) {
+  let q, params = [], order;
   if (mode === 'daily') {
-    const q = `SELECT u.name, d.moves, d.time_ms AS timeMs, d.stars, u.id,
-               RANK() OVER (ORDER BY d.moves, d.time_ms) AS rank
-               FROM daily d JOIN users u ON u.id = d.user_id WHERE d.date = ?`;
-    rows = db.prepare(q + ' ORDER BY rank, d.updated_at LIMIT 50').all(date);
-    if (me) mine = db.prepare(`SELECT * FROM (${q}) WHERE id = ?`).get(date, me.id) || null;
+    q = `SELECT u.name, d.moves, d.time_ms AS timeMs, d.stars, u.id, d.updated_at AS t,
+         RANK() OVER (ORDER BY d.moves, d.time_ms) AS rank
+         FROM daily d JOIN users u ON u.id = d.user_id WHERE d.date = ?`;
+    params = [date]; order = 'rank, t';
   } else if (mode === 'endless') {
-    const q = `SELECT name, endless_next - 1 AS solved, endless_stars AS stars, id,
-               RANK() OVER (ORDER BY endless_next DESC, endless_stars DESC) AS rank
-               FROM users WHERE endless_next > 1`;
-    rows = db.prepare(q + ' ORDER BY rank, created_at LIMIT 50').all();
-    if (me) mine = db.prepare(`SELECT * FROM (${q}) WHERE id = ?`).get(me.id) || null;
+    q = `SELECT name, endless_next - 1 AS solved, endless_stars AS stars, id, created_at AS t,
+         RANK() OVER (ORDER BY endless_next DESC, endless_stars DESC) AS rank
+         FROM users WHERE endless_next > 1`;
+    order = 'rank, t';
   } else {
-    const q = `SELECT u.name, SUM(c.stars) AS stars, COUNT(*) AS levels, SUM(c.moves) AS moves, u.id,
-               RANK() OVER (ORDER BY SUM(c.stars) DESC, COUNT(*) DESC, SUM(c.moves)) AS rank
-               FROM campaign c JOIN users u ON u.id = c.user_id GROUP BY u.id`;
-    rows = db.prepare(q + ' ORDER BY rank LIMIT 50').all();
-    if (me) mine = db.prepare(`SELECT * FROM (${q}) WHERE id = ?`).get(me.id) || null;
+    q = `SELECT u.name, SUM(c.stars) AS stars, COUNT(*) AS levels, SUM(c.moves) AS moves, u.id,
+         RANK() OVER (ORDER BY SUM(c.stars) DESC, COUNT(*) DESC, SUM(c.moves)) AS rank
+         FROM campaign c JOIN users u ON u.id = c.user_id GROUP BY u.id`;
+    order = 'rank';
   }
-  const strip = r => { if (!r) return r; const { id, ...rest } = r; return { ...rest, me: !!me && id === me.id }; };
-  return { mode, date: date || null, rows: rows.map(strip), mine: strip(mine) };
+  let rows, mine = null;
+  if (only) {
+    rows = db.prepare(`SELECT * FROM (${q}) WHERE id IN (${only.map(() => '?').join(',')}) ORDER BY ${order}`).all(...params, ...only);
+    let prev = null, r = 0;
+    rows.forEach((x, k) => { if (x.rank !== prev) r = k + 1; prev = x.rank; x.rank = r; }); // ties keep the same place
+    mine = rows.find(x => x.id === me.id) || null;
+  } else {
+    rows = db.prepare(`SELECT * FROM (${q}) ORDER BY ${order} LIMIT 50`).all(...params);
+    if (me) mine = db.prepare(`SELECT * FROM (${q}) WHERE id = ?`).get(...params, me.id) || null;
+  }
+  const strip = r => { if (!r) return r; const { id, t, ...rest } = r; return { ...rest, me: !!me && id === me.id }; };
+  return { mode, date: date || null, friends: !!only, rows: rows.map(strip), mine: strip(mine) };
 }
+const friendIds = u => [u.id, ...db.prepare('SELECT friend_id AS id FROM friends WHERE user_id = ?').all(u.id).map(r => r.id)];
 function profile(u) {
   return {
     name: u.name,
@@ -494,7 +555,30 @@ async function route(req, res) {
     return send(res, 200, { admin, ...adminStats() });
   }
 
-  if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null, passwordReset: !!mail.config() });
+  if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null, passwordReset: !!mail.config(), pushKey: push.vapidKeys().publicKey, remindHour: REMIND_HOUR });
+
+  // Daily reminder: subscribe, unsubscribe, and tell the server today's puzzle is solved.
+  if (req.method === 'POST' && p.startsWith('/api/push/')) {
+    if (limited(req, 'push', 30, 15 * 60e3)) return send(res, 429, { error: 'Previše zahtjeva.', code: 'too_many' });
+    const b = await readJson(req), u = userFrom(req);
+    const endpoint = String((b.sub && b.sub.endpoint) || b.endpoint || '');
+    if (!push.validEndpoint(endpoint)) return send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' });
+    if (p === '/api/push/subscribe') {
+      const k = (b.sub && b.sub.keys) || {};
+      if (!/^[A-Za-z0-9_-]{80,100}$/.test(k.p256dh || '') || !/^[A-Za-z0-9_-]{16,32}$/.test(k.auth || '')) return send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' });
+      const guest = !u && typeof b.guest === 'string' && GUEST_ID.test(b.guest) ? b.guest : null;
+      const lang = ['hr', 'en', 'it', 'de'].includes(b.lang) ? b.lang : 'hr';
+      db.prepare(`INSERT INTO push_subs (endpoint, p256dh, auth, user_id, guest, lang, last_solved, streak, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (endpoint) DO UPDATE SET p256dh = excluded.p256dh, auth = excluded.auth, user_id = excluded.user_id, guest = excluded.guest, lang = excluded.lang`)
+        .run(endpoint, k.p256dh, k.auth, u ? u.id : null, guest, lang, /^\d{4}-\d{2}-\d{2}$/.test(b.solved || '') ? b.solved : null, Math.max(0, Math.min(9999, Number(b.streak) || 0)), Date.now());
+    } else if (p === '/api/push/unsubscribe') {
+      db.prepare('DELETE FROM push_subs WHERE endpoint = ?').run(endpoint);
+    } else if (p === '/api/push/solved') {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(b.date || '')) return send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' });
+      db.prepare('UPDATE push_subs SET last_solved = ?, streak = ? WHERE endpoint = ?').run(b.date, Math.max(0, Math.min(9999, Number(b.streak) || 0)), endpoint);
+    } else return send(res, 404, { error: 'Nema te adrese.', code: 'not_found' });
+    return send(res, 200, { ok: true });
+  }
 
   // Forgotten password: e-mails a one-time link. The answer is the same whether or not the
   // account exists, so nobody can use it to find out who plays.
@@ -674,7 +758,32 @@ async function route(req, res) {
     if (!['daily', 'endless', 'campaign'].includes(mode)) return send(res, 400, { error: 'Nepoznat način igre.', code: 'bad_mode' });
     const date = mode === 'daily' ? (url.searchParams.get('date') || G.today(TZ)) : null;
     if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return send(res, 400, { error: 'Neispravan datum.', code: 'bad_date' });
-    return send(res, 200, board(mode, date, userFrom(req)));
+    const me = userFrom(req);
+    if (url.searchParams.get('friends') === '1' && !me) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
+    return send(res, 200, board(mode, date, me, url.searchParams.get('friends') === '1' ? friendIds(me) : null));
+  }
+
+  // Friends: list, add or remove by username.
+  if (p === '/api/friends' && (req.method === 'GET' || req.method === 'POST')) {
+    const u = userFrom(req);
+    if (!u) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
+    if (req.method === 'POST') {
+      if (limited(req, 'friends', 60, 15 * 60e3)) return send(res, 429, { error: 'Previše zahtjeva.', code: 'too_many' });
+      const { add, remove } = await readJson(req);
+      if (add !== undefined) {
+        const f = db.prepare('SELECT id, name FROM users WHERE name = ?').get(String(add || '').trim().replace(/\s+/g, ' '));
+        if (!f) return send(res, 404, { error: 'Nema igrača s tim korisničkim imenom.', code: 'friend_unknown' });
+        if (f.id === u.id) return send(res, 400, { error: 'Sebe ne možeš dodati.', code: 'friend_self' });
+        if (db.prepare('SELECT COUNT(*) AS n FROM friends WHERE user_id = ?').get(u.id).n >= MAX_FRIENDS) return send(res, 400, { error: 'Imaš najviše prijatelja.', code: 'friend_max' });
+        db.prepare('INSERT OR IGNORE INTO friends (user_id, friend_id, created_at) VALUES (?, ?, ?)').run(u.id, f.id, Date.now());
+      }
+      if (remove !== undefined) {
+        const f = db.prepare('SELECT id FROM users WHERE name = ?').get(String(remove || ''));
+        if (f) db.prepare('DELETE FROM friends WHERE user_id = ? AND friend_id = ?').run(u.id, f.id);
+      }
+    }
+    const list = db.prepare('SELECT u.name FROM friends f JOIN users u ON u.id = f.friend_id WHERE f.user_id = ? ORDER BY u.name COLLATE NOCASE').all(u.id).map(r => r.name);
+    return send(res, 200, { friends: list });
   }
 
   send(res, 404, { error: 'Nema te adrese.', code: 'not_found' });
@@ -685,7 +794,11 @@ const server = http.createServer((req, res) => {
 });
 // Listens on localhost only by default: nginx in front of it handles the public HTTPS traffic.
 const HOST = process.env.HOST || '127.0.0.1';
-if (require.main === module) server.listen(PORT, HOST, () => console.log(`Topple API na http://${HOST}:${PORT}`));
+if (require.main === module) {
+  server.listen(PORT, HOST, () => console.log(`Topple API na http://${HOST}:${PORT}`));
+  const remind = () => sendReminders().then(n => { if (n) console.log(`Podsjetnik poslan: ${n}`); }, e => console.error('Reminders:', e.message));
+  setInterval(remind, 10 * 60e3).unref(); setTimeout(remind, 60e3).unref();
+}
 // Test hook: use local keys and client ID instead of Google's.
 function setGoogleForTests(keys, clientId) { googleKeys = keys; googleKeysUntil = Infinity; GOOGLE_CLIENT_ID = clientId; }
-module.exports = { server, replay, puzzle, db, setGoogleForTests, hashPassword, checkPassword, EMAIL_RE, cleanEmail, validPassword };
+module.exports = { server, sendReminders, replay, puzzle, db, setGoogleForTests, hashPassword, checkPassword, EMAIL_RE, cleanEmail, validPassword };

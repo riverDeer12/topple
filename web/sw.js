@@ -43,3 +43,20 @@ self.addEventListener('fetch', e => {
     return hit || net; // nothing cached yet: keep waiting for the network
   })());
 });
+
+// Daily reminder (see server/push.js): show the notification, open the game when tapped.
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) {}
+  e.waitUntil(self.registration.showNotification(d.title || 'Topple', {
+    body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'daily', data: { url: d.url || 'igra.html' },
+  }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || 'igra.html', self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const open = list.find(c => c.url.includes('igra.html'));
+    return open ? open.focus() : self.clients.openWindow(url);
+  }));
+});

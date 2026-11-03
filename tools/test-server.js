@@ -194,6 +194,65 @@ function solution(level) {
   smtp.close();
   ok('forgotten password: e-mail with a one-time link, new password, other sessions end');
 
+  // Friends: add by username, leaderboard with just them.
+  r = await call('/api/friends'); assert.strictEqual(r.status, 401);
+  r = await call('/api/friends', null, ana); assert.deepStrictEqual(r.body.friends, []);
+  r = await call('/api/friends', { add: 'nitko-takav' }, ana); assert.strictEqual(r.body.code, 'friend_unknown');
+  const me = (await call('/api/me', null, ana)).body.name;
+  r = await call('/api/friends', { add: me }, ana); assert.strictEqual(r.body.code, 'friend_self');
+  r = await call('/api/friends', { add: 'Đuro Č' }, ana); assert.deepStrictEqual(r.body.friends, ['Đuro Č']);
+  for (const m of ['daily', 'endless', 'campaign']) {
+    const all = (await call('/api/leaderboard?mode=' + m, null, ana)).body, fr = (await call('/api/leaderboard?mode=' + m + '&friends=1', null, ana)).body;
+    assert.ok(fr.friends && fr.rows.every(x => x.me || x.name === 'Đuro Č'), m + ': only friends');
+    assert.ok(fr.rows.length <= 2 && (!fr.rows.length || fr.rows[0].rank === 1), m + ': ranked among friends');
+    if (all.mine) assert.ok(fr.mine && fr.mine.rank <= all.mine.rank);
+  }
+  r = await call('/api/leaderboard?mode=daily&friends=1'); assert.strictEqual(r.status, 401);
+  r = await call('/api/friends', { remove: 'Đuro Č' }, ana); assert.deepStrictEqual(r.body.friends, []);
+  ok('friends: add, friends leaderboard, remove');
+
+  // Daily reminder: subscribe, the server sends an encrypted push with a VAPID signature.
+  const pushes = [];
+  const pushSrv = require('http').createServer((q, res) => { const parts = []; q.on('data', d => parts.push(d)); q.on('end', () => { pushes.push({ url: q.url, headers: q.headers, body: Buffer.concat(parts) }); res.writeHead(q.url.includes('gone') ? 410 : 201); res.end(); }); });
+  await new Promise(okk => pushSrv.listen(0, '127.0.0.1', okk));
+  process.env.PUSH_TEST_PREFIX = `http://127.0.0.1:${pushSrv.address().port}/`;
+  const browser = crypto.createECDH('prime256v1'); browser.generateKeys();
+  const authSecret = crypto.randomBytes(16);
+  const sub = { endpoint: process.env.PUSH_TEST_PREFIX + 'sub1', keys: { p256dh: browser.getPublicKey().toString('base64url'), auth: authSecret.toString('base64url') } };
+  r = await call('/api/config'); const pushKey = r.body.pushKey; assert.ok(/^[A-Za-z0-9_-]{87}$/.test(pushKey));
+  r = await call('/api/push/subscribe', { sub: { ...sub, endpoint: 'https://evil.example.com/x' } }); assert.strictEqual(r.status, 400, 'only push services');
+  r = await call('/api/push/subscribe', { sub, lang: 'en', guest: gid }); assert.strictEqual(r.status, 200);
+  r = await call('/api/push/subscribe', { sub: { ...sub, endpoint: process.env.PUSH_TEST_PREFIX + 'gone' }, lang: 'hr' }); assert.strictEqual(r.status, 200);
+  const { sendReminders, db: pdb } = require('../server/server.js');
+  const yest = require('../web/gen.js').today('Europe/Zagreb', new Date(Date.now() - 864e5));
+  r = await call('/api/push/solved', { endpoint: sub.endpoint, date: yest, streak: 4 }); assert.strictEqual(r.status, 200);
+  const evening = new Date(); evening.setUTCHours(20, 0, 0, 0);
+  assert.strictEqual(await sendReminders(new Date(evening.getTime() - 15 * 3600e3)), 0, 'not before the reminder hour');
+  assert.strictEqual(await sendReminders(evening), 1);
+  assert.strictEqual(pushes.length, 2);
+  assert.ok(!pdb.prepare('SELECT 1 FROM push_subs WHERE endpoint LIKE ?').get('%gone'), 'expired subscription removed');
+  const pm = pushes.find(x => x.url === '/sub1');
+  // VAPID: ES256 JWT for the push service origin, signed with the server's key.
+  const [, vjwt, k] = /^vapid t=([^,]+), k=(.+)$/.exec(pm.headers.authorization);
+  assert.strictEqual(k, pushKey);
+  const [h64, c64, s64] = vjwt.split('.'), pub = Buffer.from(k, 'base64url');
+  const verifyKey = crypto.createPublicKey({ format: 'jwk', key: { kty: 'EC', crv: 'P-256', x: pub.subarray(1, 33).toString('base64url'), y: pub.subarray(33).toString('base64url') } });
+  assert.ok(crypto.verify('sha256', Buffer.from(h64 + '.' + c64), { key: verifyKey, dsaEncoding: 'ieee-p1363' }, Buffer.from(s64, 'base64url')));
+  assert.strictEqual(JSON.parse(Buffer.from(c64, 'base64url')).aud, process.env.PUSH_TEST_PREFIX.slice(0, -1));
+  // Decrypt like a browser would (RFC 8291).
+  const bd = pm.body, salt = bd.subarray(0, 16), asPub = bd.subarray(21, 86), hm = (a, b) => crypto.createHmac('sha256', a).update(b).digest();
+  const ikm = hm(hm(authSecret, browser.computeSecret(asPub)), Buffer.concat([Buffer.from('WebPush: info\0'), browser.getPublicKey(), asPub, Buffer.from([1])]));
+  const prk = hm(salt, ikm);
+  const dc = crypto.createDecipheriv('aes-128-gcm', hm(prk, Buffer.from('Content-Encoding: aes128gcm\0\x01', 'binary')).subarray(0, 16), hm(prk, Buffer.from('Content-Encoding: nonce\0\x01', 'binary')).subarray(0, 12));
+  dc.setAuthTag(bd.subarray(bd.length - 16));
+  const plain = Buffer.concat([dc.update(bd.subarray(86, bd.length - 16)), dc.final()]);
+  const msg = JSON.parse(plain.subarray(0, plain.length - 1).toString());
+  assert.ok(msg.title.includes('daily') && msg.body.includes('4'), 'English reminder with the streak');
+  assert.strictEqual(await sendReminders(evening), 0, 'once a day');
+  r = await call('/api/push/unsubscribe', { endpoint: sub.endpoint }); assert.strictEqual(r.status, 200);
+  pushSrv.close();
+  ok('reminders: subscribe, encrypted VAPID push once a day, expired ones removed');
+
   // Level plays for difficulty tuning: attempts until the first solve, then the first solve's details.
   const pg = 'guest_' + 'p'.repeat(20);
   for (const kind of ['start', 'start', 'solve', 'start', 'solve']) {

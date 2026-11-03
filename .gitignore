@@ -4,3 +4,4 @@ node_modules/
 tools/.cache/
 server/*.db
 server/*.db-*
+server/*.json

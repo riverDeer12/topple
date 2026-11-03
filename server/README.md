@@ -151,6 +151,10 @@ node C:\inetpub\wwwroot\topple\server\admin.js test-mail tvoj@email.com --db C:\
 
 Postavke se spremaju u `C:\inetpub\topple-data\smtp.json` (nije u gitu). API ih čita sam, bez ponovnog pokretanja, a poveznica „Zaboravljena lozinka?” pojavi se u igri čim je SMTP postavljen. Port 465 koristi TLS od početka, ostali STARTTLS.
 
+## Podsjetnik za dnevnu zagonetku
+
+Igrači u izborniku mogu uključiti podsjetnik (obavijest na mobitelu ili računalu). Ne treba ništa postavljati: API pri prvom pokretanju napravi ključ `C:\inetpub\topple-data\vapid.json`. Tu datoteku ne briši i ne mijenjaj, inače prestaju raditi sve postojeće pretplate. Server mora moći slati na push servise (`fcm.googleapis.com`, `*.push.apple.com`, `updates.push.services.mozilla.com`, `*.notify.windows.com`).
+
 ## Sigurnosne kopije na Google Drive
 
 Zadatak **Topple backup** svaki dan u 4:30 napravi lokalnu kopiju i, kad je Google Drive povezan, pošalje kopiju s datumom (`topple-2026-11-03.db`) u mapu **RDD → DB_Backups → Topple** na tvom Driveu. Tamo se čuva zadnjih 30 kopija, starije se brišu same. Skripta smije vidjeti samo datoteke koje je sama napravila (dozvola `drive.file`), ništa drugo na Driveu. Zapis: `C:\inetpub\topple-data\backup.log`.
@@ -240,6 +244,7 @@ Ista naredba mijenja lozinku i odjavljuje sve stare prijave tog administratora. 
 | `ALLOWED_ORIGIN` | `*` | s kojih drugih adresa igra smije zvati API, odvojeno zarezom |
 | `TZ_GAME` | `Europe/Zagreb` | vremenska zona za dnevnu zagonetku |
 | `GOOGLE_CLIENT_ID` | (prazno) | Google OAuth Client ID; prazno = bez gumba „Prijava s Googleom” |
+| `REMIND_HOUR` | `17` | sat (po `TZ_GAME`) kad se šalje podsjetnik za dnevnu zagonetku |
 | `PUBLIC_URL` | `https://topple.rdd.software` | adresa igre u e-mailu za novu lozinku |
 | `SMTP_HOST` … | (prazno) | umjesto `smtp.json`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` |
 
