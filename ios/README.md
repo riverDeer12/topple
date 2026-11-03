@@ -1,0 +1,108 @@
+# Topple za iOS
+
+Aplikacija je nativna SwiftUI ljuska oko web igre iz `../web`. Igra je spakirana u aplikaciju i radi bez interneta. Računi, ljestvice i prijatelji idu na isti server kao web (`https://topple.rdd.software`).
+
+Nativno u aplikaciji:
+- vibracija (haptika) kod klizanja, slijetanja i pobjede;
+- dijeljenje rezultata preko iOS izbornika za dijeljenje;
+- dnevni podsjetnik kao lokalna obavijest u 17:00, osim ako je dnevna zagonetka već riješena (iOS ga zakazuje sam, bez servera);
+- Game Center: ljestvice (zvjezdice u razinama, beskonačne zagonetke) i 15 postignuća.
+
+Razlike prema webu:
+- nema prijave s Googleom, jer Google ne dopušta prijavu unutar aplikacija;
+- nema reklama za savjete, jer web reklame u aplikaciji nisu dopuštene; savjeti se pune samo jednom dnevno.
+
+Svaka promjena web igre ulazi u sljedeći build aplikacije: datoteke iz `web/` kopiraju se u aplikaciju pri svakom buildu.
+
+## 1. Prvo pokretanje (Mac)
+
+```bash
+brew install xcodegen
+```
+
+```bash
+cd topple/ios && xcodegen
+```
+
+```bash
+open Topple.xcodeproj
+```
+
+U Xcodeu:
+1. Lijevo odaberi projekt **Topple**, target **Topple**, karticu **Signing & Capabilities**.
+2. Pod **Team** odaberi svoj Apple Developer račun. Bundle ID je `software.rdd.topple`, a možeš ga promijeniti u `project.yml` pa ponovno pokreni `xcodegen`.
+3. Ako Game Center nije na popisu, dodaj ga s **+ Capability → Game Center**.
+4. Spoji iPhone kabelom, gore odaberi njega i klikni ▶︎. Kod prvog pokretanja na iPhoneu dopusti developera: *Postavke → Općenito → VPN i upravljanje uređajem*. Na iOS 16 i novijima treba uključiti i *Postavke → Privatnost i sigurnost → Developer Mode*.
+
+Kad se `project.yml` promijeni (nove datoteke, verzija), ponovno pokreni `xcodegen`. Datoteka `Topple.xcodeproj` se generira i nije u gitu.
+
+Za debug buildove web dio se može pregledavati u Safariju na Macu: *Develop → tvoj iPhone → Topple*.
+
+## 2. App Store Connect
+
+Na https://appstoreconnect.apple.com → **Apps → +** napravi novu aplikaciju:
+- naziv **Topple**;
+- primarni jezik hrvatski;
+- bundle ID `software.rdd.topple`;
+- SKU npr. `topple-ios`.
+
+### Game Center
+U aplikaciji: **Services → Game Center** (ili *Features → Game Center*).
+
+**Leaderboards**, tip *Classic*, *High score*, *Best score*:
+
+| Leaderboard ID | Naziv |
+|---|---|
+| `topple.stars` | Zvjezdice u razinama |
+| `topple.endless` | Beskonačne zagonetke |
+
+**Achievements** (ID, naziv, opis; bodovi po želji, npr. 10–50, ukupno najviše 1000):
+
+| Achievement ID | Naziv | Opis |
+|---|---|---|
+| `topple.ach.first` | Prvi korak | Riješi prvu razinu. |
+| `topple.ach.levels25` | Zagrijavanje | Riješi 25 razina. |
+| `topple.ach.levels60` | Na pola puta | Riješi 60 razina. |
+| `topple.ach.levelsAll` | Majstor Topplea | Riješi sve razine. |
+| `topple.ach.perfect10` | Precizno | Riješi 10 razina s 3 zvjezdice. |
+| `topple.ach.perfect50` | Savršenstvo | Riješi 50 razina s 3 zvjezdice. |
+| `topple.ach.nohint20` | Bez pomoći | Riješi 20 razina bez savjeta. |
+| `topple.ach.daily1` | Dobro jutro | Riješi dnevnu zagonetku. |
+| `topple.ach.daily10` | Svakodnevica | Riješi 10 dnevnih zagonetki. |
+| `topple.ach.streak3` | Iskra | Riješi dnevnu zagonetku 3 dana zaredom. |
+| `topple.ach.streak7` | Vatra | Riješi dnevnu zagonetku 7 dana zaredom. |
+| `topple.ach.streak30` | Neugasivo | Riješi dnevnu zagonetku 30 dana zaredom. |
+| `topple.ach.endless10` | Bez kraja | Riješi 10 beskonačnih zagonetki. |
+| `topple.ach.endless50` | Maraton | Riješi 50 beskonačnih zagonetki. |
+| `topple.ach.skins5` | Garderoba | Otključaj 5 izgleda crvenog bloka. |
+
+Svako postignuće treba sliku 512 × 512 ili 1024 × 1024. Može ista za sve: `Topple/Assets.xcassets/AppIcon.appiconset/icon-1024.png`. Za ostale jezike lokalizaciju dodaješ u istom obrascu.
+
+### Podaci za App Store
+- **Kategorija:** Games → Puzzle. **Dobna granica:** 4+.
+- **Privacy Policy URL:** `https://topple.rdd.software/privatnost.html`
+- **Support URL:** `https://topple.rdd.software/kontakt.html`
+- **App Privacy** (podaci o privatnosti):
+  - *Contact Info → Email Address* (neobavezno, za prijavu i novu lozinku): Linked to user, App Functionality.
+  - *User Content → Other* (korisničko ime) i *Gameplay → rezultati*: Linked to user, App Functionality.
+  - *Identifiers → User ID*: Linked to user, App Functionality.
+  - *Usage Data → Product Interaction* (statistika igranja razina): Linked to user, Analytics.
+  - Tracking: **No**.
+- **Brisanje računa:** postoji u aplikaciji (*Profil → Izbriši račun*), kako Apple traži.
+- **Snimke zaslona:** u simulatoru (iPhone 6,7″ i 6,5″, npr. iPhone 15 Pro Max i 11 Pro Max) napravi ⌘S.
+
+## 3. Objava (TestFlight, pa App Store)
+
+1. U Xcodeu gore odaberi **Any iOS Device (arm64)**, pa **Product → Archive**.
+2. U Organizeru: **Distribute App → App Store Connect → Upload**.
+3. Za desetak minuta build je u App Store Connectu pod **TestFlight**. Tamo dodaj sebe ili testere i instaliraj aplikaciju preko TestFlighta.
+4. Kad je sve u redu: **App Store → Prepare for Submission**, odaberi build i **Submit for Review**. Pregled obično traje 1–3 dana.
+
+Za svaku novu verziju povećaj `CURRENT_PROJECT_VERSION` (broj builda) u `project.yml`, a za novu javnu verziju i `MARKETING_VERSION`. Zatim pokreni `xcodegen` i napravi novi Archive.
+
+## Kako je složeno
+
+- `Topple/ToppleApp.swift`: ulaz u aplikaciju, zvuk (ambient), prijava u Game Center.
+- `Topple/WebGameView.swift`: WKWebView poslužuje `web/` iz aplikacije na adresi `topple://app/` (`BundleSchemeHandler`). Taj origin server uvijek dopušta (`APP_ORIGIN` u `server/server.js`). Vanjske poveznice otvara u Safariju. Ovdje su i nativni prozori za `alert`/`confirm`/`prompt`.
+- `Topple/Native.swift`: haptika, dijeljenje, podsjetnik (`UNUserNotificationCenter`), Game Center.
+- Web igra prepozna aplikaciju po `location.protocol === 'topple:'` (`APP` u `web/igra.html`, `TOPPLE_IN_APP` u `web/config.js`). Poruke šalje sa `native({ type: ... })`, a vrste su `haptic`, `share`, `remind` i `gc`.

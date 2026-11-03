@@ -11,7 +11,7 @@
 const args = process.argv.slice(2);
 const dbAt = args.indexOf('--db');
 if (dbAt >= 0) process.env.DB_PATH = args.splice(dbAt, 2)[1];
-const { db, hashPassword, EMAIL_RE, cleanEmail, validPassword } = require('./server.js');
+const { db, hashPassword, EMAIL_RE, cleanEmail, validPassword, deleteUser } = require('./server.js');
 const [cmd, ...rest] = args;
 const fail = msg => { console.error('GREŠKA: ' + msg); process.exit(1); };
 const findUser = name => db.prepare('SELECT * FROM users WHERE name = ?').get(name) || fail(`Nema igrača "${name}".`);
@@ -76,15 +76,7 @@ if (cmd === 'list') {
   const count = t => db.prepare(`SELECT COUNT(*) AS n FROM ${t} WHERE user_id = ?`).get(u.id).n;
   const summary = `${u.name} (${u.email || 'bez e-maila'}): razine ${count('campaign')}, dnevne ${count('daily')}, beskonačne ${count('endless')}, prijave na uređajima ${count('sessions')}`;
   if (!yes) { console.log(`Bilo bi obrisano: ${summary}.\nZa brisanje ponovi naredbu s --yes na kraju.`); process.exit(0); }
-  db.exec('BEGIN');
-  try {
-    for (const t of ['campaign', 'daily', 'endless', 'sessions']) db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(u.id);
-    db.prepare('UPDATE guests SET user_id = NULL WHERE user_id = ?').run(u.id);
-    db.prepare('DELETE FROM friends WHERE user_id = ? OR friend_id = ?').run(u.id, u.id);
-    db.prepare("DELETE FROM plays WHERE pid = ?").run('u' + u.id);
-    db.prepare('DELETE FROM users WHERE id = ?').run(u.id);
-    db.exec('COMMIT');
-  } catch (e) { db.exec('ROLLBACK'); throw e; }
+  deleteUser(u.id);
   console.log(`Obrisano: ${summary}.`);
 } else {
   console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | set-admin <ime> <lozinka> | set-smtp <host> <port> <korisnik> <lozinka> <od> | test-mail <email> | delete <ime> [--yes]   [--db putanja]');

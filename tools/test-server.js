@@ -263,6 +263,15 @@ function solution(level) {
   r = await call('/api/play', { kind: 'start', level: 3 }, ana); assert.strictEqual(r.status, 200);
   ok('plays: attempts and first solve per player and level');
 
+  // Account deletion from the game (App Store rule): password needed, then everything is gone.
+  r = await call('/api/register', { name: 'Brisko', password: 'brisi123' }); const bt = r.body.token;
+  await call('/api/score', { mode: 'campaign', level: 1, moves: solution(LEVELS[0]) }, bt);
+  r = await call('/api/account/delete', { password: 'kriva' }, bt); assert.strictEqual(r.status, 401);
+  r = await call('/api/account/delete', { password: 'brisi123' }, bt); assert.strictEqual(r.status, 200);
+  r = await call('/api/me', null, bt); assert.strictEqual(r.status, 401);
+  r = await call('/api/login', { login: 'Brisko', password: 'brisi123' }); assert.strictEqual(r.status, 401);
+  ok('account deletion: needs the password, removes the player');
+
   r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/stats', null, ana); assert.strictEqual(r.status, 401);

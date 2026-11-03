@@ -5,3 +5,6 @@ tools/.cache/
 server/*.db
 server/*.db-*
 server/*.json
+ios/*.xcodeproj/
+ios/Topple/Info.plist
+ios/build/

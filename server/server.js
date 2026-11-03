@@ -18,7 +18,9 @@ const PUZZLES = require('../web/puzzles.js');
 const PORT = Number(process.env.PORT || 8787);
 const ORIGINS = (process.env.ALLOWED_ORIGIN || '*').split(',').map(s => s.trim().replace(/\/+$/, '')).filter(Boolean);
 // Echo the caller's origin when it is on the list (CORS allows only one value per response).
-const corsOrigin = req => ORIGINS.includes('*') ? '*' : (ORIGINS.includes(req.headers.origin) ? req.headers.origin : ORIGINS[0]);
+// The iOS app's web view has the origin topple://app and is always allowed.
+const APP_ORIGIN = 'topple://app';
+const corsOrigin = req => ORIGINS.includes('*') ? '*' : (ORIGINS.includes(req.headers.origin) || req.headers.origin === APP_ORIGIN ? req.headers.origin : ORIGINS[0]);
 const TZ = process.env.TZ_GAME || 'Europe/Zagreb';
 const db = new DatabaseSync(process.env.DB_PATH || path.join(__dirname, 'topple.db'));
 
@@ -374,6 +376,18 @@ function board(mode, date, me, only) {
   const strip = r => { if (!r) return r; const { id, t, ...rest } = r; return { ...rest, me: !!me && id === me.id }; };
   return { mode, date: date || null, friends: !!only, rows: rows.map(strip), mine: strip(mine) };
 }
+// Removes a player and everything stored about them (used by the game and by admin.js).
+function deleteUser(id) {
+  db.exec('BEGIN');
+  try {
+    for (const t of ['campaign', 'daily', 'endless', 'sessions', 'password_resets', 'push_subs']) db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(id);
+    db.prepare('DELETE FROM friends WHERE user_id = ? OR friend_id = ?').run(id, id);
+    db.prepare('DELETE FROM plays WHERE pid = ?').run('u' + id);
+    db.prepare('UPDATE guests SET user_id = NULL WHERE user_id = ?').run(id);
+    db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    db.exec('COMMIT');
+  } catch (e) { db.exec('ROLLBACK'); throw e; }
+}
 const friendIds = u => [u.id, ...db.prepare('SELECT friend_id AS id FROM friends WHERE user_id = ?').all(u.id).map(r => r.id)];
 function profile(u) {
   return {
@@ -710,6 +724,19 @@ async function route(req, res) {
     return send(res, 200, profile(db.prepare('SELECT * FROM users WHERE id = ?').get(u.id)));
   }
 
+  // Delete the account (required for apps in the App Store): with the password, or by typing
+  // the username for accounts without one (Google or device only).
+  if (req.method === 'POST' && p === '/api/account/delete') {
+    const u = userFrom(req);
+    if (!u) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
+    if (limited(req, 'account', 30, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
+    const { password, confirm } = await readJson(req);
+    if (u.password_hash ? !checkPassword(password, u.password_hash) : String(confirm || '').trim() !== u.name)
+      return send(res, 401, { error: u.password_hash ? 'Trenutna lozinka nije točna.' : 'Upiši svoje korisničko ime.', code: u.password_hash ? 'current_password' : 'confirm_name' });
+    deleteUser(u.id);
+    return send(res, 200, { ok: true });
+  }
+
   if (req.method === 'GET' && p === '/api/me') {
     const u = userFrom(req);
     return u ? send(res, 200, profile(u)) : send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
@@ -801,4 +828,4 @@ if (require.main === module) {
 }
 // Test hook: use local keys and client ID instead of Google's.
 function setGoogleForTests(keys, clientId) { googleKeys = keys; googleKeysUntil = Infinity; GOOGLE_CLIENT_ID = clientId; }
-module.exports = { server, sendReminders, replay, puzzle, db, setGoogleForTests, hashPassword, checkPassword, EMAIL_RE, cleanEmail, validPassword };
+module.exports = { server, sendReminders, deleteUser, replay, puzzle, db, setGoogleForTests, hashPassword, checkPassword, EMAIL_RE, cleanEmail, validPassword };
