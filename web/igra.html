@@ -314,6 +314,13 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
     </form>
     <div class="gbtn" id="gLink" hidden></div>
     <button class="link" id="accLogout" type="button" data-i18n="acc.logout">Odjava s ovog uređaja</button>
+    <button class="link" id="accDel" type="button" data-i18n="acc.delete">Izbriši račun</button>
+    <form id="delForm" class="form" hidden>
+      <p class="small" data-i18n="acc.deleteText">Brišu se račun, rezultati, mjesta na ljestvicama i prijatelji. To se ne može poništiti.</p>
+      <input class="nick" id="delInput" autocomplete="off">
+      <div class="err" id="delErr" role="alert"></div>
+      <button class="go" id="delGo" type="submit" data-i18n="acc.deleteGo" style="background:#B3261E;box-shadow:inset 0 -4px 0 #7A1712">Trajno izbriši račun</button>
+    </form>
     <button class="link" id="accClose" type="button" data-i18n="acc.back">Natrag</button>
   </div>
 </div>
@@ -535,7 +542,14 @@ function needAccount(what) {
   openLogin();
   $('loginIntro').textContent = `${what} ${t('guest.benefits')}`;
 }
-const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+// iOS app (ios/): the game runs from the app bundle (topple:// scheme) and asks the app for
+// native features: haptics, sharing, the daily reminder (local notification) and Game Center.
+const APP = location.protocol === 'topple:' && window.webkit && webkit.messageHandlers && webkit.messageHandlers.topple;
+const native = msg => { try { if (APP) APP.postMessage(msg); } catch (e) {} };
+const buzz = ms => {
+  if (APP) return native({ type: 'haptic', style: Array.isArray(ms) ? 'success' : ms >= 20 ? 'medium' : 'light' });
+  try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {}
+};
 const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
@@ -842,6 +856,7 @@ function win() {
   $('winStreak').hidden = st < 2;
   if (st >= 2) $('winStreak').textContent = t('streak.win', { n: st });
   lastWin = { mode: ctx.mode, key: ctx.key, moves: hist.length, opt: ctx.level.opt, timeMs };
+  gameCenter();
   const fresh = SKINS.filter(x => skinUnlocked(x) && !unlockedBefore.includes(x.id));
   reportGuest();
   $('winUnlock').hidden = !fresh.length;
@@ -961,6 +976,7 @@ function setLoginTab(tab) {
 document.querySelectorAll('#loginTabs .tab').forEach(b => b.onclick = () => setLoginTab(b.dataset.t));
 // Google's button script loads only when the server has a client ID configured.
 function googleButton(el) {
+  if (APP) googleId = null; // Google blocks its sign-in inside apps' web views
   el.hidden = !googleId;
   if (!googleId) return;
   googleLoaded = googleLoaded || new Promise(res => {
@@ -1060,7 +1076,7 @@ $('loginSkip').onclick = () => { store.set('asked', true); openMenu(); };
 // --- account: add or change e-mail and password, link Google, sign out ------------------
 let account = null;
 async function openAccount() {
-  $('accErr').textContent = ''; $('aCur').value = ''; $('aPass').value = '';
+  $('accErr').textContent = ''; $('aCur').value = ''; $('aPass').value = ''; $('delForm').hidden = true;
   showOnly('accBox');
   $('pAvatar').textContent = (user && user.name || '?').slice(0, 1).toUpperCase();
   $('pName').textContent = user ? user.name : t('prof.title');
@@ -1112,6 +1128,23 @@ $('accLogout').onclick = async () => {
   user = null; store.set('user', null); openMenu();
 };
 $('accClose').onclick = openMenu;
+$('accDel').onclick = () => {
+  const pw = !account || account.hasPassword;
+  $('delForm').hidden = !$('delForm').hidden; $('delErr').textContent = '';
+  $('delInput').type = pw ? 'password' : 'text'; $('delInput').value = '';
+  $('delInput').placeholder = pw ? t('ph.password') : t('acc.deleteName');
+  $('delInput').setAttribute('aria-label', $('delInput').placeholder);
+  if (!$('delForm').hidden) $('delInput').focus();
+};
+$('delForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const pw = !account || account.hasPassword, v = $('delInput').value;
+  try {
+    await api('/api/account/delete', { method: 'POST', body: JSON.stringify(pw ? { password: v } : { confirm: v }) });
+    user = null; store.set('user', null); $('delForm').hidden = true;
+    openMenu(); $('remindMsg').hidden = false; $('remindMsg').textContent = t('acc.deleted');
+  } catch (x) { $('delErr').textContent = errText(x); }
+});
 
 let lbMode = 'daily', lbScope = 'all';
 async function openBoard(mode = lbMode) {
@@ -1352,6 +1385,11 @@ function setSkin(id) {
   if (ri >= 0 && els[ri]) els[ri].className = els[ri].className.replace(/\bskin-\S+/, 'skin-' + id);
   if (signedInNow()) api('/api/account', { method: 'POST', body: JSON.stringify({ skin: id }) }).catch(() => {});
 }
+// Game Center (app only): total stars and endless puzzles solved, and earned achievements.
+function gameCenter() {
+  if (!APP) return;
+  native({ type: 'gc', stars: Object.values(best).reduce((a, b) => a + b, 0), endless: prog.endless.next - 1, achievements: earned() });
+}
 // --- daily streak, achievements, sharing -----------------------------------------------
 const { ACHIEVEMENTS } = ToppleContent;
 let nohint = store.get('nohint', []); // campaign levels solved without a hint
@@ -1406,6 +1444,7 @@ function shareText(w) {
 $('share').onclick = async () => {
   if (!lastWin) return;
   const text = shareText(lastWin), url = 'https://topple.rdd.software/';
+  if (APP) { native({ type: 'share', text: text + '\n' + url }); return; }
   try {
     if (navigator.share) { await navigator.share({ text: text + '\n', url }); return; }
   } catch (e) { if (e.name === 'AbortError') return; }
@@ -1489,7 +1528,15 @@ const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platfor
 const canPush = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && location.protocol === 'https:';
 async function pushSub() { try { return await (await navigator.serviceWorker.ready).pushManager.getSubscription(); } catch (e) { return null; } }
 function remindInfo(text) { $('remindMsg').hidden = !text; $('remindMsg').textContent = text || ''; }
+// In the app the reminder is a local notification scheduled by iOS, no server needed.
+function appRemind() {
+  const on = store.get('remindApp', false), st = streaks().current;
+  native({ type: 'remind', on, hour: remindHour, solvedToday: !!prog.daily[today()],
+    title: t('remind.nTitle'), body: t('remind.nBody'), streakBody: st ? t('remind.nStreak', { n: st }) : t('remind.nBody') });
+  setToggle('tRemind', on);
+}
 async function initRemind() {
+  if (APP) { $('tRemind').hidden = false; appRemind(); return; }
   if (!API || !pushKey) return;
   // On an iPhone, notifications only work once the game is on the home screen.
   $('tRemind').hidden = !canPush() && !(isIOS && location.protocol === 'https:');
@@ -1505,6 +1552,12 @@ function sendSub(sub) {
 }
 $('tRemind').onclick = async () => {
   fx.tap(); remindInfo('');
+  if (APP) {
+    const on = !store.get('remindApp', false);
+    store.set('remindApp', on); appRemind();
+    if (on) remindInfo(t('remind.on', { h: String(remindHour).padStart(2, '0') + ':00' }));
+    return;
+  }
   if (!canPush()) { remindInfo(t('remind.ios')); return; }
   const sub = await pushSub();
   if (sub && $('tRemind').getAttribute('aria-pressed') === 'true') {
@@ -1522,6 +1575,7 @@ $('tRemind').onclick = async () => {
 };
 // After today's daily: no reminder tonight, and the streak for tomorrow's message.
 async function pushSolved() {
+  if (APP) return appRemind(); // skip tonight's reminder
   if (!API || !canPush()) return;
   const sub = await pushSub();
   if (sub) api('/api/push/solved', { method: 'POST', body: JSON.stringify({ endpoint: sub.endpoint, date: today(), streak: streaks().current }) }).catch(() => {});
@@ -1548,6 +1602,7 @@ function start() {
   for (let k = 0; k < LEVELS.length; k++) if (unlocked(k)) i = k;
   if (last && last.mode === 'campaign' && LEVELS[last.key] && unlocked(last.key)) i = last.key;
   openCampaign(i);
+  setTimeout(gameCenter, 3000); // after the first sync
   if (resetToken && API) openReset('new');
   else if (!signedInNow() && !store.get('asked', false)) openLogin(); else openMenu();
   started = true;

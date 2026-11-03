@@ -25,6 +25,7 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 - `tools/test-content.js` — provjerava da je svaka vrsta bloka iz razina i zagonetki opisana u `content.js` i ima stil u `theme.css` (`npm test`).
 - `tools/generate-puzzles.js` — generira `web/puzzles.js` na svim jezgrama, s cacheom.
 - `server/server.js` — API (Node 22.5+, `node:http` + `node:sqlite`, bez npm paketa): računi po uređaju, provjereni rezultati, ljestvice. Upute u `server/README.md`, testovi `npm run test:server`.
+- `ios/` — iOS aplikacija: SwiftUI ljuska (WKWebView) oko `web/`, spakirane u aplikaciju i posluženo na `topple://app/`; nativno haptika, dijeljenje, lokalni podsjetnik, Game Center. Projekt iz `ios/project.yml` (XcodeGen), upute u `ios/README.md`. Igra zna da je u aplikaciji po `APP` u `igra.html` (`location.protocol === 'topple:'`) i šalje poruke `native({type})`; u aplikaciji nema Google prijave ni web reklama.
 - `docs/DESIGN.md` — dizajn igre i plan.
 
 ## Pravila igre (izvor istine je `web/core.js`)
@@ -66,6 +67,7 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 - Prijatelji: tablica `friends` (schema v7, jednosmjerno, po korisničkom imenu), `/api/friends` (popis, `{add}`, `{remove}`), ljestvica `?friends=1` rangira samo igrača i njegove prijatelje (`board(..., only)`).
 - Podsjetnik za dnevnu: Web Push bez npm-a u `server/push.js` (RFC 8291 šifriranje, provjereno primjerom iz RFC-a; VAPID ključ u `vapid.json` uz bazu — ne brisati, inače prestaju sve pretplate). Tablica `push_subs` (schema v8), `/api/push/subscribe|unsubscribe|solved`, `sendReminders()` svakih 10 min šalje jednom dnevno od `REMIND_HOUR` (17 h) onima koji danas nisu riješili. Adrese samo poznatih push servisa (`validEndpoint`). Prikaz obavijesti u `sw.js`.
 - Zaboravljena lozinka: `/api/forgot` šalje e-mail s poveznicom `igra.html#reset=<token>` (tablica `password_resets`, schema v5, 1 sat, jednokratno), `/api/reset` postavlja lozinku i odjavljuje sve uređaje. SMTP klijent bez npm-a u `server/mail.js`, postavke u `smtp.json` uz bazu (`admin.js set-smtp`, `test-mail`). Tekst e-maila je u `RESET_MAIL` u `server.js` (4 jezika).
+- Brisanje računa: `/api/account/delete` (lozinka, ili korisničko ime za račune bez lozinke) i `deleteUser()` u `server.js` (koristi ga i `admin.js delete`); u profilu „Izbriši račun”. Apple to traži za App Store. Nove tablice s `user_id` dodaj u `deleteUser`.
 - Server mora ostati bez npm ovisnosti. Svaki rezultat se provjerava ponovnim igranjem poteza (`replay`).
 - `index.html` i `igra.html` moraju raditi otvoreni izravno iz datoteke i preko GitHub Pagesa, bez build koraka i bez npm ovisnosti u pregledniku.
 - Testiranje u pregledniku: `npm run serve`, pa otvori http://localhost:8080.
@@ -74,4 +76,4 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 
 1. Postaviti igru i API na vlastiti server (31.147.206.142) na `https://topple.rdd.software` prema `server/README.md`. Server je Windows s IIS-om: IIS poslužuje `web/` i prosljeđuje `/api/` (pravila u `web/web.config`, treba URL Rewrite + ARR), API radi kao servis preko NSSM-a. Postava jednom skriptom `server/install.ps1` (kod u `C:\inetpub\wwwroot\topple`, podaci u `C:\inetpub\topple-data`); zakazani zadatak svake 2 minute pokreće `server/update.ps1` i instalira svaku novu verziju s `main`. Skripte su UTF-8 s BOM-om i CRLF zbog Windows PowerShella 5.1. GitHub Pages ostaje rezervna kopija bez ljestvice.
 2. Razine 61–120 (poglavlja 7–12; nazivi su u `CHAPTERS` u `i18n.js`; 11 = strelice, 12 = opruge). `--upto N` zapisuje samo razine 1–N u `levels.js`. Testiranje na mobitelu. Specove dodaj na kraj `SPECS`; za teške ciljeve koristi raspon (`max`) i manje blokova, inače pretraga traje satima.
-3. Prijenos na iOS: Swift paket s logikom iz `core.js`, SpriteKit scena, haptika, Game Center.
+3. iOS: hibridna aplikacija u `ios/` (vidi `ios/README.md`): Game Center ID-jevi u App Store Connectu, TestFlight, objava. Kasnije po želji nativna SpriteKit ploča.

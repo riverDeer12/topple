@@ -1,0 +1,50 @@
+# Xcode project for the Topple iOS app, generated with XcodeGen (see ios/README.md):
+#   brew install xcodegen && cd ios && xcodegen
+# The app is a native shell around the web game in ../web, which is copied into the app
+# bundle at build time, so every change to the web game is in the next app build too.
+name: Topple
+options:
+  bundleIdPrefix: software.rdd
+  deploymentTarget:
+    iOS: "16.0"
+  developmentLanguage: hr
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: ""        # your Apple team ID (Xcode → Signing & Capabilities), or set it there
+targets:
+  Topple:
+    type: application
+    platform: iOS
+    sources:
+      - path: Topple
+      - path: ../web
+        type: folder
+        buildPhase: resources
+    info:
+      path: Topple/Info.plist
+      properties:
+        CFBundleDisplayName: Topple
+        CFBundleDevelopmentRegion: hr
+        CFBundleLocalizations: [hr, en, it, de]
+        UILaunchScreen:
+          UIColorName: PageBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown]
+        UIRequiresFullScreen: true
+        UIStatusBarStyle: UIStatusBarStyleDefault
+        ITSAppUsesNonExemptEncryption: false
+        GKGameCenterBadgingDisabled: false
+    entitlements:
+      path: Topple/Topple.entitlements
+      properties:
+        com.apple.developer.game-center: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: software.rdd.topple
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_PREVIEWS: NO
