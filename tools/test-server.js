@@ -5,7 +5,7 @@ const fs = require('fs');
 const assert = require('assert');
 const dbFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'topple-')), 'test.db');
 process.env.DB_PATH = dbFile;
-const { server, setGoogleForTests } = require('../server/server.js');
+const { server, setGoogleForTests, setAppleForTests } = require('../server/server.js');
 const crypto = require('crypto');
 const C = require('../web/core.js');
 const G = require('../web/gen.js');
@@ -221,7 +221,7 @@ function solution(level) {
   const sub = { endpoint: process.env.PUSH_TEST_PREFIX + 'sub1', keys: { p256dh: browser.getPublicKey().toString('base64url'), auth: authSecret.toString('base64url') } };
   r = await call('/api/config'); const pushKey = r.body.pushKey; assert.ok(/^[A-Za-z0-9_-]{87}$/.test(pushKey));
   r = await call('/api/push/subscribe', { sub: { ...sub, endpoint: 'https://evil.example.com/x' } }); assert.strictEqual(r.status, 400, 'only push services');
-  r = await call('/api/push/subscribe', { sub, lang: 'en', guest: gid }); assert.strictEqual(r.status, 200);
+  r = await call('/api/push/subscribe', { sub, lang: 'en', guest: gid }); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
   r = await call('/api/push/subscribe', { sub: { ...sub, endpoint: process.env.PUSH_TEST_PREFIX + 'gone' }, lang: 'hr' }); assert.strictEqual(r.status, 200);
   const { sendReminders, db: pdb } = require('../server/server.js');
   const yest = require('../web/gen.js').today('Europe/Zagreb', new Date(Date.now() - 864e5));
@@ -272,6 +272,20 @@ function solution(level) {
   r = await call('/api/login', { login: 'Brisko', password: 'brisi123' }); assert.strictEqual(r.status, 401);
   ok('account deletion: needs the password, removes the player');
 
+  // Sign in with Apple (iOS app): token for the app's bundle ID; the name comes from the app.
+  const ak = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  setAppleForTests({ a1: ak.publicKey }, 'software.rdd.topple');
+  const ajwt = (claims, aud = 'software.rdd.topple') => {
+    const h = Buffer.from(JSON.stringify({ alg: 'RS256', kid: 'a1' })).toString('base64url');
+    const pl = Buffer.from(JSON.stringify({ iss: 'https://appleid.apple.com', aud, exp: Date.now() / 1000 + 600, ...claims })).toString('base64url');
+    return h + '.' + pl + '.' + crypto.sign('RSA-SHA256', Buffer.from(h + '.' + pl), ak.privateKey).toString('base64url');
+  };
+  r = await call('/api/apple', { identityToken: ajwt({ sub: 'ap1', email: 'x@privaterelay.appleid.com', email_verified: 'true' }, 'other.app') }); assert.strictEqual(r.status, 401);
+  r = await call('/api/apple', { identityToken: ajwt({ sub: 'ap1', email: 'x@privaterelay.appleid.com', email_verified: 'true' }), name: 'Luka' });
+  assert.strictEqual(r.status, 201); assert.strictEqual(r.body.name, 'Luka');
+  r = await call('/api/apple', { identityToken: ajwt({ sub: 'ap1' }) }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.name, 'Luka');
+  ok('Sign in with Apple: creates the account once, then signs in');
+
   r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/stats', null, ana); assert.strictEqual(r.status, 401);
@@ -281,14 +295,14 @@ function solution(level) {
   const adm = r.body.token;
   r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 200);
   const st = r.body;
-  assert.strictEqual(st.totals.users, 6); assert.strictEqual(st.totals.converted, 1); assert.strictEqual(st.totals.guests, 0);
+  assert.strictEqual(st.totals.users, 7); assert.strictEqual(st.totals.converted, 1); assert.strictEqual(st.totals.guests, 0);
   assert.ok(st.online.users >= 1); assert.strictEqual(st.days.length, 14); assert.strictEqual(st.days[13].date, st.today);
-  assert.ok(st.days[13].players >= 2); assert.strictEqual(st.days[13].daily, 2); assert.strictEqual(st.days[13].newUsers, 6);
+  assert.ok(st.days[13].players >= 2); assert.strictEqual(st.days[13].daily, 2); assert.strictEqual(st.days[13].newUsers, 7);
   assert.strictEqual(st.levels.length, LEVELS.length); assert.strictEqual(st.levels[9].players, 1);
   const d3 = st.difficulty[2];
   assert.deepStrictEqual([d3.started, d3.solved, d3.attempts, d3.hints, d3.extraMoves, d3.medianTimeS, d3.perfect], [2, 1, 2, 1, 2, 61, 0]);
   assert.strictEqual(st.difficulty.length, LEVELS.length);
-  assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 6);
+  assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 7);
   assert.ok(!JSON.stringify(st).includes('password_hash') && !JSON.stringify(st).includes('@'), 'no secrets or e-mails in admin stats');
   r = await call('/api/admin/logout', {}, adm); r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 401);
   ok('admin: sign-in from the admins table, stats, logout');

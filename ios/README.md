@@ -8,8 +8,9 @@ Nativno u aplikaciji:
 - dnevni podsjetnik kao lokalna obavijest u 17:00, osim ako je dnevna zagonetka već riješena (iOS ga zakazuje sam, bez servera);
 - Game Center: ljestvice (zvjezdice u razinama, beskonačne zagonetke) i 15 postignuća.
 
+Prijava: korisničko ime ili e-mail, **Sign in with Apple** i **Google** (preko sigurnog sistemskog prozora, `SignIn.swift`). Apple traži Apple prijavu čim aplikacija nudi Google prijavu.
+
 Razlike prema webu:
-- nema prijave s Googleom, jer Google ne dopušta prijavu unutar aplikacija;
 - nema reklama za savjete, jer web reklame u aplikaciji nisu dopuštene; savjeti se pune samo jednom dnevno.
 
 Svaka promjena web igre ulazi u sljedeći build aplikacije: datoteke iz `web/` kopiraju se u aplikaciju pri svakom buildu.
@@ -37,6 +38,26 @@ U Xcodeu:
 Kad se `project.yml` promijeni (nove datoteke, verzija), ponovno pokreni `xcodegen`. Datoteka `Topple.xcodeproj` se generira i nije u gitu.
 
 Za debug buildove web dio se može pregledavati u Safariju na Macu: *Develop → tvoj iPhone → Topple*.
+
+## Prijava s Appleom i Googleom (jednom)
+
+**Apple**
+1. U Xcodeu, na kartici **Signing & Capabilities**, mora biti **Sign in with Apple** (dolazi iz `Topple.entitlements`). Ako ga nema, dodaj ga s **+ Capability**.
+2. Na serveru ne treba ništa: server prihvaća Apple prijave za bundle ID `software.rdd.topple`. Za drugi bundle ID postavi `APPLE_BUNDLE_ID`.
+
+**Google**
+1. U Google Cloud Consoleu, u istom projektu kao za web: **APIs & Services → Credentials → Create credentials → OAuth client ID**.
+   - Application type: **iOS**
+   - Bundle ID: `software.rdd.topple`
+   - **Create**, pa kopiraj **Client ID** (završava na `.apps.googleusercontent.com`).
+2. Upiši ga u `ios/project.yml` (`GOOGLE_IOS_CLIENT_ID: "…"`), pa pokreni `xcodegen`.
+3. Na serveru ponovno pokreni instalacijsku skriptu s oba ID-ja, web i iOS (PowerShell kao Administrator):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\inetpub\wwwroot\topple\server\install.ps1 -GoogleClientId "WEB-ID.apps.googleusercontent.com" -GoogleIosClientId "IOS-ID.apps.googleusercontent.com"
+```
+
+Gumb „Nastavi s Googleom” u aplikaciji pojavi se kad server ima iOS ID. Računi su isti kao na webu: isti Google račun ili isti e-mail znači isti igrač.
 
 ## 2. App Store Connect
 
@@ -105,4 +126,5 @@ Za svaku novu verziju povećaj `CURRENT_PROJECT_VERSION` (broj builda) u `projec
 - `Topple/ToppleApp.swift`: ulaz u aplikaciju, zvuk (ambient), prijava u Game Center.
 - `Topple/WebGameView.swift`: WKWebView poslužuje `web/` iz aplikacije na adresi `topple://app/` (`BundleSchemeHandler`). Taj origin server uvijek dopušta (`APP_ORIGIN` u `server/server.js`). Vanjske poveznice otvara u Safariju. Ovdje su i nativni prozori za `alert`/`confirm`/`prompt`.
 - `Topple/Native.swift`: haptika, dijeljenje, podsjetnik (`UNUserNotificationCenter`), Game Center.
+- `Topple/SignIn.swift`: Sign in with Apple i Google (OAuth s PKCE u `ASWebAuthenticationSession`). ID token vraća igri preko `window.toppleSignedIn`, a igra ga šalje na `/api/apple` ili `/api/google`.
 - Web igra prepozna aplikaciju po `location.protocol === 'topple:'` (`APP` u `web/igra.html`, `TOPPLE_IN_APP` u `web/config.js`). Poruke šalje sa `native({ type: ... })`, a vrste su `haptic`, `share`, `remind` i `gc`.

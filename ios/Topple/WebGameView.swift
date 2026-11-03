@@ -34,6 +34,7 @@ struct WebGameView: UIViewRepresentable {
         if #available(iOS 16.4, *) { web.isInspectable = true } // Safari → Develop → your iPhone
         #endif
         context.coordinator.webView = web
+        SignIn.shared.webView = web
         web.load(URLRequest(url: Self.start))
         return web
     }
@@ -51,6 +52,7 @@ struct WebGameView: UIViewRepresentable {
             case "share": Share.present(text: msg["text"] as? String ?? "")
             case "remind": Reminder.update(msg)
             case "gc": GameCenter.shared.report(msg)
+            case "signin": SignIn.shared.webView = webView; SignIn.shared.start(msg["provider"] as? String ?? "apple")
             default: break
             }
         }
