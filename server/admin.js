@@ -73,6 +73,7 @@ if (cmd === 'list') {
   const [teamId, keyId, file] = rest;
   if (!teamId || !keyId || !file) fail('Nedostaju podaci. Primjer: node server/admin.js set-apple ABCDE12345 XYZ987ABCD C:\\Users\\Admin\\Downloads\\AuthKey_XYZ987ABCD.p8');
   const fs = require('fs'), crypto = require('crypto'), apple = require('./apple.js');
+  if (!fs.existsSync(file)) fail(`Nema datoteke ${file}. Upiši pravu putanju do preuzetog ključa (AuthKey_<Key ID>.p8), a umjesto TEAMID i KEYID tvoj Team ID i Key ID.`);
   const key = fs.readFileSync(file, 'utf8');
   try { crypto.createPrivateKey(key); } catch (e) { fail('Datoteka nije ispravan .p8 ključ.'); }
   fs.writeFileSync(apple.configFile(), JSON.stringify({ teamId, keyId, key }, null, 2));
