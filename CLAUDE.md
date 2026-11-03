@@ -15,6 +15,7 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 - `web/gen.js` — deterministički generator zagonetki (mulberry32 + seed). Koriste ga igra, worker (`gen-worker.js`), server i alati.
 - `web/puzzles.js` — unaprijed generirane zagonetke: 300 beskonačnih i dnevne za godinu dana (`npm run puzzles`). Iza kraja datoteke igra i server generiraju iste ploče iz `gen.js`.
 - `web/admin/index.html` — administracija za vlasnika (`/admin`): igrači, gosti, aktivnost, napredak po razinama.
+- `web/sw.js` — service worker za igranje bez interneta: datoteke igre mrežom prvo, iz cachea kad nema veze; `/api/` i `/admin` se ne spremaju. Nova datoteka koju igra treba mora se dodati u `FILES`.
 - `web/config.js` — adresa API servera (`TOPPLE_API`); prazno = igra bez servera.
 - `web/core.js` — čista logika igre (bez DOM-a): mreža, gravitacija (`settle`), dopušteni potezi, provjera pobjede, BFS solver. Koriste je i igra i alati.
 - `web/levels.js` — podaci razina. Generira se, ne uređuj ručno bez `npm run verify`.
