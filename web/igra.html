@@ -142,6 +142,17 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 .skin.locked .blk { filter: grayscale(1) opacity(.45); }
 .skin:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .unlock { color: var(--hero); font-weight: 600; }
+button.share { font: 600 1rem var(--display); background: var(--page); color: var(--ink); border: 1px solid var(--panel-line); border-radius: 999px; padding: 9px 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.achs { display: grid; gap: 8px; width: 100%; }
+.ach { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--panel-line); background: var(--page); text-align: left; }
+.ach .medal { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 1.3rem; background: var(--gold); box-shadow: inset 0 -3px 0 rgba(0,0,0,.18); }
+.ach.locked .medal { background: var(--panel-line); filter: grayscale(1); opacity: .6; }
+.ach b { display: block; font: 600 .95rem var(--display); }
+.ach span { font-size: .8rem; color: var(--muted); }
+.ach .bar { height: 5px; border-radius: 3px; background: var(--panel-line); margin-top: 5px; overflow: hidden; }
+.ach .bar i { display: block; height: 100%; background: var(--gold); }
+.streakBest { margin: 0; font-size: .85rem; color: var(--muted); }
 .gbtn { display: flex; justify-content: center; min-height: 44px; width: 100%; }
 .or { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--muted); font-size: .8rem; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--panel-line); }
@@ -214,6 +225,10 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
       <button class="mbtn" id="mSkins" type="button">
         <span class="ico" style="background:var(--hero)"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.8 1.6-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.8-1.7 1.7-1.7H16a5 5 0 0 0 5-5c0-4-4-7.2-9-7.2z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></svg></span>
         <span><b data-i18n="menu.skins">Izgled bloka</b><span id="mSkinsSub"></span></span>
+      </button>
+      <button class="mbtn" id="mAch" type="button">
+        <span class="ico" style="background:var(--gold)"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14l-1.5 7 5-3 5 3-1.5-7"/></svg></span>
+        <span><b data-i18n="menu.ach">Postignuća</b><span id="mAchSub"></span></span>
       </button>
     </div>
     <div class="row">
@@ -296,8 +311,11 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
     <h2 id="winTitle">Izašao je!</h2>
     <p id="winText"></p>
     <p id="winRank"></p>
+    <p id="winStreak" class="unlock" hidden></p>
     <p id="winUnlock" class="unlock" hidden></p>
+    <p id="winAch" class="unlock" hidden></p>
     <button class="go" id="next" type="button">Sljedeća razina</button>
+    <button class="share" id="share" type="button"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span data-i18n="win.share">Podijeli rezultat</span></button>
     <button class="link" id="retry" type="button" data-i18n="win.retry">Pokušaj u manje poteza</button>
     <button class="link" id="winMenu" type="button" data-i18n="win.menu">Izbornik</button>
   </div>
@@ -318,6 +336,14 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
     <p data-i18n="skins.intro"></p>
     <div class="skins" id="skinGrid"></div>
     <button class="link" id="skinClose" type="button" data-i18n="lv.close">Zatvori</button>
+  </div>
+</div>
+<div class="overlay" id="achBox" hidden>
+  <div class="card wide scroll">
+    <h2 data-i18n="ach.title">Postignuća</h2>
+    <p class="streakBest" id="achStreak"></p>
+    <div class="achs" id="achList"></div>
+    <button class="link" id="achClose" type="button" data-i18n="lv.close">Zatvori</button>
   </div>
 </div>
 <div class="overlay" id="hintBox" hidden>
@@ -373,7 +399,7 @@ const store = {
 // Browser storage belongs to one address, so the old copies (GitHub Pages) send the
 // player to the new address with their progress in the URL, and the new address merges it.
 const HOME = 'https://topple.rdd.software/igra.html';
-const MIGRATE_KEYS = ['best', 'progress', 'solutions', 'seen', 'settings', 'user', 'asked', 'last', 'rules'];
+const MIGRATE_KEYS = ['best', 'progress', 'solutions', 'seen', 'settings', 'user', 'asked', 'last', 'rules', 'nohint'];
 const oldHost = /(^|\.)github\.io$/.test(location.hostname) || /^(www\.)?rdd\.software$/.test(location.hostname);
 if (oldHost) {
   const data = {};
@@ -464,7 +490,7 @@ const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => ToppleI18n.plural.moves(n);
-const showOnly = id => ['menuBox', 'loginBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'hintBox', 'adBox'].forEach(b => { $(b).hidden = b !== id; });
+const showOnly = id => ['menuBox', 'loginBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'achBox', 'hintBox', 'adBox'].forEach(b => { $(b).hidden = b !== id; });
 
 // --- layout & rendering ------------------------------------------------------
 function layout() {
@@ -753,7 +779,16 @@ function win() {
   buzz([10, 40, 10]);
   const opt = ctx.level.opt, m = hist.length, timeMs = Date.now() - t0;
   const unlockedBefore = SKINS.filter(skinUnlocked).map(x => x.id);
+  const achBefore = earned();
+  if (ctx.mode === 'campaign' && !ctx.hinted && !nohint.includes(ctx.key)) { nohint.push(ctx.key); store.set('nohint', nohint); }
   const s = record(ctx.mode, ctx.key, moveLog.slice(), timeMs);
+  const achNew = earned().filter(id => !achBefore.includes(id));
+  $('winAch').hidden = !achNew.length;
+  if (achNew.length) $('winAch').textContent = achNew.map(id => t('win.ach', { name: t('ach.' + id) })).join(' ');
+  const st = ctx.mode === 'daily' ? streaks().current : 0;
+  $('winStreak').hidden = st < 2;
+  if (st >= 2) $('winStreak').textContent = t('streak.win', { n: st });
+  lastWin = { mode: ctx.mode, key: ctx.key, moves: hist.length, opt: ctx.level.opt, timeMs };
   const fresh = SKINS.filter(x => skinUnlocked(x) && !unlockedBefore.includes(x.id));
   reportGuest();
   $('winUnlock').hidden = !fresh.length;
@@ -832,6 +867,9 @@ function openMenu() {
   $('mEndlessSub').textContent = ToppleI18n.t('sub.endless', { n: prog.endless.next, s: prog.endless.stars }) + (!signedInNow() ? ToppleI18n.t('sub.endlessGuest', { n: GUEST.endless }) : '');
   const stars = Object.values(best).reduce((a, b) => a + b, 0);
   $('mSkinsSub').textContent = ToppleI18n.t('menu.skinsSub', { n: SKINS.filter(skinUnlocked).length, total: SKINS.length });
+  const str = streaks().current;
+  if (str) $('mDailySub').textContent += ToppleI18n.t('streak.sub', { n: str });
+  $('mAchSub').textContent = ToppleI18n.t('menu.achSub', { n: earned().length, total: ACHIEVEMENTS.length });
   $('mLevelsSub').textContent = ToppleI18n.t('sub.levels', { done: Object.keys(best).length, total: LEVELS.length, s: stars, max: LEVELS.length * 3 });
   $('who').innerHTML = signedInNow() ? `${ToppleI18n.t('who.signed')} <b></b> · <button class="link" id="account" type="button">${ToppleI18n.t('who.account')}</button>`
     : `${ToppleI18n.t('who.guest')} <b></b> · <button class="link" id="login" type="button">${ToppleI18n.t('who.login')}</button>`;
@@ -1065,6 +1103,7 @@ async function useHint() {
   if (i < 0 || i >= p.moves.length) { plan = null; return useHint(); } // the board changed meanwhile
   const [b, d] = p.moves[i];
   hints.count--; store.set('hints', hints); refreshHints();
+  c.hinted = true; // this solve gets no credit for solving without hints
   clearHint();
   els[b].classList.add('hinted');
   const g = document.createElement('div');
@@ -1153,6 +1192,67 @@ function setSkin(id) {
   if (ri >= 0 && els[ri]) els[ri].className = els[ri].className.replace(/\bskin-\S+/, 'skin-' + id);
   if (signedInNow()) api('/api/account', { method: 'POST', body: JSON.stringify({ skin: id }) }).catch(() => {});
 }
+// --- daily streak, achievements, sharing -----------------------------------------------
+const { ACHIEVEMENTS } = ToppleContent;
+let nohint = store.get('nohint', []); // campaign levels solved without a hint
+let lastWin = null;
+const dayNum = d => Math.round(Date.parse(d + 'T12:00:00Z') / 864e5);
+// current: days in a row up to today (or up to yesterday while today is still open); best: longest ever.
+function streaks() {
+  const days = [...new Set(Object.keys(prog.daily).map(dayNum))].sort((a, b) => a - b);
+  let best = 0, run = 0, prev = null;
+  for (const d of days) { run = prev !== null && d === prev + 1 ? run + 1 : 1; prev = d; best = Math.max(best, run); }
+  const set = new Set(days), now = dayNum(today());
+  let cur = 0;
+  for (let d = set.has(now) ? now : now - 1; set.has(d); d--) cur++;
+  return { current: cur, best };
+}
+function achValue(a) {
+  switch (a.kind) {
+    case 'levels': return Object.keys(best).length;
+    case 'perfect': return Object.values(best).filter(x => x === 3).length;
+    case 'nohint': return nohint.length;
+    case 'daily': return Object.keys(prog.daily).length;
+    case 'streak': return streaks().best;
+    case 'endless': return prog.endless.next - 1;
+    case 'skins': return SKINS.filter(skinUnlocked).length;
+  }
+  return 0;
+}
+const achTarget = a => (a.n === 'all' ? LEVELS.length : a.n);
+const earned = () => ACHIEVEMENTS.filter(a => achValue(a) >= achTarget(a)).map(a => a.id);
+function openAch() {
+  const h = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const s = streaks();
+  $('achStreak').textContent = (s.current ? '🔥 ' + s.current + ' · ' : '') + t('streak.best', { n: s.best });
+  $('achList').innerHTML = ACHIEVEMENTS.map(a => {
+    const v = Math.min(achValue(a), achTarget(a)), done = v >= achTarget(a);
+    return `<div class="ach${done ? '' : ' locked'}"><span class="medal" aria-hidden="true">${done ? '🏆' : '🔒'}</span><div style="flex:1;min-width:0">
+      <b>${h(t('ach.' + a.id))}</b><span>${h(t('ach.' + a.id + '.d'))}${done ? ' · ' + h(t('ach.done')) : ` · ${v}/${achTarget(a)}`}</span>
+      ${done ? '' : `<div class="bar"><i style="width:${(100 * v / achTarget(a)).toFixed(1)}%"></i></div>`}</div></div>`;
+  }).join('');
+  showOnly('achBox');
+}
+$('mAch').onclick = openAch;
+$('achClose').onclick = openMenu;
+// Share the result: the phone's share sheet when there is one, otherwise copy the text.
+function shareText(w) {
+  const s = starsFor(w.moves, w.opt);
+  const head = w.mode === 'daily' ? t('share.daily', { date: fmtDate(w.key) }) : w.mode === 'endless' ? t('share.endless', { n: w.key }) : t('share.level', { n: w.key + 1 });
+  const line = t('share.line', { stars: '⭐'.repeat(s) + '☆'.repeat(3 - s), n: w.moves, moves: potez(w.moves) }) + (w.mode === 'daily' ? ' · ' + fmtTime(w.timeMs) : '');
+  const st = w.mode === 'daily' ? streaks().current : 0;
+  return [head, line, st >= 2 ? t('share.streak', { n: st }) : ''].filter(Boolean).join('\n');
+}
+$('share').onclick = async () => {
+  if (!lastWin) return;
+  const text = shareText(lastWin), url = 'https://topple.rdd.software/';
+  try {
+    if (navigator.share) { await navigator.share({ text: text + '\n', url }); return; }
+  } catch (e) { if (e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(text + '\n' + url); } catch (e) { window.prompt('', text + '\n' + url); return; }
+  $('winRank').textContent = t('share.copied');
+};
+
 function openSkins() {
   const cur = currentSkin();
   $('skinGrid').innerHTML = SKINS.map(sk => {

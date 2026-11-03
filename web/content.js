@@ -19,6 +19,15 @@ const ToppleContent = (() => {
     { id: 'bee', level: 110 }, { id: 'diamond', level: 120 },
   ];
 
+  // Achievements: earned from the player's progress (kind + target n; n 'all' = every level).
+  const ACHIEVEMENTS = [
+    { id: 'first', kind: 'levels', n: 1 }, { id: 'levels25', kind: 'levels', n: 25 }, { id: 'levels60', kind: 'levels', n: 60 },
+    { id: 'levelsAll', kind: 'levels', n: 'all' }, { id: 'perfect10', kind: 'perfect', n: 10 }, { id: 'perfect50', kind: 'perfect', n: 50 },
+    { id: 'nohint20', kind: 'nohint', n: 20 }, { id: 'daily1', kind: 'daily', n: 1 }, { id: 'daily10', kind: 'daily', n: 10 },
+    { id: 'streak3', kind: 'streak', n: 3 }, { id: 'streak7', kind: 'streak', n: 7 }, { id: 'streak30', kind: 'streak', n: 30 },
+    { id: 'endless10', kind: 'endless', n: 10 }, { id: 'endless50', kind: 'endless', n: 50 }, { id: 'skins5', kind: 'skins', n: 5 },
+  ];
+
   const TEXT = {
     hr: {
       TYPES: {
@@ -48,7 +57,9 @@ const ToppleContent = (() => {
         ['Ljestvica', 'Natječi se na dnevnoj ljestvici, u beskonačnom nizu i u zvjezdicama iz razina.'],
         ['Prijava i više uređaja', 'Prijavi se Google računom, e-mailom ili korisničkim imenom i lozinkom. Napredak te prati na mobitelu i na računalu.'],
         ['Profil', 'Pregled tvojih razina, zvjezdica, beskonačnog niza i mjesta na ljestvicama. Korisničko ime možeš promijeniti kad god želiš.'],
-        ['Izgledi crvenog bloka', 'Riješi zadnju razinu poglavlja i otključaj novi izgled crvenog bloka: mačak, robot, lubenica, duga, zlatni i kralj. Odabireš ga u izborniku.'],
+        ['Izgledi crvenog bloka', 'Riješi zadnju razinu poglavlja i otključaj novi izgled crvenog bloka, od mačka i robota do zmaja i dijamanta. Odabireš ga u izborniku.'],
+        ['Niz dana i postignuća', 'Rješavaj dnevnu zagonetku svaki dan i gradi niz 🔥. Za razine, zvjezdice, nizove i beskonačne zagonetke dobivaš postignuća.'],
+        ['Podijeli rezultat', 'Nakon rješenja jednim dodirom podijeli rezultat s prijateljima i izazovi ih na istu zagonetku.'],
         ['Pošteni rezultati', 'Server ponovno odigra svako poslano rješenje i sprema samo ispravna. Na ljestvicu se ne može upisati izmišljeni rezultat.'],
         ['Savjeti', 'Zapeo si? Savjet označi sljedeći najbolji potez iz trenutnog položaja. Svaki dan dobiješ jedan besplatni savjet, a još jedan za kratku reklamu. U dnevnoj zagonetki savjeta nema.'],
         ['Neograničeno „Vrati”', 'Eksperimentiraj bez kazne: svaki potez se može poništiti, a ploča vratiti na početak.'],
@@ -87,7 +98,9 @@ const ToppleContent = (() => {
         ['Leaderboard', 'Compete on the daily leaderboard, in the endless run and in stars from the levels.'],
         ['Sign-in and devices', 'Sign in with Google, e-mail or a username and password. Your progress follows you from phone to computer.'],
         ['Profile', 'See your levels, stars, endless run and leaderboard places. You can change your username at any time.'],
-        ['Red block looks', 'Finish the last level of a chapter to unlock a new look for the red block: cat, robot, watermelon, rainbow, gold and king. Pick one in the menu.'],
+        ['Red block looks', 'Finish the last level of a chapter to unlock a new look for the red block, from a cat and a robot to a dragon and a diamond. Pick one in the menu.'],
+        ['Streaks and achievements', 'Solve the daily puzzle every day to build a 🔥 streak. Levels, stars, streaks and endless puzzles earn you achievements.'],
+        ['Share your result', 'After solving, share your result with friends in one tap and challenge them to the same puzzle.'],
         ['Fair results', 'The server replays every submitted solution and keeps only valid ones. Nobody can put a made-up score on the leaderboard.'],
         ['Hints', 'Stuck? A hint highlights the next best move from where you are. You get one free hint a day, and another for watching a short ad. The daily puzzle has no hints.'],
         ['Unlimited undo', 'Experiment without penalty: every move can be undone and the board reset.'],
@@ -126,7 +139,9 @@ const ToppleContent = (() => {
         ['Classifica', 'Sfida gli altri nella classifica del giorno, nella serie infinita e nelle stelle dei livelli.'],
         ['Accesso e dispositivi', 'Accedi con Google, e-mail o nome utente e password. I tuoi progressi ti seguono dal telefono al computer.'],
         ['Profilo', 'Vedi i tuoi livelli, le stelle, la serie infinita e le posizioni in classifica. Puoi cambiare il nome utente quando vuoi.'],
-        ['Aspetti del blocco rosso', 'Completa l’ultimo livello di un capitolo e sblocca un nuovo aspetto del blocco rosso: gatto, robot, anguria, arcobaleno, oro e re. Lo scegli nel menu.'],
+        ['Aspetti del blocco rosso', 'Completa l’ultimo livello di un capitolo e sblocca un nuovo aspetto del blocco rosso, dal gatto e dal robot fino al drago e al diamante. Lo scegli nel menu.'],
+        ['Serie e traguardi', 'Risolvi il rompicapo del giorno ogni giorno e allunga la tua serie 🔥. Livelli, stelle, serie e rompicapi infiniti ti fanno guadagnare traguardi.'],
+        ['Condividi il risultato', 'Dopo la soluzione condividi il risultato con gli amici con un tocco e sfidali sullo stesso rompicapo.'],
         ['Risultati onesti', 'Il server rigioca ogni soluzione inviata e salva solo quelle valide. Nessuno può mettere in classifica un risultato inventato.'],
         ['Suggerimenti', 'Bloccato? Un suggerimento evidenzia la mossa migliore dalla posizione attuale. Ne ricevi uno gratis al giorno e un altro guardando una breve pubblicità. Il rompicapo del giorno non ha suggerimenti.'],
         ['Annulla senza limiti', 'Sperimenta senza penalità: ogni mossa si può annullare e la tavola si può ricominciare.'],
@@ -165,7 +180,9 @@ const ToppleContent = (() => {
         ['Rangliste', 'Miss dich in der Tagesrangliste, im Endlosmodus und mit den Sternen aus den Leveln.'],
         ['Anmeldung und Geräte', 'Melde dich mit Google, E-Mail oder Benutzername und Passwort an. Dein Fortschritt begleitet dich vom Handy zum Computer.'],
         ['Profil', 'Sieh deine Level, Sterne, deinen Endlos-Lauf und deine Ranglistenplätze. Deinen Benutzernamen kannst du jederzeit ändern.'],
-        ['Looks für den roten Block', 'Schaff das letzte Level eines Kapitels und schalte ein neues Aussehen für den roten Block frei: Katze, Roboter, Wassermelone, Regenbogen, Gold und König. Du wählst es im Menü.'],
+        ['Looks für den roten Block', 'Schaff das letzte Level eines Kapitels und schalte ein neues Aussehen für den roten Block frei, von Katze und Roboter bis Drache und Diamant. Du wählst es im Menü.'],
+        ['Serien und Erfolge', 'Löse jeden Tag das Tagesrätsel und bau deine 🔥-Serie aus. Für Level, Sterne, Serien und endlose Rätsel bekommst du Erfolge.'],
+        ['Ergebnis teilen', 'Teile nach dem Lösen dein Ergebnis mit einem Tipp und fordere Freunde mit demselben Rätsel heraus.'],
         ['Faire Ergebnisse', 'Der Server spielt jede eingereichte Lösung nach und speichert nur gültige. Niemand kann ein erfundenes Ergebnis in die Rangliste bringen.'],
         ['Tipps', 'Festgefahren? Ein Tipp markiert den besten nächsten Zug von deiner Position aus. Du bekommst einen Gratis-Tipp pro Tag und einen weiteren für eine kurze Werbung. Beim Tagesrätsel gibt es keine Tipps.'],
         ['Unbegrenztes Zurück', 'Probier ohne Strafe aus: Jeder Zug lässt sich zurücknehmen und das Brett neu starten.'],
@@ -180,6 +197,6 @@ const ToppleContent = (() => {
 
   const lang = typeof ToppleI18n !== 'undefined' && TEXT[ToppleI18n.lang] ? ToppleI18n.lang : 'hr';
   const stats = { levels, chapters, endless, types: TYPE_ORDER.length };
-  return { ...TEXT[lang], TYPE_ORDER, SKINS, GUEST, stats, TEXT };
+  return { ...TEXT[lang], TYPE_ORDER, SKINS, GUEST, ACHIEVEMENTS, stats, TEXT };
 })();
 if (typeof module !== 'undefined') module.exports = ToppleContent;
