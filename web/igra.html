@@ -839,7 +839,8 @@ function sync() {
       };
       for (const [i, s] of Object.entries(best)) if ((me.campaign[+i + 1] || 0) < s) await post('campaign', i, { level: +i + 1 });
       for (let n = me.endless.next; n < prog.endless.next; n++) await post('endless', n, { n });
-      for (const d of [today()]) {
+      // Yesterday too: a daily solved offline before midnight still counts (the server accepts both days).
+      for (const d of [ToppleGen.today(undefined, new Date(Date.now() - 864e5)), today()]) {
         const loc = prog.daily[d];
         if (loc && (!me.daily[d] || loc.moves <= me.daily[d])) await post('daily', d, { date: d });
       }
@@ -1351,6 +1352,9 @@ function start() {
   sync();
 }
 start();
+// Offline play: the service worker keeps the game files; results go to the server when the connection is back.
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+window.addEventListener('online', () => { sync(); reportGuest(); });
 </script>
 </body>
 </html>

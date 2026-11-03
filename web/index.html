@@ -259,6 +259,7 @@ async function boards() {
 }
 ['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = `<li class="empty">${esc(t('home.loading'))}</li>`; });
 boards();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 $('foot').textContent = t('home.foot', { levels: K.stats.levels, chapters: K.stats.chapters, types: K.stats.types });
 </script>
 </body>
