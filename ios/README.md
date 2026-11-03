@@ -43,7 +43,20 @@ Za debug buildove web dio se može pregledavati u Safariju na Macu: *Develop →
 
 **Apple**
 1. U Xcodeu, na kartici **Signing & Capabilities**, mora biti **Sign in with Apple** (dolazi iz `Topple.entitlements`). Ako ga nema, dodaj ga s **+ Capability**.
-2. Na serveru ne treba ništa: server prihvaća Apple prijave za bundle ID `software.rdd.topple`. Za drugi bundle ID postavi `APPLE_BUNDLE_ID`.
+2. Server prihvaća Apple prijave za bundle ID `software.rdd.topple`. Za drugi bundle ID postavi `APPLE_BUNDLE_ID`.
+3. **Poništavanje kod brisanja računa** (Apple to traži): na https://developer.apple.com/account → **Certificates, IDs & Profiles → Keys → +**:
+   - naziv npr. „Topple Sign in with Apple”;
+   - uključi **Sign in with Apple** → **Configure**, odaberi App ID `software.rdd.topple`;
+   - **Continue → Register → Download**: preuzima se `AuthKey_XXXXXXXXXX.p8`, a preuzeti se može samo jednom.
+   - Zapiši **Key ID** (10 znakova, piše uz ključ) i **Team ID** (gore desno na developer.apple.com, ili *Membership details*).
+
+   Kopiraj `.p8` na server, npr. u `C:\inetpub\topple-data\`, i pokreni:
+
+```powershell
+node C:\inetpub\wwwroot\topple\server\admin.js set-apple TEAMID KEYID C:\inetpub\topple-data\AuthKey_KEYID.p8 --db C:\inetpub\topple-data\topple.db
+```
+
+   Ključ se spremi u `apple.json` uz bazu. Od tada server pri svakoj Apple prijavi zamijeni jednokratni kod za token. Kad igrač izbriše račun, server tim tokenom poništi Apple prijavu (`server/apple.js`). Za račune koji su se Appleom prijavili prije postavljanja ključa token se spremi pri sljedećoj prijavi.
 
 **Google**
 1. U Google Cloud Consoleu, u istom projektu kao za web: **APIs & Services → Credentials → Create credentials → OAuth client ID**.

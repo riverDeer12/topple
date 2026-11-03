@@ -286,6 +286,35 @@ function solution(level) {
   r = await call('/api/apple', { identityToken: ajwt({ sub: 'ap1' }) }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.name, 'Luka');
   ok('Sign in with Apple: creates the account once, then signs in');
 
+  // Apple token revocation: the sign-in code becomes a refresh token, revoked on account deletion.
+  const appleCalls = [];
+  const appleSrv = require('http').createServer((q, res) => { let b = ''; q.on('data', d => { b += d; }); q.on('end', () => {
+    appleCalls.push({ url: q.url, form: Object.fromEntries(new URLSearchParams(b)) });
+    res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(q.url === '/auth/token' ? JSON.stringify({ refresh_token: 'rt-123', id_token: 'x' }) : '');
+  }); });
+  await new Promise(okk => appleSrv.listen(0, '127.0.0.1', okk));
+  process.env.APPLE_AUTH_URL = `http://127.0.0.1:${appleSrv.address().port}`;
+  const appleMod = require('../server/apple.js');
+  const ec = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
+  require('fs').writeFileSync(appleMod.configFile(), JSON.stringify({ teamId: 'TEAM123456', keyId: 'KEY1234567', key: ec.privateKey.export({ type: 'pkcs8', format: 'pem' }) }));
+  const secret = appleMod.clientSecret(appleMod.config(), 'software.rdd.topple');
+  const [sh, sp, ss] = secret.split('.');
+  assert.ok(crypto.verify('sha256', Buffer.from(sh + '.' + sp), { key: ec.publicKey, dsaEncoding: 'ieee-p1363' }, Buffer.from(ss, 'base64url')), 'client secret signed with the .p8 key');
+  assert.deepStrictEqual([JSON.parse(Buffer.from(sh, 'base64url')).kid, JSON.parse(Buffer.from(sp, 'base64url')).iss], ['KEY1234567', 'TEAM123456']);
+  const { db: adb } = require('../server/server.js');
+  adb.prepare("UPDATE users SET apple_refresh = 'rt-123' WHERE apple_sub = 'ap1'").run();
+  const apr = await call('/api/apple', { identityToken: ajwt({ sub: 'ap1' }) });
+  r = await call('/api/account/delete', { confirm: 'Luka' }, apr.body.token); assert.strictEqual(r.status, 200);
+  for (let k = 0; k < 50 && !appleCalls.some(c => c.url === '/auth/revoke'); k++) await new Promise(okk => setTimeout(okk, 20));
+  const rv = appleCalls.find(c => c.url === '/auth/revoke');
+  assert.ok(rv && rv.form.token === 'rt-123' && rv.form.client_id === 'software.rdd.topple' && rv.form.token_type_hint === 'refresh_token', 'revoked at Apple');
+  r = await call('/api/apple', { identityToken: ajwt({ sub: 'ap2', email: 'n@example.com', email_verified: true }), code: 'c-1', name: 'Nora' }); assert.strictEqual(r.status, 201);
+  for (let k = 0; k < 50 && !adb.prepare("SELECT apple_refresh FROM users WHERE apple_sub = 'ap2'").get().apple_refresh; k++) await new Promise(okk => setTimeout(okk, 20));
+  assert.strictEqual(adb.prepare("SELECT apple_refresh FROM users WHERE apple_sub = 'ap2'").get().apple_refresh, 'rt-123', 'code exchanged for a refresh token');
+  assert.strictEqual(appleCalls.find(c => c.url === '/auth/token').form.code, 'c-1');
+  appleSrv.close();
+  ok('Apple: code exchanged at sign-in, sign-in revoked when the account is deleted');
+
   r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/stats', null, ana); assert.strictEqual(r.status, 401);

@@ -155,6 +155,12 @@ if (db.prepare('PRAGMA user_version').get().user_version < 9) {
   if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'apple_sub')) db.exec('ALTER TABLE users ADD COLUMN apple_sub TEXT');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS users_apple ON users (apple_sub) WHERE apple_sub IS NOT NULL; PRAGMA user_version = 9;');
 }
+// Schema v10: Apple refresh token, needed to revoke Sign in with Apple when the account is deleted.
+if (db.prepare('PRAGMA user_version').get().user_version < 10) {
+  if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'apple_refresh')) db.exec('ALTER TABLE users ADD COLUMN apple_refresh TEXT');
+  db.exec('PRAGMA user_version = 10');
+}
+const appleAuth = require('./apple.js');
 const push = require('./push.js');
 const REMIND_HOUR = Number(process.env.REMIND_HOUR || 17); // local time (TZ_GAME) of the daily reminder
 const REMIND = {
@@ -418,6 +424,9 @@ function board(mode, date, me, only) {
 }
 // Removes a player and everything stored about them (used by the game and by admin.js).
 function deleteUser(id) {
+  // Sign in with Apple: tell Apple the app no longer uses this Apple ID (Apple requires it).
+  const ar = db.prepare('SELECT apple_refresh FROM users WHERE id = ?').get(id);
+  if (ar && ar.apple_refresh) appleAuth.revoke(ar.apple_refresh, APPLE_AUDS[0]).catch(e => console.error('Apple revoke failed:', e.message));
   db.exec('BEGIN');
   try {
     for (const t of ['campaign', 'daily', 'endless', 'sessions', 'password_resets', 'push_subs']) db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(id);
@@ -710,11 +719,17 @@ async function route(req, res) {
   // Sign in with Apple (iOS app). Apple gives the name only on the very first sign-in, so the app sends it along.
   if (req.method === 'POST' && p === '/api/apple') {
     if (limited(req, 'apple', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
-    const { identityToken, name, guest } = await readJson(req);
+    const { identityToken, code, name, guest } = await readJson(req);
     const a = await verifyApple(identityToken);
     if (!a) return send(res, 401, { error: 'Prijava s Appleom nije uspjela.', code: 'apple_failed' });
     const verified = a.email_verified === true || a.email_verified === 'true';
-    return socialSignIn(req, res, 'apple_sub', a.sub, verified ? cleanEmail(a.email) : '', String(name || '').slice(0, 40), guest, { taken: 'apple_taken' });
+    socialSignIn(req, res, 'apple_sub', a.sub, verified ? cleanEmail(a.email) : '', String(name || '').slice(0, 40), guest, { taken: 'apple_taken' });
+    // The one-time code becomes a refresh token, kept only to revoke the sign-in on account deletion.
+    if (typeof code === 'string' && code.length < 1000) {
+      appleAuth.exchange(code, a.aud).then(rt => { if (rt) db.prepare('UPDATE users SET apple_refresh = ? WHERE apple_sub = ?').run(rt, a.sub); })
+        .catch(e => console.error('Apple code exchange failed:', e.message));
+    }
+    return;
   }
 
   if (req.method === 'POST' && p === '/api/logout') {
