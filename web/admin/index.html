@@ -117,6 +117,17 @@
       <div class="axis ticks" id="levelsAxis"></div>
     </section>
 
+    <section class="card grid" style="margin-bottom:14px">
+      <div class="chart-head"><h2>Težina razina: koliko igrača koji su započeli razinu ju je i riješilo</h2>
+        <button id="copyDiff" type="button" title="Za analizu i ugađanje razina">Kopiraj podatke</button></div>
+      <p class="muted small" style="margin:0">Računa se od uvođenja bilježenja: prijavljeni igrači i gosti. Pokušaj se broji kad igrač pomakne bar jedan blok. Vrijeme, potezi i savjeti su od prvog rješenja.</p>
+      <div class="chart" id="diffChart" style="height:150px" role="img"></div>
+      <div class="axis ticks" id="diffAxis"></div>
+      <h2 style="margin-top:6px">Najteže razine</h2>
+      <div class="scroll"><table id="hardest"></table></div>
+      <details><summary class="muted small" style="cursor:pointer">Sve razine</summary><div class="scroll"><table id="diffAll"></table></div></details>
+    </section>
+
     <div class="grid two">
       <section class="card">
         <h2>Najdalje stigli</h2>
@@ -283,6 +294,7 @@ function render(s) {
   $('guestMax').textContent = `vrh ljestvice: ${num(gmax)}`;
   $('guestAxis').innerHTML = `<span>0 razina</span><span>${gl.length - 1} razina</span>`;
 
+  renderDifficulty(s);
   hbars($('methods'), s.methods, k => METHOD[k] || k);
   hbars($('langs'), s.langs, k => LANG[k] || k);
   hbars($('skins'), s.skins, skinName);
@@ -293,6 +305,30 @@ function render(s) {
     s.recentUsers.map(u => [esc(u.name), date(u.createdAt), `<span class="badge">${METHOD[u.method]}</span>`, num(u.levels), seen(u.lastSeen)]), 'Još nema igrača.');
   table($('recentGuests'), [['Gost'], ['Jezik'], ['Prvi put'], ['Posjeta', 'n'], ['Razina', 'n'], ['Beskonačne', 'n'], ['Zadnji put']],
     s.recentGuests.map(g => [esc(g.name || '–'), esc(g.lang || '?'), date(g.firstSeen), num(g.visits), num(g.levels), num(g.endless), seen(g.lastSeen)]), 'Još nema gostiju.');
+}
+let lastDiff = [];
+$('copyDiff').onclick = async () => {
+  const text = JSON.stringify(lastDiff.filter(d => d.started), null, 1);
+  try { await navigator.clipboard.writeText(text); $('copyDiff').textContent = 'Kopirano ✓'; } catch (e) { window.prompt('Kopiraj:', text); }
+  setTimeout(() => { $('copyDiff').textContent = 'Kopiraj podatke'; }, 2000);
+};
+function renderDifficulty(s) {
+  const D = s.difficulty || [], n = D.length;
+  lastDiff = D;
+  const p = x => x === null ? '–' : Math.round(100 * x) + ' %';
+  const f1 = x => x === null ? '–' : x.toLocaleString('hr-HR', { maximumFractionDigits: 1 });
+  const time = x => x === null ? '–' : `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`;
+  bars($('diffChart'), D.map(d => ({ value: d.solveRate === null ? 0 : Math.round(100 * d.solveRate),
+    tip: d.started ? `Razina ${d.level}: riješilo ${d.solved} od ${d.started} (${p(d.solveRate)}) · vrijeme ${time(d.medianTimeS)} · savjeti ${f1(d.hints)}` : `Razina ${d.level}: još nitko nije igrao` })));
+  const ticks = [1, ...[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110].filter(t => t < n), n];
+  $('diffAxis').innerHTML = ticks.map(t => `<span style="left:${(100 * (t - .5) / n).toFixed(2)}%">${t}</span>`).join('');
+  const head = [['Razina', 'n'], ['Cilj', 'n'], ['Započelo', 'n'], ['Riješilo', 'n'], ['Uspjeh', 'n'], ['Vrijeme (medijan)', 'n'], ['Pokušaji', 'n'], ['Savjeti', 'n'], ['Potezi viška', 'n'], ['3 ★', 'n']];
+  const row = d => [`<b>${d.level}</b>`, d.opt, num(d.started), num(d.solved), p(d.solveRate), time(d.medianTimeS), f1(d.attempts), f1(d.hints), f1(d.extraMoves), p(d.perfect)];
+  // Hardest: lowest share solved, then most hints and attempts; only levels at least 3 players started.
+  const score = d => (1 - d.solveRate) * 2 + (d.hints || 0) * .5 + (d.attempts || 0) * .1;
+  const hard = D.filter(d => d.started >= 3).sort((a, b) => score(b) - score(a)).slice(0, 10);
+  table($('hardest'), head, hard.map(row), 'Još premalo podataka: razina treba bar 3 igrača.');
+  table($('diffAll'), head, D.filter(d => d.started).map(row), 'Još nema podataka.');
 }
 const seen = t => t > Date.now() - 15 * 60e3 ? '<span class="on">sada</span>' : ago(t);
 

@@ -113,6 +113,18 @@ if (db.prepare('PRAGMA user_version').get().user_version < 5) {
     PRAGMA user_version = 5;
   `);
 }
+// Schema v6: how each player (account or guest) plays each level, to tune the difficulty:
+// attempts (starts and restarts), and for the first solve: time, moves and hints used.
+if (db.prepare('PRAGMA user_version').get().user_version < 6) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plays (
+      pid TEXT NOT NULL, level INTEGER NOT NULL, first_seen INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
+      solved_at INTEGER, time_ms INTEGER, moves INTEGER, hints INTEGER,
+      PRIMARY KEY (pid, level)
+    );
+    PRAGMA user_version = 6;
+  `);
+}
 const mail = require('./mail.js');
 const PUBLIC_URL = (process.env.PUBLIC_URL || 'https://topple.rdd.software').replace(/\/+$/, '');
 const RESET_MS = 3600e3;
@@ -124,7 +136,9 @@ const RESET_MAIL = {
 };
 const GUEST_ID = /^[A-Za-z0-9_-]{16,64}$/;
 function linkGuest(guestId, userId) {
-  if (typeof guestId === 'string' && GUEST_ID.test(guestId)) db.prepare('UPDATE guests SET user_id = ? WHERE id = ? AND user_id IS NULL').run(userId, guestId);
+  if (typeof guestId !== 'string' || !GUEST_ID.test(guestId)) return;
+  db.prepare('UPDATE guests SET user_id = ? WHERE id = ? AND user_id IS NULL').run(userId, guestId);
+  db.prepare('UPDATE OR IGNORE plays SET pid = ? WHERE pid = ?').run('u' + userId, 'g' + guestId); // keep the levels played as a guest
 }
 const SKINS = require('../web/content.js').SKINS;
 function newSession(userId) {
@@ -356,6 +370,21 @@ function adminStats() {
   // How many signed-in players solved each level, and how far guests got.
   const solvedBy = Object.fromEntries(db.prepare('SELECT level, COUNT(*) AS c FROM campaign GROUP BY level').all().map(r => [r.level, r.c]));
   const levels = LEVELS.map((lv, i) => ({ level: i + 1, players: solvedBy[i + 1] || 0 }));
+  // Difficulty per level from plays: how many started and solved it, and how hard the first solve was.
+  const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+  const byLevel = {};
+  for (const r of db.prepare('SELECT * FROM plays').all()) (byLevel[r.level] = byLevel[r.level] || []).push(r);
+  const difficulty = LEVELS.map((lv, i) => {
+    const rows = byLevel[i + 1] || [], solved = rows.filter(r => r.solved_at);
+    const avg = f => (solved.length ? solved.reduce((a, r) => a + f(r), 0) / solved.length : null);
+    return {
+      level: i + 1, opt: lv.opt, started: rows.length, solved: solved.length,
+      solveRate: rows.length ? solved.length / rows.length : null,
+      medianTimeS: solved.length ? Math.round(median(solved.map(r => r.time_ms)) / 1000) : null,
+      attempts: avg(r => r.attempts), hints: avg(r => r.hints), extraMoves: avg(r => Math.max(0, r.moves - lv.opt)),
+      perfect: solved.length ? solved.filter(r => r.moves <= lv.opt).length / solved.length : null,
+    };
+  });
   const guestLevels = db.prepare('SELECT levels, COUNT(*) AS c FROM guests WHERE user_id IS NULL GROUP BY levels ORDER BY levels').all().map(r => ({ levels: r.levels, guests: r.c }));
   const count = (rows, key) => Object.entries(rows.reduce((m, r) => { const k = key(r) || '?'; m[k] = (m[k] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]);
   const guestRows = db.prepare('SELECT lang FROM guests WHERE user_id IS NULL').all();
@@ -377,7 +406,7 @@ function adminStats() {
       activeGuests: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND last_seen > ?', since(d)),
       newGuests: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND first_seen > ?', since(d)),
     })),
-    days, levels, guestLevels,
+    days, levels, guestLevels, difficulty,
     top: users.filter(u => u.levels || u.endless || u.daily)
       .sort((a, b) => b.top - a.top || b.stars - a.stars || b.endless - a.endless || b.daily - a.daily).slice(0, 20).map(player),
     methods: count(users, method), skins: count(users, u => u.skin || 'classic'), langs: count(guestRows, r => r.lang),
@@ -410,6 +439,22 @@ async function route(req, res) {
         levels = MAX(levels, ?), stars = MAX(stars, ?), endless = MAX(endless, ?), daily = MAX(daily, ?) WHERE id = ?`)
         .run(name, lang, now, now - old.last_seen > 30 * 60e3 ? 1 : 0, num(b.levels), num(b.stars), num(b.endless), num(b.daily), b.id);
     }
+    return send(res, 200, { ok: true });
+  }
+
+  // How a level is played (fire-and-forget from the game): kind 'start' on every start or restart,
+  // 'solve' on a win. Only the first solve is kept.
+  if (req.method === 'POST' && p === '/api/play') {
+    if (limited(req, 'play', 120, 60e3)) return send(res, 429, { error: 'Previše zahtjeva.', code: 'too_many' });
+    const b = await readJson(req), u = userFrom(req);
+    const pid = u ? 'u' + u.id : typeof b.guest === 'string' && GUEST_ID.test(b.guest) ? 'g' + b.guest : null;
+    const level = Number(b.level);
+    if (!pid || !Number.isInteger(level) || level < 1 || level > LEVELS.length || !['start', 'solve'].includes(b.kind)) return send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' });
+    const num = (v, max) => Math.max(0, Math.min(max, Math.floor(Number(v) || 0)));
+    db.prepare('INSERT OR IGNORE INTO plays (pid, level, first_seen) VALUES (?, ?, ?)').run(pid, level, Date.now());
+    if (b.kind === 'start') db.prepare('UPDATE plays SET attempts = attempts + 1 WHERE pid = ? AND level = ? AND solved_at IS NULL').run(pid, level); // attempts until the first solve
+    else db.prepare('UPDATE plays SET solved_at = ?, time_ms = ?, moves = ?, hints = ? WHERE pid = ? AND level = ? AND solved_at IS NULL')
+      .run(Date.now(), num(b.timeMs, 6 * 3600e3), num(b.moves, 1000), num(b.hints, 100), pid, level);
     return send(res, 200, { ok: true });
   }
 

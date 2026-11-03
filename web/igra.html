@@ -487,6 +487,19 @@ function guestId() {
   }
   return id;
 }
+// How levels are played, for tuning the difficulty (see /admin): attempts, and time, moves
+// and hints of the first solve. Time and hints add up over all attempts in this visit.
+let attemptReported = false;
+const sessions = {};
+const playSession = k => (sessions[k] = sessions[k] || { t0, hints: 0 });
+function reportPlay(kind, extra = {}) {
+  if (!API || !ctx || ctx.mode !== 'campaign') return;
+  playSession(ctx.key);
+  const headers = { 'Content-Type': 'application/json' };
+  if (signedInNow()) headers.Authorization = 'Bearer ' + user.token;
+  const body = { kind, level: ctx.key + 1, guest: signedInNow() ? undefined : guestId(), ...extra };
+  fetch(API + '/api/play', { method: 'POST', headers, body: JSON.stringify(body), keepalive: true }).catch(() => {});
+}
 function reportGuest() {
   if (!API || signedInNow()) return;
   const body = {
@@ -540,7 +553,7 @@ function show(c) {
   clearHint();
   ctx = c; won_ = false; busy = false;
   blocks = fromLevel(c.level.blocks);
-  hist = []; moveLog = []; t0 = Date.now();
+  hist = []; moveLog = []; t0 = Date.now(); attemptReported = false;
   board.querySelectorAll('.blk, .exit').forEach(e => e.remove());
   const ex = document.createElement('div'); ex.className = 'exit';
   ex.innerHTML = '<svg viewBox="0 0 10 10"><path d="M2 1l6 4-6 4z"/></svg>';
@@ -707,6 +720,7 @@ function onKey(e, k) {
 
 function commit(k, d, travel) {
   clearHint();
+  if (!attemptReported && !watching) { attemptReported = true; reportPlay('start'); } // an attempt counts once a block moves
   busy = true;
   hist.push(blocks.map(b => ({ ...b })));
   moveLog.push([k, d]);
@@ -795,6 +809,7 @@ function win() {
   buzz([10, 40, 10]);
   const opt = ctx.level.opt, m = hist.length, timeMs = Date.now() - t0;
   const unlockedBefore = SKINS.filter(skinUnlocked).map(x => x.id);
+  reportPlay('solve', { moves: hist.length, timeMs: Date.now() - playSession(ctx.key).t0, hints: playSession(ctx.key).hints });
   const achBefore = earned();
   if (ctx.mode === 'campaign' && !ctx.hinted && !nohint.includes(ctx.key)) { nohint.push(ctx.key); store.set('nohint', nohint); }
   const s = record(ctx.mode, ctx.key, moveLog.slice(), timeMs);
@@ -1165,6 +1180,7 @@ async function useHint() {
   const [b, d] = p.moves[i];
   hints.count--; store.set('hints', hints); refreshHints();
   c.hinted = true; // this solve gets no credit for solving without hints
+  if (c.mode === 'campaign') playSession(c.key).hints++;
   clearHint();
   els[b].classList.add('hinted');
   const g = document.createElement('div');
