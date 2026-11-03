@@ -194,6 +194,16 @@ function solution(level) {
   smtp.close();
   ok('forgotten password: e-mail with a one-time link, new password, other sessions end');
 
+  // Level plays for difficulty tuning: attempts until the first solve, then the first solve's details.
+  const pg = 'guest_' + 'p'.repeat(20);
+  for (const kind of ['start', 'start', 'solve', 'start', 'solve']) {
+    r = await call('/api/play', { kind, level: 3, guest: pg, moves: kind === 'solve' ? LEVELS[2].opt + 2 : 0, timeMs: 61000, hints: 1 }); assert.strictEqual(r.status, 200);
+  }
+  r = await call('/api/play', { kind: 'start', level: 3 }); assert.strictEqual(r.status, 400, 'needs an account or a guest id');
+  r = await call('/api/play', { kind: 'start', level: 9999, guest: pg }); assert.strictEqual(r.status, 400);
+  r = await call('/api/play', { kind: 'start', level: 3 }, ana); assert.strictEqual(r.status, 200);
+  ok('plays: attempts and first solve per player and level');
+
   r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/stats', null, ana); assert.strictEqual(r.status, 401);
@@ -207,6 +217,9 @@ function solution(level) {
   assert.ok(st.online.users >= 1); assert.strictEqual(st.days.length, 14); assert.strictEqual(st.days[13].date, st.today);
   assert.ok(st.days[13].players >= 2); assert.strictEqual(st.days[13].daily, 2); assert.strictEqual(st.days[13].newUsers, 6);
   assert.strictEqual(st.levels.length, LEVELS.length); assert.strictEqual(st.levels[9].players, 1);
+  const d3 = st.difficulty[2];
+  assert.deepStrictEqual([d3.started, d3.solved, d3.attempts, d3.hints, d3.extraMoves, d3.medianTimeS, d3.perfect], [2, 1, 2, 1, 2, 61, 0]);
+  assert.strictEqual(st.difficulty.length, LEVELS.length);
   assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 6);
   assert.ok(!JSON.stringify(st).includes('password_hash') && !JSON.stringify(st).includes('@'), 'no secrets or e-mails in admin stats');
   r = await call('/api/admin/logout', {}, adm); r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 401);
