@@ -6,6 +6,7 @@
 //   node server/admin.js set-admin <name> <password>            (sign-in for the admin page /admin; again to change the password)
 //   node server/admin.js set-smtp <host> <port> <user> <password> "<from>"   (e-mail for "forgot password")
 //   node server/admin.js test-mail <email>                      (sends a test e-mail with those settings)
+//   node server/admin.js set-apple <teamId> <keyId> <path to .p8>  (revokes Sign in with Apple on account deletion)
 //   node server/admin.js delete <name> [--yes]                  (removes the player and all their data; without --yes only shows what would go)
 // Uses DB_PATH, or --db <path>. On the Windows server: --db C:\inetpub\topple-data\topple.db
 const args = process.argv.slice(2);
@@ -68,6 +69,14 @@ if (cmd === 'list') {
   if (!mail.config()) fail('SMTP nije postavljen (naredba set-smtp).');
   mail.sendMail({ to: rest[0], subject: 'Topple: probni e-mail', text: 'Slanje e-maila za Topple radi. Igrači sada mogu zatražiti novu lozinku.' })
     .then(() => console.log('Poslano na ' + rest[0] + '.'), e => fail('Slanje nije uspjelo: ' + e.message));
+} else if (cmd === 'set-apple') {
+  const [teamId, keyId, file] = rest;
+  if (!teamId || !keyId || !file) fail('Nedostaju podaci. Primjer: node server/admin.js set-apple ABCDE12345 XYZ987ABCD C:\\Users\\Admin\\Downloads\\AuthKey_XYZ987ABCD.p8');
+  const fs = require('fs'), crypto = require('crypto'), apple = require('./apple.js');
+  const key = fs.readFileSync(file, 'utf8');
+  try { crypto.createPrivateKey(key); } catch (e) { fail('Datoteka nije ispravan .p8 ključ.'); }
+  fs.writeFileSync(apple.configFile(), JSON.stringify({ teamId, keyId, key }, null, 2));
+  console.log(`Spremljeno u ${apple.configFile()}. Od sada se Apple prijava poništava kod brisanja računa (za prijave nakon ovoga).`);
 } else if (cmd === 'delete') {
   const yes = rest.includes('--yes');
   const name = rest.filter(a => a !== '--yes').join(' ');
@@ -79,5 +88,5 @@ if (cmd === 'list') {
   deleteUser(u.id);
   console.log(`Obrisano: ${summary}.`);
 } else {
-  console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | set-admin <ime> <lozinka> | set-smtp <host> <port> <korisnik> <lozinka> <od> | test-mail <email> | delete <ime> [--yes]   [--db putanja]');
+  console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | set-admin <ime> <lozinka> | set-smtp <host> <port> <korisnik> <lozinka> <od> | test-mail <email> | set-apple <teamId> <keyId> <p8> | delete <ime> [--yes]   [--db putanja]');
 }

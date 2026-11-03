@@ -36,7 +36,9 @@ final class SignIn: NSObject, ASAuthorizationControllerDelegate, ASAuthorization
               let data = cred.identityToken, let token = String(data: data, encoding: .utf8) else { return finish(error: "failed") }
         // Apple shares the name only on the very first sign-in.
         let name = [cred.fullName?.givenName, cred.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
-        finish(["provider": "apple", "token": token, "name": name])
+        // The one-time code lets the server revoke this sign-in if the account is deleted.
+        let code = cred.authorizationCode.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        finish(["provider": "apple", "token": token, "name": name, "code": code])
     }
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         finish(error: (error as? ASAuthorizationError)?.code == .canceled ? "cancel" : "failed")

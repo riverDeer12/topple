@@ -1092,7 +1092,7 @@ window.toppleSignedIn = async d => {
   if (!d || d.error) { if (!d || d.error !== 'cancel') $('loginErr').textContent = t(d && d.error === 'google_off' ? 'srv.google_off' : 'login.socialFailed'); return; }
   try {
     const r = d.provider === 'apple'
-      ? await api('/api/apple', { method: 'POST', body: JSON.stringify({ identityToken: d.token, name: d.name || '', guest: guestId() }) })
+      ? await api('/api/apple', { method: 'POST', body: JSON.stringify({ identityToken: d.token, code: d.code || '', name: d.name || '', guest: guestId() }) })
       : await api('/api/google', { method: 'POST', body: JSON.stringify({ credential: d.token, guest: guestId() }) });
     signedIn(r);
   } catch (x) { $('loginErr').textContent = errText(x); }
