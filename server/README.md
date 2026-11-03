@@ -131,6 +131,26 @@ powershell -ExecutionPolicy Bypass -File C:\inetpub\wwwroot\topple\server\instal
 
 Skripta postavi `GOOGLE_CLIENT_ID` za API i ponovno ga pokrene. Gumb se u igri pojavi sam. Server mora moći dohvatiti `https://www.googleapis.com/oauth2/v3/certs` (Googleovi javni ključevi za provjeru prijave).
 
+## Zaboravljena lozinka (slanje e-maila)
+
+Igrač koji ima e-mail na računu može u prijavi kliknuti „Zaboravljena lozinka?”. Server mu pošalje poveznicu koja vrijedi 1 sat. Nakon nove lozinke odjavljuju se svi ostali uređaji. Za slanje treba SMTP pristup nekom poštanskom sandučiću, npr. onom za `info@rdd.software`:
+
+| Pošta | Poslužitelj | Port |
+|---|---|---|
+| Namecheap Private Email | `mail.privateemail.com` | 465 |
+| Google Workspace / Gmail (lozinka za aplikacije) | `smtp.gmail.com` | 587 |
+| Zoho Mail (EU) | `smtp.zoho.eu` | 465 |
+| Brevo (besplatno do 300 e-mailova dnevno) | `smtp-relay.brevo.com` | 587 |
+
+Na serveru (lozinku u PowerShellu stavi u jednostruke navodnike):
+
+```powershell
+node C:\inetpub\wwwroot\topple\server\admin.js set-smtp mail.privateemail.com 465 info@rdd.software 'lozinka' "Topple <info@rdd.software>" --db C:\inetpub\topple-data\topple.db
+node C:\inetpub\wwwroot\topple\server\admin.js test-mail tvoj@email.com --db C:\inetpub\topple-data\topple.db
+```
+
+Postavke se spremaju u `C:\inetpub\topple-data\smtp.json` (nije u gitu). API ih čita sam, bez ponovnog pokretanja, a poveznica „Zaboravljena lozinka?” pojavi se u igri čim je SMTP postavljen. Port 465 koristi TLS od početka, ostali STARTTLS.
+
 ## Sigurnosne kopije na Google Drive
 
 Zadatak **Topple backup** svaki dan u 4:30 napravi lokalnu kopiju i, kad je Google Drive povezan, pošalje kopiju s datumom (`topple-2026-11-03.db`) u mapu **RDD → DB_Backups → Topple** na tvom Driveu. Tamo se čuva zadnjih 30 kopija, starije se brišu same. Skripta smije vidjeti samo datoteke koje je sama napravila (dozvola `drive.file`), ništa drugo na Driveu. Zapis: `C:\inetpub\topple-data\backup.log`.
@@ -220,6 +240,8 @@ Ista naredba mijenja lozinku i odjavljuje sve stare prijave tog administratora. 
 | `ALLOWED_ORIGIN` | `*` | s kojih drugih adresa igra smije zvati API, odvojeno zarezom |
 | `TZ_GAME` | `Europe/Zagreb` | vremenska zona za dnevnu zagonetku |
 | `GOOGLE_CLIENT_ID` | (prazno) | Google OAuth Client ID; prazno = bez gumba „Prijava s Googleom” |
+| `PUBLIC_URL` | `https://topple.rdd.software` | adresa igre u e-mailu za novu lozinku |
+| `SMTP_HOST` … | (prazno) | umjesto `smtp.json`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` |
 
 Promjena postavki: `nssm edit topple` (kartica Environment), pa `Restart-Service topple`. Zadane vrijednosti postavlja `install.ps1`.
 
@@ -237,6 +259,8 @@ Promjena postavki: `nssm edit topple` (kartica Environment), pa `Restart-Service
 | `GET /api/stats` | broj igrača i riješenih zagonetki |
 | `POST /api/admin/login` `{user, password}` | prijava administratora (tablica `admins`), vraća `{token}` |
 | `GET /api/admin/stats` | statistika za /admin (Bearer token administratora) |
+| `POST /api/forgot` `{login, lang}` | e-mail s poveznicom za novu lozinku (isti odgovor i kad računa nema) |
+| `POST /api/reset` `{token, password}` | nova lozinka iz poveznice, vraća `{name, token}` |
 | `GET /api/me` | profil i napredak (zaglavlje `Authorization: Bearer <token>`) |
 | `POST /api/score` `{mode, level/date/n, moves, timeMs}` | rezultat; server provjerava poteze |
 | `GET /api/leaderboard?mode=daily&date=YYYY-MM-DD` | dnevna ljestvica (najmanje poteza, pa najbrže) |

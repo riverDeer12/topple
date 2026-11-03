@@ -157,6 +157,43 @@ function solution(level) {
   r = await call('/api/stats');
   assert.strictEqual(r.body.players, 5); assert.strictEqual(r.body.dailyToday, 2); assert.strictEqual(r.body.solved, 7); assert.ok(r.body.online >= 1); ok('stats');
 
+  // Forgotten password, with a fake SMTP server that keeps the messages.
+  r = await call('/api/forgot', { login: 'x' }); assert.strictEqual(r.status, 503);
+  const mails = [];
+  const smtp = require('net').createServer(sock => {
+    let data = false, msg = '';
+    sock.write('220 fake ESMTP\r\n');
+    sock.on('data', d => {
+      for (const line of d.toString().split('\r\n').filter((l, i, a) => i < a.length - 1 || l)) {
+        if (data) { if (line === '.') { data = false; mails.push(msg); sock.write('250 ok\r\n'); } else msg += line + '\n'; continue; }
+        if (/^EHLO/.test(line)) sock.write('250-fake\r\n250 AUTH PLAIN\r\n');
+        else if (/^AUTH PLAIN/.test(line)) sock.write('235 ok\r\n');
+        else if (/^DATA/.test(line)) { data = true; msg = ''; sock.write('354 go\r\n'); }
+        else if (/^QUIT/.test(line)) { sock.write('221 bye\r\n'); sock.end(); }
+        else sock.write('250 ok\r\n');
+      }
+    });
+  });
+  await new Promise(ok => smtp.listen(0, '127.0.0.1', ok));
+  Object.assign(process.env, { SMTP_HOST: '127.0.0.1', SMTP_PORT: String(smtp.address().port), SMTP_USER: 'u', SMTP_PASS: 'p', SMTP_FROM: 'Topple <info@example.com>', SMTP_TLS: 'off' });
+  r = await call('/api/config'); assert.strictEqual(r.body.passwordReset, true);
+  r = await call('/api/register', { name: 'Zaboravko', password: 'stara123', email: 'zab@example.com' }); assert.strictEqual(r.status, 201);
+  const oldToken = r.body.token;
+  r = await call('/api/forgot', { login: 'nitko@example.com' }); assert.strictEqual(r.status, 200);
+  r = await call('/api/forgot', { login: 'zab@example.com', lang: 'en' }); assert.strictEqual(r.status, 200);
+  for (let k = 0; k < 50 && mails.length < 1; k++) await new Promise(ok => setTimeout(ok, 20));
+  assert.strictEqual(mails.length, 1, 'only the existing account gets an e-mail');
+  const body = Buffer.from(mails[0].split('\n\n').slice(1).join('').replace(/\s+/g, ''), 'base64').toString('utf8');
+  assert.ok(mails[0].includes('To: zab@example.com') && body.includes('Hi Zaboravko'));
+  const resetToken = /#reset=([A-Za-z0-9_-]+)/.exec(body)[1];
+  r = await call('/api/reset', { token: resetToken, password: 'x' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'password_short');
+  r = await call('/api/reset', { token: resetToken, password: 'nova12345' }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.name, 'Zaboravko');
+  r = await call('/api/me', null, oldToken); assert.strictEqual(r.status, 401, 'other devices are signed out');
+  r = await call('/api/reset', { token: resetToken, password: 'nova12345' }); assert.strictEqual(r.body.code, 'reset_expired');
+  r = await call('/api/login', { login: 'Zaboravko', password: 'nova12345' }); assert.strictEqual(r.status, 200);
+  smtp.close();
+  ok('forgotten password: e-mail with a one-time link, new password, other sessions end');
+
   r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/stats', null, ana); assert.strictEqual(r.status, 401);
@@ -166,11 +203,11 @@ function solution(level) {
   const adm = r.body.token;
   r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 200);
   const st = r.body;
-  assert.strictEqual(st.totals.users, 5); assert.strictEqual(st.totals.converted, 1); assert.strictEqual(st.totals.guests, 0);
+  assert.strictEqual(st.totals.users, 6); assert.strictEqual(st.totals.converted, 1); assert.strictEqual(st.totals.guests, 0);
   assert.ok(st.online.users >= 1); assert.strictEqual(st.days.length, 14); assert.strictEqual(st.days[13].date, st.today);
-  assert.ok(st.days[13].players >= 2); assert.strictEqual(st.days[13].daily, 2); assert.strictEqual(st.days[13].newUsers, 5);
+  assert.ok(st.days[13].players >= 2); assert.strictEqual(st.days[13].daily, 2); assert.strictEqual(st.days[13].newUsers, 6);
   assert.strictEqual(st.levels.length, LEVELS.length); assert.strictEqual(st.levels[9].players, 1);
-  assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 5);
+  assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 6);
   assert.ok(!JSON.stringify(st).includes('password_hash') && !JSON.stringify(st).includes('@'), 'no secrets or e-mails in admin stats');
   r = await call('/api/admin/logout', {}, adm); r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 401);
   ok('admin: sign-in from the admins table, stats, logout');

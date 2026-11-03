@@ -263,7 +263,22 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
       <div class="err" id="loginErr" role="alert"></div>
       <button class="go" id="loginGo" type="submit">Prijavi se</button>
     </form>
+    <button class="link" id="forgot" type="button" data-i18n="login.forgot" hidden>Zaboravljena lozinka?</button>
     <button class="link" id="loginSkip" type="button" data-i18n="login.skip">Igraj bez prijave</button>
+  </div>
+</div>
+
+<div class="overlay" id="resetBox" hidden>
+  <div class="card">
+    <h2 id="rTitle">Zaboravljena lozinka</h2>
+    <p id="rText"></p>
+    <form id="resetForm" class="form">
+      <input class="nick" id="rLogin" autocomplete="username" placeholder="Korisničko ime ili e-mail" data-i18n-ph="ph.login" data-i18n-aria="ph.login">
+      <input class="nick" id="rPass" type="password" autocomplete="new-password" placeholder="Nova lozinka" data-i18n-ph="ph.passwordNew" data-i18n-aria="ph.passwordNew">
+      <div class="err" id="rErr" role="alert"></div>
+      <button class="go" id="rGo" type="submit"></button>
+    </form>
+    <button class="link" id="rBack" type="button" data-i18n="reset.back">Natrag na prijavu</button>
   </div>
 </div>
 
@@ -490,7 +505,7 @@ const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => ToppleI18n.plural.moves(n);
-const showOnly = id => ['menuBox', 'loginBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'achBox', 'hintBox', 'adBox'].forEach(b => { $(b).hidden = b !== id; });
+const showOnly = id => ['menuBox', 'loginBox', 'resetBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'achBox', 'hintBox', 'adBox'].forEach(b => { $(b).hidden = b !== id; });
 
 // --- layout & rendering ------------------------------------------------------
 function layout() {
@@ -886,7 +901,11 @@ $('who').addEventListener('click', e => {
 // --- sign-in: username or e-mail + password, or Google -------------------------------
 let loginTab = 'login', googleId = null, googleLoaded = null;
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u;
-async function loadConfig() { if (API) try { googleId = (await api('/api/config')).googleClientId; } catch (e) {} }
+let resetOn = false; // the server can send password reset e-mails
+async function loadConfig() {
+  if (API) try { const c = await api('/api/config'); googleId = c.googleClientId; resetOn = !!c.passwordReset; } catch (e) {}
+  $('forgot').hidden = !resetOn || loginTab !== 'login';
+}
 function setLoginTab(tab) {
   loginTab = tab;
   document.querySelectorAll('#loginTabs .tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.t === tab)));
@@ -895,6 +914,7 @@ function setLoginTab(tab) {
   $('lPass').autocomplete = reg ? 'new-password' : 'current-password';
   $('lPass').placeholder = reg ? t('ph.passwordNew') : t('ph.password');
   $('loginGo').textContent = reg ? t('login.create') : t('login.submit');
+  $('forgot').hidden = !resetOn || reg;
   $('loginErr').textContent = '';
 }
 document.querySelectorAll('#loginTabs .tab').forEach(b => b.onclick = () => setLoginTab(b.dataset.t));
@@ -924,6 +944,44 @@ function openLogin() {
   googleButton($('gBtn')); $('gOr').hidden = !googleId || !online;
   if (online) (loginTab === 'register' ? $('lName') : $('lLogin')).focus();
 }
+// --- forgotten password: ask for a link by e-mail, then set a new password from the link ---
+let resetToken = null;
+function readResetLink() {
+  if (!location.hash.startsWith('#reset=')) return false;
+  resetToken = location.hash.slice(7);
+  history.replaceState(null, '', location.pathname + location.search); // the link works once; keep it out of history
+  return true;
+}
+readResetLink();
+window.addEventListener('hashchange', () => { if (readResetLink() && API) openReset('new'); });
+function openReset(mode) {
+  const ask = mode === 'ask';
+  $('rTitle').textContent = ask ? t('reset.title') : t('reset.newTitle');
+  $('rText').textContent = ask ? t('reset.ask') : t('reset.newText');
+  $('rLogin').hidden = !ask; $('rPass').hidden = ask; $('resetForm').hidden = false;
+  $('rGo').textContent = ask ? t('reset.send') : t('reset.save');
+  $('rErr').textContent = '';
+  if (ask && $('lLogin').value) $('rLogin').value = $('lLogin').value;
+  showOnly('resetBox');
+  (ask ? $('rLogin') : $('rPass')).focus();
+}
+$('forgot').onclick = () => openReset('ask');
+$('rBack').onclick = () => { resetToken = null; openLogin(); };
+$('resetForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = $('rErr'); err.textContent = '';
+  try {
+    if (!resetToken) {
+      if (!$('rLogin').value.trim()) { err.textContent = t('reset.ask'); return; }
+      await api('/api/forgot', { method: 'POST', body: JSON.stringify({ login: $('rLogin').value.trim(), lang: ToppleI18n.lang }) });
+      $('resetForm').hidden = true; $('rText').textContent = t('reset.sent');
+    } else {
+      const r = await api('/api/reset', { method: 'POST', body: JSON.stringify({ token: resetToken, password: $('rPass').value }) });
+      resetToken = null; $('rPass').value = '';
+      signedIn(r);
+    }
+  } catch (x) { err.textContent = errText(x); }
+});
 function signedIn(r) {
   user = { name: r.name, token: r.token }; store.set('user', user); store.set('asked', true); store.set('importedName', '');
   $('lPass').value = '';
@@ -1346,7 +1404,8 @@ function start() {
   for (let k = 0; k < LEVELS.length; k++) if (unlocked(k)) i = k;
   if (last && last.mode === 'campaign' && LEVELS[last.key] && unlocked(last.key)) i = last.key;
   openCampaign(i);
-  if (!signedInNow() && !store.get('asked', false)) openLogin(); else openMenu();
+  if (resetToken && API) openReset('new');
+  else if (!signedInNow() && !store.get('asked', false)) openLogin(); else openMenu();
   started = true;
   reportGuest(); // count this visit if playing without an account
   sync();
