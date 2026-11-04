@@ -10,6 +10,7 @@ struct ToppleApp: App {
         // Game sounds mix with the player's own music and follow the silent switch.
         try? AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
         GameCenter.shared.authenticate()
+        Task { @MainActor in Store.shared.start() }
     }
 
     var body: some Scene {

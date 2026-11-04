@@ -1,0 +1,21 @@
+{
+  "identifier" : "6A1F0C3E",
+  "nonRenewingSubscriptions" : [ ],
+  "products" : [
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : true,
+      "internalID" : "6739000001",
+      "localizations" : [
+        { "description" : "Neograničeni savjeti, jednokratna kupnja", "displayName" : "Topple Plus", "locale" : "hr" },
+        { "description" : "Unlimited hints, one-time purchase", "displayName" : "Topple Plus", "locale" : "en_US" }
+      ],
+      "productID" : "software.rdd.topple.plus",
+      "referenceName" : "Topple Plus",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : { },
+  "subscriptionGroups" : [ ],
+  "version" : { "major" : 2, "minor" : 0 }
+}

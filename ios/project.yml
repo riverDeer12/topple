@@ -44,6 +44,8 @@ targets:
       properties:
         com.apple.developer.game-center: true
         com.apple.developer.applesignin: [Default]
+    scheme:
+      storeKitConfiguration: Topple.storekit   # local test purchases in Xcode (not used by TestFlight or the App Store)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: software.rdd.topple
