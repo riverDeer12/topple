@@ -1,5 +1,14 @@
 # Game Center: postignuća
 
+**Brže: skriptom.** `ios/tools/gamecenter-upload.js` unese sva postignuća iz ove datoteke, s tekstovima na 4 jezika i slikama, preko App Store Connect API-ja. Postignuća koja već postoje preskoči, a dopuni im jezike i slike koji nedostaju. Treba Node 18+ (`brew install node`) i API ključ: *App Store Connect → Users and Access → Integrations → App Store Connect API → Team Keys → +*, Access **App Manager**. Preuzmi `.p8` i zapiši **Key ID** i **Issuer ID** (piše iznad popisa ključeva).
+
+```bash
+node ios/tools/gamecenter-upload.js --dry-run
+node ios/tools/gamecenter-upload.js --key ~/Downloads/AuthKey_XXXXXXXXXX.p8 --key-id XXXXXXXXXX --issuer xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+**Ručno:**
+
 App Store Connect → aplikacija → **Services → Game Center → Achievements → +**. Za svako postignuće:
 - **Reference Name**: naslov na hrvatskom (vidi ga samo ti);
 - **Achievement ID**: točno kao ispod (mora odgovarati kodu u `ios/Topple/Native.swift`);
