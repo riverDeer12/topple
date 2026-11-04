@@ -190,6 +190,8 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
 .adsim { font: 600 2.4rem var(--mono); color: var(--hero); }
 .help:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .exit svg, .stars svg.on { animation: none; } .blk.land .face { animation: none; } .blk.breaking .face { animation-duration: .05s; } }
+/* Tablets (iPad): the whole game larger, so it fills the screen like on a phone. */
+@media (min-width: 820px) and (min-height: 1000px) and (pointer: coarse) { html { zoom: 1.6; } }
 </style>
 </head>
 <body>
