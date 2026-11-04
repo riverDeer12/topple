@@ -52,6 +52,10 @@ struct WebGameView: UIViewRepresentable {
             case "share": Share.present(text: msg["text"] as? String ?? "")
             case "remind": Reminder.update(msg)
             case "gc": GameCenter.shared.report(msg)
+            case "plus":
+                let action = msg["action"] as? String ?? "status"
+                let web = webView
+                Task { @MainActor in Store.shared.webView = web; Store.shared.handle(action) }
             case "signin": SignIn.shared.webView = webView; SignIn.shared.start(msg["provider"] as? String ?? "apple")
             default: break
             }

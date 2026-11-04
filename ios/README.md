@@ -125,6 +125,24 @@ Svako postignuće treba sliku 512 × 512 ili 1024 × 1024. Može ista za sve: `T
 - **Brisanje računa:** postoji u aplikaciji (*Profil → Izbriši račun*), kako Apple traži.
 - **Snimke zaslona:** u simulatoru iPhone 16 Pro Max (6,9″) i, ako je aplikacija i za iPad, iPad Pro 13″ napravi ⌘S. Spremi ih u `ios/screenshots/` i uploadaj skriptom `ios/tools/screenshots-upload.js` (vidi `ios/screenshots/README.md`).
 
+## Topple Plus (kupnja u aplikaciji)
+
+Jednokratna kupnja (non-consumable) `software.rdd.topple.plus` daje neograničene savjete. Kod je u `Topple/Store.swift` (StoreKit 2), a ponuda se u igri pojavi u izborniku i kad ponestane savjeta.
+
+**Jednom u App Store Connectu:**
+1. **Business** (gore) → **Agreements**: potpiši **Paid Apps Agreement** i ispuni bankovni račun i porezni obrazac (za fizičku osobu W-8BEN). Bez toga kupnje ne rade, ni u TestFlightu.
+2. Aplikacija → **Monetization → In-App Purchases → +** → **Non-Consumable**:
+   - Reference Name `Topple Plus`, Product ID `software.rdd.topple.plus` (točno ovako)
+   - **Price**: npr. 2,99 €. **Family Sharing**: uključeno.
+   - **Localization** za hr, en-US, it, de-DE: Display Name `Topple Plus`; Description npr. „Neograničeni savjeti, jednokratna kupnja” / „Unlimited hints, one-time purchase” / „Suggerimenti illimitati, acquisto unico” / „Unbegrenzte Tipps, einmaliger Kauf”.
+   - **Review Information**: snimka `ios/review/topple-plus.png`. Napomena: „Opens from the menu (Topple Plus) or when hints run out. Unlimited hints; restore with Restore purchase.”
+3. Prvu kupnju Apple pregledava zajedno s verzijom aplikacije: na stranici verzije, u odjeljku **In-App Purchases and Subscriptions**, dodaj Topple Plus. Ako je verzija 1.0 već poslana, ide uz 1.1.
+4. **Small Business Program** (Apple uzima 15 % umjesto 30 %): prijava na https://developer.apple.com/app-store/small-business-program/
+
+**Isprobavanje:**
+- **U Xcodeu (bez App Store Connecta):** projekt koristi `Topple.storekit`, pa kupnja u simulatoru ili na spojenom iPhoneu radi odmah, bez naplate. Ako se ne pojavi, provjeri *Product → Scheme → Edit Scheme → Run → Options → StoreKit Configuration: Topple.storekit*.
+- **U TestFlightu:** kupnje su besplatne (sandbox), a proizvod mora postojati u App Store Connectu.
+
 ## 3. Objava (TestFlight, pa App Store)
 
 1. U Xcodeu gore odaberi **Any iOS Device (arm64)**, pa **Product → Archive**.
@@ -139,5 +157,6 @@ Za svaku novu verziju povećaj `CURRENT_PROJECT_VERSION` (broj builda) u `projec
 - `Topple/ToppleApp.swift`: ulaz u aplikaciju, zvuk (ambient), prijava u Game Center.
 - `Topple/WebGameView.swift`: WKWebView poslužuje `web/` iz aplikacije na adresi `topple://app/` (`BundleSchemeHandler`). Taj origin server uvijek dopušta (`APP_ORIGIN` u `server/server.js`). Vanjske poveznice otvara u Safariju. Ovdje su i nativni prozori za `alert`/`confirm`/`prompt`.
 - `Topple/Native.swift`: haptika, dijeljenje, podsjetnik (`UNUserNotificationCenter`), Game Center.
+- `Topple/Store.swift`: Topple Plus (StoreKit 2): stanje, kupnja, vraćanje kupnje; igri javlja `window.topplePlus({owned, price})`.
 - `Topple/SignIn.swift`: Sign in with Apple i Google (OAuth s PKCE u `ASWebAuthenticationSession`). ID token vraća igri preko `window.toppleSignedIn`, a igra ga šalje na `/api/apple` ili `/api/google`.
 - Web igra prepozna aplikaciju po `location.protocol === 'topple:'` (`APP` u `web/igra.html`, `TOPPLE_IN_APP` u `web/config.js`). Poruke šalje sa `native({ type: ... })`, a vrste su `haptic`, `share`, `remind` i `gc`.

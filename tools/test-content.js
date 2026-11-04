@@ -42,3 +42,12 @@ for (const page of ['index.html', 'igra.html']) {
   for (const m of html.matchAll(/\bt\('([a-zA-Z0-9.]+)'/g)) if (!m[1].endsWith('.')) assert.ok(I.S.hr[m[1]], `${page}: ključ '${m[1]}' ne postoji u i18n.js`);
 }
 console.log(`Sadržaj je potpun na ${langs.length} jezika: ${used.size} vrsta blokova, sve opisane; ${K.stats.levels} razina.`);
+
+// Inline scripts of the pages must at least parse (a syntax error stops the whole page).
+for (const page of ['index.html', 'igra.html', 'admin/index.html']) {
+  const html = fs.readFileSync(path.join(__dirname, '../web', page), 'utf8');
+  for (const m of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
+    try { new Function(m[1]); } catch (e) { assert.fail(`${page}: greška u skripti: ${e.message}`); }
+  }
+}
+

@@ -152,6 +152,9 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 .skin.locked .blk { filter: grayscale(1) opacity(.45); }
 .skin:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .unlock { color: var(--hero); font-weight: 600; }
+ul.plus { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; text-align: left; width: 100%; }
+ul.plus li { padding-left: 28px; position: relative; font-size: .95rem; }
+ul.plus li::before { content: "✓"; position: absolute; left: 4px; color: var(--hero); font-weight: 700; }
 button.share { font: 600 1rem var(--display); background: var(--page); color: var(--ink); border: 1px solid var(--panel-line); border-radius: 999px; padding: 9px 20px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .achs { display: grid; gap: 8px; width: 100%; }
@@ -248,6 +251,10 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
       <button class="mbtn" id="mAch" type="button">
         <span class="ico" style="background:var(--gold)"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14l-1.5 7 5-3 5 3-1.5-7"/></svg></span>
         <span><b data-i18n="menu.ach">Postignuća</b><span id="mAchSub"></span></span>
+      </button>
+      <button class="mbtn" id="mPlus" type="button" hidden>
+        <span class="ico" style="background:var(--hero)"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg></span>
+        <span><b data-i18n="menu.plus">Topple Plus</b><span id="mPlusSub"></span></span>
       </button>
     </div>
     <div class="row">
@@ -403,11 +410,26 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
     <button class="link" id="achClose" type="button" data-i18n="lv.close">Zatvori</button>
   </div>
 </div>
+<div class="overlay" id="plusBox" hidden>
+  <div class="card">
+    <h2>Topple <span style="color:var(--hero)">Plus</span></h2>
+    <ul class="plus">
+      <li data-i18n="plus.b1">Neograničeni savjeti</li>
+      <li data-i18n="plus.b2">Jednokratna kupnja</li>
+      <li data-i18n="plus.b3">Podržavaš nove razine</li>
+    </ul>
+    <button class="go" id="plusBuy" type="button"></button>
+    <p class="small" id="plusStatus" role="status" style="text-align:center"></p>
+    <button class="link" id="plusRestore" type="button" data-i18n="plus.restore">Vrati prijašnju kupnju</button>
+    <button class="link" id="plusClose" type="button" data-i18n="shop.close">Zatvori</button>
+  </div>
+</div>
 <div class="overlay" id="hintBox" hidden>
   <div class="card">
     <h2 data-i18n="shop.title">Nema više savjeta</h2>
     <p id="shopText"></p>
     <button class="go" id="adBtn" type="button" data-i18n="shop.watch">Pogledaj reklamu za savjet</button>
+    <button class="go" id="shopPlus" type="button" hidden data-i18n="shop.plus">Neograničeni savjeti uz Topple Plus</button>
     <p class="small" id="adStatus" role="status"></p>
     <button class="link" id="shopClose" type="button" data-i18n="shop.close">Zatvori</button>
   </div>
@@ -567,7 +589,7 @@ const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => ToppleI18n.plural.moves(n);
-const showOnly = id => ['menuBox', 'loginBox', 'resetBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'achBox', 'hintBox', 'adBox'].forEach(b => { $(b).hidden = b !== id; });
+const showOnly = id => ['menuBox', 'loginBox', 'resetBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'achBox', 'plusBox', 'hintBox', 'adBox'].forEach(b => { $(b).hidden = b !== id; });
 
 // --- layout & rendering ------------------------------------------------------
 function layout() {
@@ -953,6 +975,7 @@ function openMenu() {
   const str = streaks().current;
   if (str) $('mDailySub').textContent += ToppleI18n.t('streak.sub', { n: str });
   $('mAchSub').textContent = ToppleI18n.t('menu.achSub', { n: earned().length, total: ACHIEVEMENTS.length });
+  plusMenuSub();
   $('mLevelsSub').textContent = ToppleI18n.t('sub.levels', { done: Object.keys(best).length, total: LEVELS.length, s: stars, max: LEVELS.length * 3 });
   $('who').innerHTML = signedInNow() ? `${ToppleI18n.t('who.signed')} <b></b> · <button class="link" id="account" type="button">${ToppleI18n.t('who.account')}</button>`
     : `${ToppleI18n.t('who.guest')} <b></b> · <button class="link" id="login" type="button">${ToppleI18n.t('who.login')}</button>`;
@@ -1234,6 +1257,9 @@ $('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
 // --- hints: the next move of a shortest solution from the current position ------------------
 // Players get 3 hints to start and one more each day (up to HINT_MAX). More come from rewarded ads.
 const HINT_START = 3, HINT_DAILY = 1, HINT_MAX = 10;
+// Topple Plus (iOS app, one-time purchase through the App Store): unlimited hints.
+// The app tells the game whether it is owned (window.topplePlus); kept locally between launches.
+let plus = store.get('plus', false), plusPrice = '';
 let hints = null, plan = null, hintWorker = null, hintReq = 0;
 const canPrefetch = typeof Worker !== 'undefined' && location.protocol !== 'file:';
 function refreshHints() {
@@ -1241,7 +1267,7 @@ function refreshHints() {
   hints = store.get('hints', null) || { count: HINT_START, day: d };
   if (hints.day !== d) { hints.count = Math.max(hints.count, Math.min(HINT_MAX, hints.count + HINT_DAILY)); hints.day = d; }
   store.set('hints', hints);
-  $('hintCount').textContent = hints.count;
+  $('hintCount').textContent = plus ? '∞' : hints.count;
   $('hintBtn').setAttribute('aria-label', t('hint.btn') + ', ' + hints.count);
 }
 function solveAsync(bs, exit) {
@@ -1279,7 +1305,7 @@ async function useHint() {
   if (!ctx || busy || won_) return;
   if (ctx.mode === 'daily') { $('hint').textContent = t('hint.dailyOff'); return; }
   refreshHints();
-  if (hints.count <= 0) return openHintShop();
+  if (!plus && hints.count <= 0) return openHintShop();
   const c = ctx, cur = key(blocks);
   if (!plan || plan.exit !== c.level.exit || (plan.startKey !== cur && !(plan.keys && plan.keys.includes(cur)))) plan = makePlan(blocks);
   $('hint').textContent = t('hint.thinking');
@@ -1289,7 +1315,7 @@ async function useHint() {
   const i = p.keys.indexOf(key(blocks));
   if (i < 0 || i >= p.moves.length) { plan = null; return useHint(); } // the board changed meanwhile
   const [b, d] = p.moves[i];
-  hints.count--; store.set('hints', hints); refreshHints();
+  if (!plus) { hints.count--; store.set('hints', hints); } refreshHints();
   c.hinted = true; // this solve gets no credit for solving without hints
   if (c.mode === 'campaign') playSession(c.key).hints++;
   clearHint();
@@ -1355,6 +1381,32 @@ function reportAd(kind) {
   if (signedInNow()) headers.Authorization = 'Bearer ' + user.token;
   fetch(API + '/api/ad', { method: 'POST', headers, body: JSON.stringify({ kind, guest: signedInNow() ? undefined : guestId() }), keepalive: true }).catch(() => {});
 }
+function plusMenuSub() { $('mPlus').hidden = !APP; $('mPlusSub').textContent = plus ? t('plus.ownedShort') : t('plus.sub'); }
+function openPlus() {
+  $('plusStatus').textContent = plus ? t('plus.owned') : '';
+  $('plusBuy').hidden = plus;
+  $('plusBuy').textContent = plusPrice ? t('plus.buy', { price: plusPrice }) : t('plus.buyNoPrice');
+  $('plusBuy').disabled = false;
+  showOnly('plusBox');
+  native({ type: 'plus', action: 'status' });
+}
+$('mPlus').onclick = openPlus;
+$('shopPlus').onclick = openPlus;
+$('plusClose').onclick = () => (ctx ? showOnly(null) : openMenu());
+$('plusBuy').onclick = () => { $('plusBuy').disabled = true; $('plusStatus').textContent = t('plus.loading'); native({ type: 'plus', action: 'buy' }); };
+$('plusRestore').onclick = () => { $('plusStatus').textContent = t('plus.loading'); native({ type: 'plus', action: 'restore' }); };
+window.topplePlus = d => {
+  const was = plus;
+  plus = !!d.owned; plusPrice = d.price || plusPrice;
+  store.set('plus', plus); refreshHints(); plusMenuSub();
+  if (!$('plusBox').hidden) {
+    $('plusBuy').hidden = plus; $('plusBuy').disabled = false;
+    if (plusPrice) $('plusBuy').textContent = t('plus.buy', { price: plusPrice });
+    $('plusStatus').textContent = plus ? t('plus.owned') : d.error === 'failed' || d.error === 'unavailable' ? t('plus.failed')
+      : d.error === 'pending' ? t('plus.pending') : d.restore ? t('plus.noneRestored') : '';
+  }
+  if (plus && !was) { fx.win(); buzz([10, 40, 10]); }
+};
 function grantHint() {
   refreshHints();
   hints.count++; store.set('hints', hints); refreshHints();
@@ -1366,6 +1418,7 @@ function openHintShop() {
   $('adStatus').textContent = '';
   const btn = $('adBtn');
   btn.hidden = !ADS.client && ADS.simulate === false;
+  $('shopPlus').hidden = !APP;
   btn.disabled = true; btn.onclick = null;
   showOnly('hintBox');
   reportAd('shop');
@@ -1638,6 +1691,7 @@ function start() {
   if (last && last.mode === 'campaign' && LEVELS[last.key] && unlocked(last.key)) i = last.key;
   openCampaign(i);
   setTimeout(gameCenter, 3000); // after the first sync
+  native({ type: 'plus', action: 'status' }); // Topple Plus owned? (app only)
   if (resetToken && API) openReset('new');
   else if (!signedInNow() && !store.get('asked', false)) openLogin(); else openMenu();
   started = true;
