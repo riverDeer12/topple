@@ -160,6 +160,15 @@ if (db.prepare('PRAGMA user_version').get().user_version < 10) {
   if (!db.prepare('PRAGMA table_info(users)').all().some(c => c.name === 'apple_refresh')) db.exec('ALTER TABLE users ADD COLUMN apple_refresh TEXT');
   db.exec('PRAGMA user_version = 10');
 }
+// Schema v11: ad events for hints (counted in /admin).
+if (db.prepare('PRAGMA user_version').get().user_version < 11) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ad_events (t INTEGER NOT NULL, kind TEXT NOT NULL, pid TEXT);
+    CREATE INDEX IF NOT EXISTS ad_events_t ON ad_events (t);
+    PRAGMA user_version = 11;
+  `);
+}
+const AD_KINDS = ['shop', 'viewed', 'dismissed', 'none', 'sim'];
 const appleAuth = require('./apple.js');
 const push = require('./push.js');
 const REMIND_HOUR = Number(process.env.REMIND_HOUR || 17); // local time (TZ_GAME) of the daily reminder
@@ -432,6 +441,7 @@ function deleteUser(id) {
     for (const t of ['campaign', 'daily', 'endless', 'sessions', 'password_resets', 'push_subs']) db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(id);
     db.prepare('DELETE FROM friends WHERE user_id = ? OR friend_id = ?').run(id, id);
     db.prepare('DELETE FROM plays WHERE pid = ?').run('u' + id);
+    db.prepare('UPDATE ad_events SET pid = NULL WHERE pid = ?').run('u' + id);
     db.prepare('UPDATE guests SET user_id = NULL WHERE user_id = ?').run(id);
     db.prepare('DELETE FROM users WHERE id = ?').run(id);
     db.exec('COMMIT');
@@ -489,7 +499,11 @@ function adminStats() {
       UNION ALL SELECT user_id, updated_at FROM daily WHERE updated_at > ?1 UNION ALL SELECT user_id, updated_at FROM endless WHERE updated_at > ?1`).all(from)) {
     const d = dayOf(r.t); if (d) (active[d.date] = active[d.date] || new Set()).add(r.u);
   }
-  for (const d of days) { d.players = active[d.date] ? active[d.date].size : 0; d.daily = n('SELECT COUNT(*) AS n FROM daily WHERE date = ?', d.date); }
+  for (const d of days) { d.players = active[d.date] ? active[d.date].size : 0; d.daily = n('SELECT COUNT(*) AS n FROM daily WHERE date = ?', d.date); d.ads = 0; d.adsSim = 0; }
+  for (const r of db.prepare("SELECT t, kind FROM ad_events WHERE t > ? AND kind IN ('viewed', 'sim')").all(from)) { const d = dayOf(r.t); if (d) d[r.kind === 'viewed' ? 'ads' : 'adsSim']++; }
+  // Ads for hints: per kind for 24 h / 7 / 30 days / all time.
+  const ads = Object.fromEntries(AD_KINDS.map(k => [k, [1, 7, 30, 36500].map(dd => n('SELECT COUNT(*) AS n FROM ad_events WHERE kind = ? AND t > ?', k, since(dd)))]));
+  ads.players = [1, 7, 30, 36500].map(dd => n("SELECT COUNT(DISTINCT pid) AS n FROM ad_events WHERE kind IN ('viewed', 'sim') AND t > ?", since(dd)));
 
   // How many signed-in players solved each level, and how far guests got.
   const solvedBy = Object.fromEntries(db.prepare('SELECT level, COUNT(*) AS c FROM campaign GROUP BY level').all().map(r => [r.level, r.c]));
@@ -530,7 +544,7 @@ function adminStats() {
       activeGuests: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND last_seen > ?', since(d)),
       newGuests: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND first_seen > ?', since(d)),
     })),
-    days, levels, guestLevels, difficulty,
+    days, levels, guestLevels, difficulty, ads,
     top: users.filter(u => u.levels || u.endless || u.daily)
       .sort((a, b) => b.top - a.top || b.stars - a.stars || b.endless - a.endless || b.daily - a.daily).slice(0, 20).map(player),
     methods: count(users, method), skins: count(users, u => u.skin || 'classic'), langs: count(guestRows, r => r.lang),
@@ -579,6 +593,16 @@ async function route(req, res) {
     if (b.kind === 'start') db.prepare('UPDATE plays SET attempts = attempts + 1 WHERE pid = ? AND level = ? AND solved_at IS NULL').run(pid, level); // attempts until the first solve
     else db.prepare('UPDATE plays SET solved_at = ?, time_ms = ?, moves = ?, hints = ? WHERE pid = ? AND level = ? AND solved_at IS NULL')
       .run(Date.now(), num(b.timeMs, 6 * 3600e3), num(b.moves, 1000), num(b.hints, 100), pid, level);
+    return send(res, 200, { ok: true });
+  }
+
+  // An ad event from the hint shop (fire-and-forget).
+  if (req.method === 'POST' && p === '/api/ad') {
+    if (limited(req, 'ad', 60, 60e3)) return send(res, 429, { error: 'Previše zahtjeva.', code: 'too_many' });
+    const b = await readJson(req), u = userFrom(req);
+    if (!AD_KINDS.includes(b.kind)) return send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' });
+    const pid = u ? 'u' + u.id : typeof b.guest === 'string' && GUEST_ID.test(b.guest) ? 'g' + b.guest : null;
+    db.prepare('INSERT INTO ad_events (t, kind, pid) VALUES (?, ?, ?)').run(Date.now(), b.kind, pid);
     return send(res, 200, { ok: true });
   }
 

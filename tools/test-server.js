@@ -315,6 +315,10 @@ function solution(level) {
   appleSrv.close();
   ok('Apple: code exchanged at sign-in, sign-in revoked when the account is deleted');
 
+  for (const kind of ['shop', 'viewed', 'shop', 'sim']) { r = await call('/api/ad', { kind, guest: pg }); assert.strictEqual(r.status, 200); }
+  r = await call('/api/ad', { kind: 'bogus' }); assert.strictEqual(r.status, 400);
+  ok('ad events recorded');
+
   r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/stats', null, ana); assert.strictEqual(r.status, 401);
@@ -331,6 +335,8 @@ function solution(level) {
   const d3 = st.difficulty[2];
   assert.deepStrictEqual([d3.started, d3.solved, d3.attempts, d3.hints, d3.extraMoves, d3.medianTimeS, d3.perfect], [2, 1, 2, 1, 2, 61, 0]);
   assert.strictEqual(st.difficulty.length, LEVELS.length);
+  assert.deepStrictEqual([st.ads.shop[3], st.ads.viewed[0], st.ads.sim[1], st.ads.players[2]], [2, 1, 1, 1]);
+  assert.strictEqual(st.days[13].ads, 1); assert.strictEqual(st.days[13].adsSim, 1);
   assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 7);
   assert.ok(!JSON.stringify(st).includes('password_hash') && !JSON.stringify(st).includes('@'), 'no secrets or e-mails in admin stats');
   r = await call('/api/admin/logout', {}, adm); r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 401);
