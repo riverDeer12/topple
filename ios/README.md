@@ -145,6 +145,15 @@ Jednokratna kupnja (non-consumable) `software.rdd.topple.plus` daje neograničen
 
 ## 3. Objava (TestFlight, pa App Store)
 
+**Iz terminala:** `ios/tools/release.sh` poveća broj builda u `project.yml`, pokrene `xcodegen`, napravi Archive i pošalje ga u App Store Connect, s istim API ključem kao ostale skripte:
+
+```bash
+ios/tools/release.sh --team TEAMID --key ~/Downloads/AuthKey_XXXXXXXXXX.p8 --key-id XXXXXXXXXX --issuer xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+Dodaj `--version 1.1` za novu javnu verziju. Odabir builda u verziji i slanje na pregled ostaju u App Store Connectu.
+
+
 1. U Xcodeu gore odaberi **Any iOS Device (arm64)**, pa **Product → Archive**.
 2. U Organizeru: **Distribute App → App Store Connect → Upload**.
 3. Za desetak minuta build je u App Store Connectu pod **TestFlight**. Tamo dodaj sebe ili testere i instaliraj aplikaciju preko TestFlighta.
