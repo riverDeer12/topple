@@ -123,7 +123,7 @@ Svako postignuće treba sliku 512 × 512 ili 1024 × 1024. Može ista za sve: `T
   - *Usage Data → Product Interaction* (statistika igranja razina): Linked to user, Analytics.
   - Tracking: **No**.
 - **Brisanje računa:** postoji u aplikaciji (*Profil → Izbriši račun*), kako Apple traži.
-- **Snimke zaslona:** u simulatoru (iPhone 6,7″ i 6,5″, npr. iPhone 15 Pro Max i 11 Pro Max) napravi ⌘S.
+- **Snimke zaslona:** u simulatoru iPhone 16 Pro Max (6,9″) i, ako je aplikacija i za iPad, iPad Pro 13″ napravi ⌘S. Spremi ih u `ios/screenshots/` i uploadaj skriptom `ios/tools/screenshots-upload.js` (vidi `ios/screenshots/README.md`).
 
 ## 3. Objava (TestFlight, pa App Store)
 
