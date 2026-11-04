@@ -41,7 +41,7 @@ Izvedi crveni blok do izlaza u što manje poteza i osvoji tri zvjezdice.
 
 NATJECANJE I NAPREDAK
 • Ljestvice za dnevnu zagonetku, beskonačni niz i zvjezdice, i samo s prijateljima
-• Niz dana 🔥 za dnevnu zagonetku i 15 postignuća
+• Niz dana zaredom za dnevnu zagonetku i 15 postignuća
 • Game Center ljestvice i postignuća
 • 13 likova crvenog bloka za otključati, od mačka i robota do zmaja i dijamanta
 • Podijeli rezultat s prijateljima jednim dodirom
@@ -92,7 +92,7 @@ WHAT'S INSIDE
 
 COMPETE AND PROGRESS
 • Leaderboards for the daily puzzle, the endless run and level stars, also with just your friends
-• A 🔥 daily streak and 15 achievements
+• A daily streak and 15 achievements
 • Game Center leaderboards and achievements
 • 13 looks for the red block to unlock, from a cat and a robot to a dragon and a diamond
 • Share your result with friends in one tap
@@ -143,7 +143,7 @@ COSA TROVI
 
 SFIDE E PROGRESSI
 • Classifiche per il rompicapo del giorno, la serie infinita e le stelle, anche solo con gli amici
-• Una serie di giorni 🔥 e 15 traguardi
+• Una serie di giorni di fila e 15 traguardi
 • Classifiche e obiettivi di Game Center
 • 13 aspetti del blocco rosso da sbloccare, dal gatto e dal robot fino al drago e al diamante
 • Condividi il risultato con gli amici con un tocco
@@ -194,7 +194,7 @@ DAS ERWARTET DICH
 
 WETTBEWERB UND FORTSCHRITT
 • Ranglisten für das Tagesrätsel, die endlose Reihe und die Sterne, auch nur mit Freunden
-• Eine 🔥-Serie für das Tagesrätsel und 15 Erfolge
+• Eine Tage-Serie für das Tagesrätsel und 15 Erfolge
 • Game-Center-Ranglisten und -Erfolge
 • 13 Looks für den roten Block zum Freischalten, von Katze und Roboter bis Drache und Diamant
 • Teile dein Ergebnis mit einem Tipp
