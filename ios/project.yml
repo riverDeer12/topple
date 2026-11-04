@@ -11,7 +11,7 @@ options:
 settings:
   base:
     MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    CURRENT_PROJECT_VERSION: "2"
     SWIFT_VERSION: "5.0"
     DEVELOPMENT_TEAM: ""        # your Apple team ID (Xcode → Signing & Capabilities), or set it there
     GOOGLE_IOS_CLIENT_ID: "224195062999-lqe0avqbcb952jbus9tu23nsfu05jv3l.apps.googleusercontent.com"
