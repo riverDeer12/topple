@@ -117,6 +117,19 @@
       <div class="axis ticks" id="levelsAxis"></div>
     </section>
 
+    <div class="grid two">
+      <section class="card">
+        <h2>Reklame za savjete</h2>
+        <div class="scroll"><table id="adsTable"></table></div>
+        <p class="muted small" style="margin:10px 0 0">„Probne” su zamjenske reklame dok AdSense ne odobri stranicu i ne donose zaradu. Zarada se vidi u AdSenseu (Reports).</p>
+      </section>
+      <section class="card">
+        <div class="chart-head"><h2>Pogledane reklame po danu</h2><span class="max" id="adsMax"></span></div>
+        <div class="chart" id="adsChart" role="img"></div>
+        <div class="axis" id="adsAxis"></div>
+      </section>
+    </div>
+
     <section class="card grid" style="margin-bottom:14px">
       <div class="chart-head"><h2>Težina razina: koliko igrača koji su započeli razinu ju je i riješilo</h2>
         <button id="copyDiff" type="button" title="Za analizu i ugađanje razina">Kopiraj podatke</button></div>
@@ -295,6 +308,7 @@ function render(s) {
   $('guestAxis').innerHTML = `<span>0 razina</span><span>${gl.length - 1} razina</span>`;
 
   renderDifficulty(s);
+  renderAds(s);
   hbars($('methods'), s.methods, k => METHOD[k] || k);
   hbars($('langs'), s.langs, k => LANG[k] || k);
   hbars($('skins'), s.skins, skinName);
@@ -305,6 +319,16 @@ function render(s) {
     s.recentUsers.map(u => [esc(u.name), date(u.createdAt), `<span class="badge">${METHOD[u.method]}</span>`, num(u.levels), seen(u.lastSeen)]), 'Još nema igrača.');
   table($('recentGuests'), [['Gost'], ['Jezik'], ['Prvi put'], ['Posjeta', 'n'], ['Razina', 'n'], ['Beskonačne', 'n'], ['Zadnji put']],
     s.recentGuests.map(g => [esc(g.name || '–'), esc(g.lang || '?'), date(g.firstSeen), num(g.visits), num(g.levels), num(g.endless), seen(g.lastSeen)]), 'Još nema gostiju.');
+}
+function renderAds(s) {
+  const A = s.ads; if (!A) return;
+  const rows = [['Otvoren izbornik savjeta', 'shop'], ['Pogledano do kraja (prave)', 'viewed'], ['Prekinuto prije kraja', 'dismissed'], ['Reklama nije bila dostupna', 'none'], ['Probne reklame', 'sim']];
+  table($('adsTable'), [['Događaj'], ['24 h', 'n'], ['7 dana', 'n'], ['30 dana', 'n'], ['Ukupno', 'n']],
+    [...rows.map(([label, k]) => [label, ...A[k].map(num)]), ['<b>Igrači koji su gledali</b>', ...A.players.map(v => `<b>${num(v)}</b>`)]], '');
+  const d = s.days;
+  const max = bars($('adsChart'), d.map(x => ({ value: x.ads + x.adsSim, tip: `${shortDay(x.date)}: ${num(x.ads)} pravih, ${num(x.adsSim)} probnih` })));
+  $('adsMax').textContent = `vrh ljestvice: ${num(max)}`;
+  $('adsAxis').innerHTML = `<span>${shortDay(d[0].date)}</span><span>danas</span>`;
 }
 let lastDiff = [];
 $('copyDiff').onclick = async () => {

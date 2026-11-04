@@ -1348,6 +1348,13 @@ if (ADS.client) {
   window.adBreak = window.adConfig = o => window.adsbygoogle.push(o);
   window.adConfig({ preloadAdBreaks: 'on', sound: 'on' });
 }
+// Counts ads for /admin: shop opened, ad watched to the end, closed early, no ad, placeholder.
+function reportAd(kind) {
+  if (!API) return;
+  const headers = { 'Content-Type': 'application/json' };
+  if (signedInNow()) headers.Authorization = 'Bearer ' + user.token;
+  fetch(API + '/api/ad', { method: 'POST', headers, body: JSON.stringify({ kind, guest: signedInNow() ? undefined : guestId() }), keepalive: true }).catch(() => {});
+}
 function grantHint() {
   refreshHints();
   hints.count++; store.set('hints', hints); refreshHints();
@@ -1361,6 +1368,7 @@ function openHintShop() {
   btn.hidden = !ADS.client && ADS.simulate === false;
   btn.disabled = true; btn.onclick = null;
   showOnly('hintBox');
+  reportAd('shop');
   if (ADS.client) {
     $('adStatus').textContent = t('shop.loading');
     let musicWas = false, offered = false;
@@ -1369,15 +1377,15 @@ function openHintShop() {
     setTimeout(() => {
       if (offered || $('hintBox').hidden) return;
       if (ADS.simulate !== false) { btn.disabled = false; btn.onclick = simulateAd; $('adStatus').textContent = ''; }
-      else $('adStatus').textContent = t('shop.unavailable');
+      else { $('adStatus').textContent = t('shop.unavailable'); reportAd('none'); }
     }, 8000);
     window.adBreak({
       type: 'reward', name: 'hint',
       beforeAd: () => { musicWas = ToppleAudio.music; ToppleAudio.setMusic(false); },
       afterAd: () => { if (musicWas) ToppleAudio.setMusic(true); },
       beforeReward: showAdFn => { offered = true; btn.disabled = false; $('adStatus').textContent = ''; btn.onclick = () => showAdFn(); },
-      adDismissed: () => { $('adStatus').textContent = t('shop.dismissed'); },
-      adViewed: grantHint,
+      adDismissed: () => { $('adStatus').textContent = t('shop.dismissed'); reportAd('dismissed'); },
+      adViewed: () => { reportAd('viewed'); grantHint(); },
       adBreakDone: info => { if (info && !['viewed', 'dismissed'].includes(info.breakStatus)) { btn.disabled = true; $('adStatus').textContent = t('shop.unavailable'); } },
     });
   } else if (ADS.simulate !== false) {
@@ -1391,7 +1399,7 @@ function simulateAd() {
   const tick = () => {
     $('adCount').textContent = n;
     $('adText').textContent = t('adsim.text', { n });
-    if (n-- <= 0) return grantHint();
+    if (n-- <= 0) { reportAd('sim'); return grantHint(); }
     setTimeout(tick, 1000);
   };
   showOnly('adBox');
