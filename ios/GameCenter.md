@@ -6,7 +6,7 @@ App Store Connect → aplikacija → **Services → Game Center → Achievements
 - **Points**: kao ispod (ukupno 900 od najviše 1000);
 - **Hidden**: No; **Achievable More Than Once**: No.
 
-Zatim **Localization → Add Language** za svaki jezik: **Title**, **Pre-earned Description**, **Earned Description** i **Image** (512 × 512 ili 1024 × 1024; može `ios/Topple/Assets.xcassets/AppIcon.appiconset/icon-1024.png` za sva). Naslovi i opisi „prije” isti su kao u igri (`ach.*` u `web/i18n.js`).
+Zatim **Localization → Add Language** za svaki jezik: **Title**, **Pre-earned Description**, **Earned Description** i **Image**: `ios/achievements/<id>.png` (1024 × 1024, npr. `first.png` za `topple.ach.first`; ista slika za sve jezike). Naslovi i opisi „prije” isti su kao u igri (`ach.*` u `web/i18n.js`).
 
 | Achievement ID | Points | Reference Name |
 |---|---|---|
