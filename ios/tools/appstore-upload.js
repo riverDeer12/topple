@@ -41,6 +41,9 @@ function readTexts() {
     for (const [k, max] of Object.entries(LIMITS)) {
       if (!t[k]) throw new Error(`AppStore.md (${loc}): prazno polje ${k}`);
       if ([...t[k]].length > max) throw new Error(`AppStore.md (${loc}): ${k} ima ${[...t[k]].length} znakova, najviše ${max}`);
+      // App Store Connect rejects emoji and other pictographs in the texts.
+      const emoji = t[k].match(/\p{Extended_Pictographic}/gu);
+      if (emoji) throw new Error(`AppStore.md (${loc}): ${k} sadrži znakove koje App Store ne prima: ${[...new Set(emoji)].join(' ')}`);
     }
   }
   return out;
