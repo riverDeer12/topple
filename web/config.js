@@ -13,3 +13,15 @@ window.TOPPLE_API = TOPPLE_IN_APP ? 'https://topple.rdd.software' : location.hos
 window.TOPPLE_ADS = { client: 'ca-pub-8378829605116517', test: true, simulate: true };
 // Web ads are not allowed inside an app: there hints come only from the daily refill.
 if (TOPPLE_IN_APP) window.TOPPLE_ADS = { client: '', test: false, simulate: false };
+
+// iOS app on the App Store: its Apple ID (the number in App Store Connect → App Information).
+// Empty = no App Store badge on the home page yet.
+window.TOPPLE_IOS_APP_ID = '';
+
+// Safari on iPhone/iPad: Smart App Banner (open or download the app) on the web pages.
+if (window.TOPPLE_IOS_APP_ID && location.protocol !== 'topple:' && document.head) {
+  const m = document.createElement('meta');
+  m.name = 'apple-itunes-app';
+  m.content = 'app-id=' + window.TOPPLE_IOS_APP_ID;
+  document.head.appendChild(m);
+}
