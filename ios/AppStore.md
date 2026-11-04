@@ -1,5 +1,14 @@
 # Topple: tekstovi za App Store
 
+**Skriptom:** `ios/tools/appstore-upload.js` upiše sve iz ove datoteke u App Store Connect za sva 4 jezika: naziv, podnaslov, opis, ključne riječi, promotivni tekst i URL-ove. Koristi isti API ključ kao `gamecenter-upload.js`. Postojeće tekstove zamijeni, a jezike koji nedostaju doda. „Što je novo” preskače za prvu verziju (dodaj `--whats-new` od verzije 1.1).
+
+```bash
+node ios/tools/appstore-upload.js --dry-run
+node ios/tools/appstore-upload.js --key ~/Downloads/AuthKey_XXXXXXXXXX.p8 --key-id XXXXXXXXXX --issuer xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+**Ručno:**
+
 Kopiraj u App Store Connect → aplikacija → **App Store** → jezik (gore desno dodaj lokalizacije: Croatian, English (U.S.), Italian, German). Ograničenja: naziv i podnaslov do 30 znakova, promotivni tekst do 170, ključne riječi do 100 (odvojene zarezom, bez razmaka), opis do 4000.
 
 Brojke (razine, poglavlja, blokovi, likovi) vrijede za verziju 1.0. Kad dodaš razine, promijeni ih i ovdje.
