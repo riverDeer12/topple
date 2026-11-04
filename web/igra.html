@@ -980,6 +980,7 @@ function openMenu() {
   $('who').innerHTML = signedInNow() ? `${ToppleI18n.t('who.signed')} <b></b> · <button class="link" id="account" type="button">${ToppleI18n.t('who.account')}</button>`
     : `${ToppleI18n.t('who.guest')} <b></b> · <button class="link" id="login" type="button">${ToppleI18n.t('who.login')}</button>`;
   $('who').querySelector('b').textContent = signedInNow() ? user.name : guestName();
+  if (signedInNow() && plus) $('who').querySelector('b').appendChild(plusBadge());
   $('menuClose').hidden = !ctx;
   showOnly('menuBox');
 }
@@ -1079,6 +1080,7 @@ $('resetForm').addEventListener('submit', async e => {
 });
 function signedIn(r) {
   user = { name: r.name, token: r.token };
+  plusSent = null; native({ type: 'plus', action: 'status' }); // Topple Plus badge for this account
   if (canPush()) pushSub().then(sub => { if (sub) sendSub(sub); }); // link the reminder to the account store.set('user', user); store.set('asked', true); store.set('importedName', '');
   $('lPass').value = '';
   sync();
@@ -1136,6 +1138,7 @@ async function openAccount() {
   const st = account.stats, rk = r => (r ? t('prof.rank', { r }) : '–');
   $('pAvatar').textContent = account.name.slice(0, 1).toUpperCase();
   $('pName').textContent = account.name;
+  if (account.plus) $('pName').appendChild(plusBadge());
   $('pSince').textContent = t('prof.since', { date: new Date(account.createdAt).toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', year: 'numeric' }) });
   const h = x => String(x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const tile = (label, value, note, cls = '') => `<div class="pstat ${cls}"><small>${h(label)}</small><b>${h(value)}</b><span>${h(note)}</span></div>`;
@@ -1223,6 +1226,7 @@ async function openBoard(mode = lbMode) {
       if (x.me) li.className = 'me';
       li.innerHTML = '<span class="r"></span><span class="n"></span><span class="v"></span>';
       li.children[0].textContent = x.rank + '.'; li.children[1].textContent = x.name; li.children[2].textContent = val(x);
+      if (x.plus) li.children[1].appendChild(plusBadge());
       list.appendChild(li);
     }
     if (!signedInNow()) list.insertAdjacentHTML('beforeend', empty(`${t('lb.guest')} <button class="link" type="button" data-login>${t('lb.guestBtn')}</button>`));
@@ -1231,22 +1235,25 @@ async function openBoard(mode = lbMode) {
 document.querySelectorAll('#lbBox .tab').forEach(t => t.onclick = () => openBoard(t.dataset.m));
 document.querySelectorAll('#lbScope button').forEach(b => b.onclick = () => { lbScope = b.dataset.s; openBoard(); });
 // Friends: players you follow by username; the friends leaderboard shows only them and you.
-function drawFriends(names) {
+// The Topple Plus badge next to a player's name.
+function plusBadge() { const b = document.createElement('span'); b.className = 'pbadge'; b.textContent = 'PLUS'; b.title = 'Topple Plus'; return b; }
+function drawFriends(names, plusNames = []) {
   const list = $('frList'); list.innerHTML = '';
   if (!names.length) { list.textContent = t('fr.none'); return; }
   for (const n of names) {
     const c = document.createElement('span'); c.className = 'chip';
     c.innerHTML = '<span></span><button type="button"></button>';
     c.children[0].textContent = n; c.children[1].textContent = '×';
+    if (plusNames.includes(n)) c.children[0].appendChild(plusBadge());
     c.children[1].setAttribute('aria-label', t('fr.remove', { name: n }));
     c.children[1].onclick = () => changeFriends({ remove: n });
     list.appendChild(c);
   }
 }
-async function loadFriends() { try { drawFriends((await api('/api/friends')).friends); } catch (e) {} }
+async function loadFriends() { try { const r = await api('/api/friends'); drawFriends(r.friends, r.plus); } catch (e) {} }
 async function changeFriends(body) {
   $('frErr').textContent = '';
-  try { drawFriends((await api('/api/friends', { method: 'POST', body: JSON.stringify(body) })).friends); $('frName').value = ''; openBoard(); }
+  try { const r = await api('/api/friends', { method: 'POST', body: JSON.stringify(body) }); drawFriends(r.friends, r.plus); $('frName').value = ''; openBoard(); }
   catch (e) { $('frErr').textContent = errText(e); }
 }
 $('frForm').addEventListener('submit', e => { e.preventDefault(); const n = $('frName').value.trim(); if (n) changeFriends({ add: n }); });
@@ -1395,8 +1402,15 @@ $('shopPlus').onclick = openPlus;
 $('plusClose').onclick = () => (ctx ? showOnly(null) : openMenu());
 $('plusBuy').onclick = () => { $('plusBuy').disabled = true; $('plusStatus').textContent = t('plus.loading'); native({ type: 'plus', action: 'buy' }); };
 $('plusRestore').onclick = () => { $('plusStatus').textContent = t('plus.loading'); native({ type: 'plus', action: 'restore' }); };
+let plusSent = null; // the transaction already sent to the server this visit
+function sendPlus(jws) {
+  if (!jws || !signedInNow() || !API || plusSent === jws) return;
+  plusSent = jws;
+  api('/api/plus', { method: 'POST', body: JSON.stringify({ jws }) }).catch(() => { plusSent = null; });
+}
 window.topplePlus = d => {
   const was = plus;
+  if (d.owned) sendPlus(d.jws); // the badge on the account, seen by everyone
   plus = !!d.owned; plusPrice = d.price || plusPrice;
   store.set('plus', plus); refreshHints(); plusMenuSub();
   if (!$('plusBox').hidden) {

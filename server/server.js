@@ -169,6 +169,15 @@ if (db.prepare('PRAGMA user_version').get().user_version < 11) {
   `);
 }
 const AD_KINDS = ['shop', 'viewed', 'dismissed', 'none', 'sim'];
+// Schema v12: Topple Plus (iOS purchase) on the account, shown as a badge to everyone.
+if (db.prepare('PRAGMA user_version').get().user_version < 12) {
+  const cols = db.prepare('PRAGMA table_info(users)').all().map(c => c.name);
+  if (!cols.includes('plus')) db.exec('ALTER TABLE users ADD COLUMN plus INTEGER NOT NULL DEFAULT 0');
+  if (!cols.includes('plus_tx')) db.exec('ALTER TABLE users ADD COLUMN plus_tx TEXT');
+  db.exec('PRAGMA user_version = 12');
+}
+const plusCheck = require('./plus.js');
+const PLUS_PRODUCT = 'software.rdd.topple.plus', PLUS_SHARE = 6; // one purchase: family sharing, a few accounts
 const appleAuth = require('./apple.js');
 const push = require('./push.js');
 const REMIND_HOUR = Number(process.env.REMIND_HOUR || 17); // local time (TZ_GAME) of the daily reminder
@@ -403,17 +412,17 @@ function validDate(d) {
 function board(mode, date, me, only) {
   let q, params = [], order;
   if (mode === 'daily') {
-    q = `SELECT u.name, d.moves, d.time_ms AS timeMs, d.stars, u.id, d.updated_at AS t,
+    q = `SELECT u.name, d.moves, d.time_ms AS timeMs, d.stars, u.id, u.plus, d.updated_at AS t,
          RANK() OVER (ORDER BY d.moves, d.time_ms) AS rank
          FROM daily d JOIN users u ON u.id = d.user_id WHERE d.date = ?`;
     params = [date]; order = 'rank, t';
   } else if (mode === 'endless') {
-    q = `SELECT name, endless_next - 1 AS solved, endless_stars AS stars, id, created_at AS t,
+    q = `SELECT name, endless_next - 1 AS solved, endless_stars AS stars, id, plus, created_at AS t,
          RANK() OVER (ORDER BY endless_next DESC, endless_stars DESC) AS rank
          FROM users WHERE endless_next > 1`;
     order = 'rank, t';
   } else {
-    q = `SELECT u.name, SUM(c.stars) AS stars, COUNT(*) AS levels, SUM(c.moves) AS moves, u.id,
+    q = `SELECT u.name, SUM(c.stars) AS stars, COUNT(*) AS levels, SUM(c.moves) AS moves, u.id, u.plus,
          RANK() OVER (ORDER BY SUM(c.stars) DESC, COUNT(*) DESC, SUM(c.moves)) AS rank
          FROM campaign c JOIN users u ON u.id = c.user_id GROUP BY u.id`;
     order = 'rank';
@@ -428,7 +437,7 @@ function board(mode, date, me, only) {
     rows = db.prepare(`SELECT * FROM (${q}) ORDER BY ${order} LIMIT 50`).all(...params);
     if (me) mine = db.prepare(`SELECT * FROM (${q}) WHERE id = ?`).get(...params, me.id) || null;
   }
-  const strip = r => { if (!r) return r; const { id, t, ...rest } = r; return { ...rest, me: !!me && id === me.id }; };
+  const strip = r => { if (!r) return r; const { id, t, plus, ...rest } = r; return { ...rest, plus: !!plus, me: !!me && id === me.id }; };
   return { mode, date: date || null, friends: !!only, rows: rows.map(strip), mine: strip(mine) };
 }
 // Removes a player and everything stored about them (used by the game and by admin.js).
@@ -451,6 +460,7 @@ const friendIds = u => [u.id, ...db.prepare('SELECT friend_id AS id FROM friends
 function profile(u) {
   return {
     name: u.name,
+    plus: !!u.plus,
     email: u.email || null,
     hasPassword: !!u.password_hash,
     google: !!u.google_sub,
@@ -479,12 +489,12 @@ function adminStats() {
   const now = Date.now(), since = d => now - d * 864e5, ONLINE = 15 * 60e3;
   const n = (q, ...a) => db.prepare(q).get(...a).n;
   const method = u => u.google_sub && u.password_hash ? 'both' : u.google_sub ? 'google' : u.password_hash ? 'password' : 'device';
-  const users = db.prepare(`SELECT u.id, u.name, u.email, u.password_hash, u.google_sub, u.created_at, u.last_seen, u.skin,
+  const users = db.prepare(`SELECT u.id, u.name, u.email, u.password_hash, u.google_sub, u.created_at, u.last_seen, u.skin, u.plus,
       u.endless_next - 1 AS endless, u.endless_stars,
       COALESCE(c.levels, 0) AS levels, COALESCE(c.stars, 0) AS stars, COALESCE(c.top, 0) AS top,
       (SELECT COUNT(*) FROM daily WHERE user_id = u.id) AS daily
     FROM users u LEFT JOIN (SELECT user_id, COUNT(*) AS levels, SUM(stars) AS stars, MAX(level) AS top FROM campaign GROUP BY user_id) c ON c.user_id = u.id`).all();
-  const player = u => ({ name: u.name, method: method(u), createdAt: u.created_at, lastSeen: u.last_seen, top: u.top, levels: u.levels, stars: u.stars, endless: u.endless, daily: u.daily });
+  const player = u => ({ name: u.name, plus: !!u.plus, method: method(u), createdAt: u.created_at, lastSeen: u.last_seen, top: u.top, levels: u.levels, stars: u.stars, endless: u.endless, daily: u.daily });
 
   // Activity per day (game time zone), last 14 days.
   const days = [];
@@ -536,6 +546,7 @@ function adminStats() {
       converted: n('SELECT COUNT(*) AS n FROM guests WHERE user_id IS NOT NULL'),
       campaign: n('SELECT COUNT(*) AS n FROM campaign'), daily: n('SELECT COUNT(*) AS n FROM daily'), endless: n('SELECT COUNT(*) AS n FROM endless'),
       guestVisits: n('SELECT COALESCE(SUM(visits), 0) AS n FROM guests'),
+      plus: users.filter(u => u.plus).length,
     },
     windows: [1, 7, 30].map(d => ({
       days: d,
@@ -807,6 +818,25 @@ async function route(req, res) {
     return send(res, 200, { ok: true });
   }
 
+  // Topple Plus: the iOS app sends the App Store's signed transaction; the account gets the badge.
+  if (req.method === 'POST' && p === '/api/plus') {
+    const u = userFrom(req);
+    if (!u) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
+    if (limited(req, 'plus', 30, 15 * 60e3)) return send(res, 429, { error: 'Previše zahtjeva.', code: 'too_many' });
+    const { jws } = await readJson(req);
+    const tx = plusCheck.verifyTransaction(jws);
+    if (!tx || tx.productId !== PLUS_PRODUCT || !APPLE_AUDS.includes(tx.bundleId)) return send(res, 400, { error: 'Kupnja nije potvrđena.', code: 'plus_invalid' });
+    const txId = String(tx.originalTransactionId || tx.transactionId);
+    if (tx.revocationDate) {
+      db.prepare('UPDATE users SET plus = 0 WHERE plus_tx = ?').run(txId);
+      return send(res, 200, { plus: false });
+    }
+    const others = db.prepare('SELECT COUNT(*) AS n FROM users WHERE plus_tx = ? AND id <> ?').get(txId, u.id).n;
+    if (others >= PLUS_SHARE) return send(res, 409, { error: 'Ova kupnja je već na previše računa.', code: 'plus_shared' });
+    db.prepare('UPDATE users SET plus = 1, plus_tx = ? WHERE id = ?').run(txId, u.id);
+    return send(res, 200, { plus: true });
+  }
+
   if (req.method === 'GET' && p === '/api/me') {
     const u = userFrom(req);
     return u ? send(res, 200, profile(u)) : send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
@@ -879,8 +909,8 @@ async function route(req, res) {
         if (f) db.prepare('DELETE FROM friends WHERE user_id = ? AND friend_id = ?').run(u.id, f.id);
       }
     }
-    const list = db.prepare('SELECT u.name FROM friends f JOIN users u ON u.id = f.friend_id WHERE f.user_id = ? ORDER BY u.name COLLATE NOCASE').all(u.id).map(r => r.name);
-    return send(res, 200, { friends: list });
+    const rows = db.prepare('SELECT u.name, u.plus FROM friends f JOIN users u ON u.id = f.friend_id WHERE f.user_id = ? ORDER BY u.name COLLATE NOCASE').all(u.id);
+    return send(res, 200, { friends: rows.map(r => r.name), plus: rows.filter(r => r.plus).map(r => r.name) });
   }
 
   send(res, 404, { error: 'Nema te adrese.', code: 'not_found' });

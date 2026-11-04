@@ -37,11 +37,12 @@ final class Store {
         if product == nil { product = try? await Product.products(for: [Self.productId]).first }
     }
 
-    private func owned() async -> Bool {
+    // Whether Topple Plus is owned, and Apple's signed transaction (JWS) that proves it to the server.
+    private func entitlement() async -> (owned: Bool, jws: String?) {
         for await result in Transaction.currentEntitlements {
-            if case .verified(let t) = result, t.productID == Self.productId, t.revocationDate == nil { return true }
+            if case .verified(let t) = result, t.productID == Self.productId, t.revocationDate == nil { return (true, result.jwsRepresentation) }
         }
-        return false
+        return (false, nil)
     }
 
     private func buy() async {
@@ -67,7 +68,9 @@ final class Store {
 
     private func send(error: String? = nil, restore: Bool = false) async {
         await load()
-        var payload: [String: Any] = ["owned": await owned(), "price": product?.displayPrice ?? ""]
+        let e = await entitlement()
+        var payload: [String: Any] = ["owned": e.owned, "price": product?.displayPrice ?? ""]
+        if let jws = e.jws { payload["jws"] = jws }
         if let error { payload["error"] = error }
         if restore { payload["restore"] = true }
         guard let data = try? JSONSerialization.data(withJSONObject: payload), let json = String(data: data, encoding: .utf8) else { return }
