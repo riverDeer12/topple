@@ -14,7 +14,7 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     DEVELOPMENT_TEAM: ""        # your Apple team ID (Xcode → Signing & Capabilities), or set it there
-    GOOGLE_IOS_CLIENT_ID: ""    # iOS OAuth client ID from Google Cloud (ends in .apps.googleusercontent.com), see ios/README.md
+    GOOGLE_IOS_CLIENT_ID: "224195062999-lqe0avqbcb952jbus9tu23nsfu05jv3l.apps.googleusercontent.com"
 targets:
   Topple:
     type: application
