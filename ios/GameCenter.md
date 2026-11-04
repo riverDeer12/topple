@@ -3,7 +3,7 @@
 App Store Connect → aplikacija → **Services → Game Center → Achievements → +**. Za svako postignuće:
 - **Reference Name**: naslov na hrvatskom (vidi ga samo ti);
 - **Achievement ID**: točno kao ispod (mora odgovarati kodu u `ios/Topple/Native.swift`);
-- **Points**: kao ispod (ukupno 900 od najviše 1000);
+- **Points**: kao ispod (ukupno 800 od najviše 1000, najviše 100 po postignuću);
 - **Hidden**: No; **Achievable More Than Once**: No.
 
 Zatim **Localization → Add Language** za svaki jezik: **Title**, **Pre-earned Description**, **Earned Description** i **Image**: `ios/achievements/<id>.png` (1024 × 1024, npr. `first.png` za `topple.ach.first`; ista slika za sve jezike). Naslovi i opisi „prije” isti su kao u igri (`ach.*` u `web/i18n.js`).
@@ -13,7 +13,7 @@ Zatim **Localization → Add Language** za svaki jezik: **Title**, **Pre-earned 
 | `topple.ach.first` | 10 | Prvi korak |
 | `topple.ach.levels25` | 30 | Zagrijavanje |
 | `topple.ach.levels60` | 60 | Na pola puta |
-| `topple.ach.levelsAll` | 150 | Majstor Topplea |
+| `topple.ach.levelsAll` | 100 | Majstor Topplea |
 | `topple.ach.perfect10` | 40 | Precizno |
 | `topple.ach.perfect50` | 100 | Savršenstvo |
 | `topple.ach.nohint20` | 60 | Bez pomoći |
@@ -21,7 +21,7 @@ Zatim **Localization → Add Language** za svaki jezik: **Title**, **Pre-earned 
 | `topple.ach.daily10` | 50 | Svakodnevica |
 | `topple.ach.streak3` | 20 | Iskra |
 | `topple.ach.streak7` | 50 | Vatra |
-| `topple.ach.streak30` | 150 | Neugasivo |
+| `topple.ach.streak30` | 100 | Neugasivo |
 | `topple.ach.endless10` | 30 | Bez kraja |
 | `topple.ach.endless50` | 90 | Maraton |
 | `topple.ach.skins5` | 50 | Garderoba |
@@ -106,4 +106,4 @@ Zatim **Localization → Add Language** za svaki jezik: **Title**, **Pre-earned 
 | `topple.ach.endless50` | Marathon | Löse 50 endlose Rätsel. | 50 endlose Rätsel gelöst. |
 | `topple.ach.skins5` | Kleiderschrank | Schalte 5 Looks für den roten Block frei. | 5 Looks für den roten Block freigeschaltet. |
 
-Ukupno bodova: 900.
+Ukupno bodova: 800.
