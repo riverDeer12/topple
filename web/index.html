@@ -37,6 +37,8 @@ nav .links a:hover { color: var(--ink); }
 h1 { font: 600 clamp(2.6rem, 6vw, 4.2rem) var(--display); line-height: 1; margin: 0 0 14px; letter-spacing: .01em; }
 .lead { font-size: 1.12rem; color: var(--muted); margin: 0 0 24px; max-width: 46ch; }
 .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+.appstore { display: inline-flex; align-items: center; }
+.appstore img { height: 50px; width: auto; display: block; }
 .facts { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 30px; }
 .facts div { display: flex; flex-direction: column; }
 .facts b { font: 500 1.6rem var(--mono); line-height: 1.1; }
@@ -114,6 +116,7 @@ footer { border-top: 1px solid var(--panel-line); padding: 22px 0 32px; color: v
       <div class="cta">
         <a class="btn go" href="igra.html" data-i18n="home.playFree">Igraj besplatno</a>
         <a class="btn alt" href="#ljestvica" data-i18n="home.boardBtn">Ljestvica</a>
+        <a class="appstore" id="appStore" hidden rel="noopener"><img alt="Download on the App Store" width="150" height="50"></a>
       </div>
       <div class="facts" id="facts"></div>
     </div>
@@ -259,6 +262,14 @@ async function boards() {
 }
 ['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = `<li class="empty">${esc(t('home.loading'))}</li>`; });
 boards();
+// App Store badge (official artwork from Apple's marketing tools) once the app is live, not inside the app.
+if (window.TOPPLE_IOS_APP_ID && location.protocol !== 'topple:') {
+  const loc = { hr: 'hr-hr', en: 'en-us', it: 'it-it', de: 'de-de' }[ToppleI18n.lang] || 'en-us';
+  const a = $('appStore');
+  a.href = 'https://apps.apple.com/app/id' + window.TOPPLE_IOS_APP_ID;
+  a.querySelector('img').src = `https://tools.applemarketingtools.com/api/badges/download-on-the-app-store/black/${loc}?size=250x83`;
+  a.hidden = false;
+}
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 $('foot').textContent = t('home.foot', { levels: K.stats.levels, chapters: K.stats.chapters, types: K.stats.types });
 </script>
