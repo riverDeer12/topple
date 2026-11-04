@@ -239,7 +239,7 @@ function fill(id, r, val) {
   const ol = $(id), rows = r.rows.slice(0, 10);
   if (r.mine && !rows.some(x => x.me)) rows.push(r.mine);
   if (!rows.length) { ol.innerHTML = `<li class="empty">${esc(t('home.lbEmpty'))}</li>`; return; }
-  ol.innerHTML = rows.map(x => `<li class="${x.me ? 'me' : ''}${x.rank <= 3 ? ' top' : ''}"><span class="r">${x.rank}.</span><span>${esc(x.name)}</span><span class="v">${esc(val(x))}</span></li>`).join('');
+  ol.innerHTML = rows.map(x => `<li class="${x.me ? 'me' : ''}${x.rank <= 3 ? ' top' : ''}"><span class="r">${x.rank}.</span><span>${esc(x.name)}${x.plus ? ' <span class="pbadge" title="Topple Plus">PLUS</span>' : ''}</span><span class="v">${esc(val(x))}</span></li>`).join('');
 }
 async function boards() {
   const off = msg => ['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = `<li class="empty">${msg}</li>`; });

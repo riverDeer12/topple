@@ -277,7 +277,7 @@ function render(s) {
   const tile = (label, value, sub, live) => `<div class="card tile"><div class="label">${live ? '<span class="live"></span>' : ''}${label}</div><div class="value">${value}</div><div class="sub">${sub || '&nbsp;'}</div></div>`;
   $('tiles').innerHTML = [
     tile('Trenutno igraju', num(s.online.users + s.online.guests), `${num(s.online.users)} prijavljenih · ${num(s.online.guests)} gostiju (15 min)`, true),
-    tile('Registrirani igrači', num(T.users), `+${num(w1.newUsers)} u zadnja 24 h`),
+    tile('Registrirani igrači', num(T.users), `+${num(w1.newUsers)} u zadnja 24 h · ${num(T.plus || 0)} s Topple Plus`),
     tile('Gosti bez računa', num(T.guests), `+${num(w1.newGuests)} u zadnja 24 h`),
     tile('Gosti koji su napravili račun', num(T.converted), `${pct(T.converted, guestsAll)} svih gostiju`),
     tile('Aktivni danas', num(w1.activeUsers + w1.activeGuests), `${num(w1.activeUsers)} igrača · ${num(w1.activeGuests)} gostiju`),
@@ -314,9 +314,9 @@ function render(s) {
   hbars($('skins'), s.skins, skinName);
 
   table($('top'), [['#', 'n'], ['Igrač'], ['Najviša razina', 'n'], ['Razina', 'n'], ['★', 'n'], ['Beskonačne', 'n'], ['Dnevne', 'n'], ['Zadnji put']],
-    s.top.map((u, i) => [i + 1, esc(u.name), `<b>${u.top || '–'}</b>`, num(u.levels), num(u.stars), num(u.endless), num(u.daily), seen(u.lastSeen)]), 'Još nitko nije riješio razinu.');
+    s.top.map((u, i) => [i + 1, esc(u.name) + pb(u), `<b>${u.top || '–'}</b>`, num(u.levels), num(u.stars), num(u.endless), num(u.daily), seen(u.lastSeen)]), 'Još nitko nije riješio razinu.');
   table($('recentUsers'), [['Igrač'], ['Račun od'], ['Prijava'], ['Razina', 'n'], ['Zadnji put']],
-    s.recentUsers.map(u => [esc(u.name), date(u.createdAt), `<span class="badge">${METHOD[u.method]}</span>`, num(u.levels), seen(u.lastSeen)]), 'Još nema igrača.');
+    s.recentUsers.map(u => [esc(u.name) + pb(u), date(u.createdAt), `<span class="badge">${METHOD[u.method]}</span>`, num(u.levels), seen(u.lastSeen)]), 'Još nema igrača.');
   table($('recentGuests'), [['Gost'], ['Jezik'], ['Prvi put'], ['Posjeta', 'n'], ['Razina', 'n'], ['Beskonačne', 'n'], ['Zadnji put']],
     s.recentGuests.map(g => [esc(g.name || '–'), esc(g.lang || '?'), date(g.firstSeen), num(g.visits), num(g.levels), num(g.endless), seen(g.lastSeen)]), 'Još nema gostiju.');
 }
@@ -354,6 +354,7 @@ function renderDifficulty(s) {
   table($('hardest'), head, hard.map(row), 'Još premalo podataka: razina treba bar 3 igrača.');
   table($('diffAll'), head, D.filter(d => d.started).map(row), 'Još nema podataka.');
 }
+const pb = u => (u.plus ? ' <span class="pbadge" title="Topple Plus">PLUS</span>' : '');
 const seen = t => t > Date.now() - 15 * 60e3 ? '<span class="on">sada</span>' : ago(t);
 
 load();

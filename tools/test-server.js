@@ -319,6 +319,38 @@ function solution(level) {
   r = await call('/api/ad', { kind: 'bogus' }); assert.strictEqual(r.status, 400);
   ok('ad events recorded');
 
+  // Topple Plus: a signed App Store transaction (test chain standing in for Apple's) gives the badge.
+  {
+    const { execSync } = require('child_process'), os = require('os'), fsx = require('fs');
+    const d = fsx.mkdtempSync(path.join(os.tmpdir(), 'plus-')), sh = c => execSync(c, { cwd: d, stdio: 'pipe' });
+    sh('openssl ecparam -name prime256v1 -genkey -noout -out root.key && openssl req -x509 -new -key root.key -subj "/CN=Test Root" -days 30 -out root.pem');
+    fsx.writeFileSync(path.join(d, 'mid.ext'), 'basicConstraints=critical,CA:TRUE\n1.2.840.113635.100.6.2.1=ASN1:NULL\n');
+    fsx.writeFileSync(path.join(d, 'leaf.ext'), '1.2.840.113635.100.6.11.1=ASN1:NULL\n');
+    sh('openssl ecparam -name prime256v1 -genkey -noout -out mid.key && openssl req -new -key mid.key -subj "/CN=Test WWDR" -out mid.csr && openssl x509 -req -in mid.csr -CA root.pem -CAkey root.key -CAcreateserial -days 30 -extfile mid.ext -out mid.pem');
+    sh('openssl ecparam -name prime256v1 -genkey -noout -out leaf.key && openssl req -new -key leaf.key -subj "/CN=Test StoreKit" -out leaf.csr && openssl x509 -req -in leaf.csr -CA mid.pem -CAkey mid.key -CAcreateserial -days 30 -extfile leaf.ext -out leaf.pem');
+    const der = f => new crypto.X509Certificate(fsx.readFileSync(path.join(d, f))).raw.toString('base64');
+    process.env.PLUS_ROOT_SHA256 = new crypto.X509Certificate(fsx.readFileSync(path.join(d, 'root.pem'))).fingerprint256;
+    const leafKey = crypto.createPrivateKey(fsx.readFileSync(path.join(d, 'leaf.key')));
+    const jws = claims => {
+      const h = Buffer.from(JSON.stringify({ alg: 'ES256', x5c: [der('leaf.pem'), der('mid.pem'), der('root.pem')] })).toString('base64url');
+      const p = Buffer.from(JSON.stringify({ bundleId: 'software.rdd.topple', productId: 'software.rdd.topple.plus', transactionId: '1001', originalTransactionId: '1001', signedDate: Date.now(), environment: 'Sandbox', ...claims })).toString('base64url');
+      return h + '.' + p + '.' + crypto.sign('sha256', Buffer.from(h + '.' + p), { key: leafKey, dsaEncoding: 'ieee-p1363' }).toString('base64url');
+    };
+    r = await call('/api/plus', { jws: jws({}) }); assert.strictEqual(r.status, 401);
+    r = await call('/api/plus', { jws: jws({ productId: 'other' }) }, ana); assert.strictEqual(r.body.code, 'plus_invalid');
+    const forged = jws({}).split('.'); forged[1] = Buffer.from(JSON.stringify({ bundleId: 'software.rdd.topple', productId: 'software.rdd.topple.plus', originalTransactionId: '9' })).toString('base64url');
+    r = await call('/api/plus', { jws: forged.join('.') }, ana); assert.strictEqual(r.body.code, 'plus_invalid', 'changed payload rejected');
+    r = await call('/api/plus', { jws: jws({}) }, ana); assert.deepStrictEqual(r.body, { plus: true });
+    r = await call('/api/me', null, ana); assert.strictEqual(r.body.plus, true);
+    r = await call('/api/leaderboard?mode=campaign', null, ana); assert.ok(r.body.mine.plus && r.body.rows.some(x => x.plus));
+    r = await call('/api/plus', { jws: jws({ revocationDate: Date.now() }) }, ana); assert.deepStrictEqual(r.body, { plus: false });
+    r = await call('/api/me', null, ana); assert.strictEqual(r.body.plus, false);
+    delete process.env.PLUS_ROOT_SHA256;
+    r = await call('/api/plus', { jws: jws({}) }, ana); assert.strictEqual(r.body.code, 'plus_invalid', 'only Apple\'s root is trusted');
+    fsx.rmSync(d, { recursive: true, force: true });
+    ok('Topple Plus: verified App Store transaction gives the badge, refund removes it, forgeries rejected');
+  }
+
   r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/stats', null, ana); assert.strictEqual(r.status, 401);
