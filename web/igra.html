@@ -579,8 +579,8 @@ function needAccount(what) {
 }
 // iOS app (ios/): the game runs from the app bundle (topple:// scheme) and asks the app for
 // native features: haptics, sharing, the daily reminder (local notification) and Game Center.
-// Android app (android/): the same messages through window.ToppleAndroid; sign-in with Apple or
-// Google, Topple Plus and Game Center are iOS only (IOS_APP).
+// Android app (android/): the same messages through window.ToppleAndroid, with Google sign-in;
+// Apple sign-in, Topple Plus and Game Center are iOS only (IOS_APP).
 const IOS_APP = location.protocol === 'topple:' && window.webkit && webkit.messageHandlers && webkit.messageHandlers.topple;
 const ANDROID_APP = !IOS_APP && window.ToppleAndroid && { postMessage: m => window.ToppleAndroid.post(JSON.stringify(m)) };
 const APP = IOS_APP || ANDROID_APP || null;
@@ -1002,13 +1002,13 @@ $('who').addEventListener('click', e => {
 });
 
 // --- sign-in: username or e-mail + password, or Google -------------------------------
-let loginTab = 'login', googleId = null, googleLoaded = null;
+let loginTab = 'login', googleId = null, googleWeb = null, googleLoaded = null; // googleWeb: the server's web client ID, kept for the Android app
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u;
 let resetOn = false; // the server can send password reset e-mails
 let googleIos = false; // the server accepts Google sign-in from the iOS app
 let pushKey = null, remindHour = 17; // public VAPID key and local hour of the daily reminder
 async function loadConfig() {
-  if (API) try { const c = await api('/api/config'); googleId = c.googleClientId; resetOn = !!c.passwordReset; pushKey = c.pushKey || null; remindHour = c.remindHour ?? 17; googleIos = !!c.googleIos; } catch (e) {}
+  if (API) try { const c = await api('/api/config'); googleId = googleWeb = c.googleClientId; resetOn = !!c.passwordReset; pushKey = c.pushKey || null; remindHour = c.remindHour ?? 17; googleIos = !!c.googleIos; } catch (e) {}
   initRemind();
   $('forgot').hidden = !resetOn || loginTab !== 'login';
 }
@@ -1040,6 +1040,15 @@ function googleButton(el) {
     google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', locale: 'hr', width: 260 });
   });
 }
+// Native sign-in buttons: Apple and Google in the iOS app, Google in the Android app (with the
+// server's web client ID); on the web, Google's own button (googleButton).
+function appButtons(online) {
+  const android = !!(ANDROID_APP && googleWeb);
+  $('appSign').hidden = !online || !(IOS_APP || android);
+  $('appleBtn').hidden = !IOS_APP;
+  $('googleAppBtn').hidden = IOS_APP ? !googleIos : !android;
+  $('gOr').hidden = !online || !(googleId || IOS_APP || android);
+}
 function openLogin() {
   const online = !!API;
   $('loginIntro').textContent = online ? t('login.intro') : t('login.offline');
@@ -1048,8 +1057,7 @@ function openLogin() {
   setLoginTab(imported ? 'register' : loginTab);
   if (imported && !$('lName').value) $('lName').value = imported;
   showOnly('loginBox');
-  googleButton($('gBtn')); $('gOr').hidden = !(googleId || IOS_APP) || !online;
-  $('appSign').hidden = !IOS_APP || !online; $('googleAppBtn').hidden = !googleIos;
+  googleButton($('gBtn')); appButtons(online);
   if (online) (loginTab === 'register' ? $('lName') : $('lLogin')).focus();
 }
 // --- forgotten password: ask for a link by e-mail, then set a new password from the link ---
@@ -1126,7 +1134,7 @@ async function onGoogle(credential) {
 $('loginSkip').onclick = () => { store.set('asked', true); openMenu(); };
 // iOS app: Sign in with Apple / Google happen natively (SignIn.swift), which calls back here.
 $('appleBtn').onclick = () => { $('loginErr').textContent = ''; native({ type: 'signin', provider: 'apple' }); };
-$('googleAppBtn').onclick = () => { $('loginErr').textContent = ''; native({ type: 'signin', provider: 'google' }); };
+$('googleAppBtn').onclick = () => { $('loginErr').textContent = ''; native({ type: 'signin', provider: 'google', clientId: googleWeb || '' }); };
 window.toppleSignedIn = async d => {
   if (!d || d.error) { if (!d || d.error !== 'cancel') $('loginErr').textContent = t(d && d.error === 'google_off' ? 'srv.google_off' : 'login.socialFailed'); return; }
   try {
@@ -1707,7 +1715,7 @@ function start() {
   ToppleI18n.apply();
   $('langRow').appendChild(ToppleI18n.picker());
   // The Google button needs the client ID from the server; draw it once that arrives.
-  loadConfig().then(() => { if (!$('loginBox').hidden && API) { googleButton($('gBtn')); $('gOr').hidden = !googleId; } });
+  loadConfig().then(() => { if (!$('loginBox').hidden && API) { googleButton($('gBtn')); appButtons(true); } });
   ToppleAudio.init(settings); // music starts on the first tap or key press
   setToggle('tSfx', settings.sfx); setToggle('tMusic', settings.music);
   // Board behind the menu: continue where the player left off.

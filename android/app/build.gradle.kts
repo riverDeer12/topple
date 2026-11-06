@@ -32,6 +32,14 @@ android {
     }
 
     signingConfigs {
+        // A fixed debug key (not secret, standard passwords), so that every debug build, local or
+        // from GitHub Actions, has the same SHA-1 for the Google sign-in Android client.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         if (canSign) create("release") {
             storeFile = file(signing.getProperty("storeFile"))
             storePassword = signing.getProperty("storePassword")
@@ -69,4 +77,9 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.10.1")
     implementation("androidx.webkit:webkit:1.14.0")
     implementation("androidx.work:work-runtime-ktx:2.10.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
+    // Sign in with Google (Credential Manager)
+    implementation("androidx.credentials:credentials:1.5.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 }
