@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- page colour from web/theme.css -->
+    <color name="page">#E4EAE6</color>
+    <color name="icon_bg">#24443F</color>
+</resources>

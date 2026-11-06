@@ -3,7 +3,7 @@
 // origin. Anywhere else (GitHub Pages copy, a local file) it plays offline: login is
 // local only and the leaderboard says it is not connected.
 // The iOS app (ios/) loads the game from its bundle (topple://app) and talks to the same server.
-const TOPPLE_IN_APP = location.protocol === 'topple:';
+const TOPPLE_IN_APP = location.protocol === 'topple:' || !!window.ToppleAndroid; // iOS or Android app
 window.TOPPLE_API = TOPPLE_IN_APP ? 'https://topple.rdd.software' : location.hostname === 'topple.rdd.software' ? location.origin : '';
 
 // Rewarded ads for hints (Google AdSense, H5 Games Ads / Ad Placement API).
@@ -19,7 +19,7 @@ if (TOPPLE_IN_APP) window.TOPPLE_ADS = { client: '', test: false, simulate: fals
 window.TOPPLE_IOS_APP_ID = '';
 
 // Safari on iPhone/iPad: Smart App Banner (open or download the app) on the web pages.
-if (window.TOPPLE_IOS_APP_ID && location.protocol !== 'topple:' && document.head) {
+if (window.TOPPLE_IOS_APP_ID && !TOPPLE_IN_APP && document.head) {
   const m = document.createElement('meta');
   m.name = 'apple-itunes-app';
   m.content = 'app-id=' + window.TOPPLE_IOS_APP_ID;

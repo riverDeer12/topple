@@ -263,7 +263,7 @@ async function boards() {
 ['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = `<li class="empty">${esc(t('home.loading'))}</li>`; });
 boards();
 // App Store badge (official artwork from Apple's marketing tools) once the app is live, not inside the app.
-if (window.TOPPLE_IOS_APP_ID && location.protocol !== 'topple:') {
+if (window.TOPPLE_IOS_APP_ID && !TOPPLE_IN_APP) {
   const loc = { hr: 'hr-hr', en: 'en-us', it: 'it-it', de: 'de-de' }[ToppleI18n.lang] || 'en-us';
   const a = $('appStore');
   a.href = 'https://apps.apple.com/app/id' + window.TOPPLE_IOS_APP_ID;

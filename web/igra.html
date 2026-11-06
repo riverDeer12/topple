@@ -579,7 +579,11 @@ function needAccount(what) {
 }
 // iOS app (ios/): the game runs from the app bundle (topple:// scheme) and asks the app for
 // native features: haptics, sharing, the daily reminder (local notification) and Game Center.
-const APP = location.protocol === 'topple:' && window.webkit && webkit.messageHandlers && webkit.messageHandlers.topple;
+// Android app (android/): the same messages through window.ToppleAndroid; sign-in with Apple or
+// Google, Topple Plus and Game Center are iOS only (IOS_APP).
+const IOS_APP = location.protocol === 'topple:' && window.webkit && webkit.messageHandlers && webkit.messageHandlers.topple;
+const ANDROID_APP = !IOS_APP && window.ToppleAndroid && { postMessage: m => window.ToppleAndroid.post(JSON.stringify(m)) };
+const APP = IOS_APP || ANDROID_APP || null;
 const native = msg => { try { if (APP) APP.postMessage(msg); } catch (e) {} };
 const buzz = ms => {
   if (APP) return native({ type: 'haptic', style: Array.isArray(ms) ? 'success' : ms >= 20 ? 'medium' : 'light' });
@@ -589,7 +593,15 @@ const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => ToppleI18n.plural.moves(n);
-const showOnly = id => ['menuBox', 'loginBox', 'resetBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'achBox', 'plusBox', 'hintBox', 'adBox'].forEach(b => { $(b).hidden = b !== id; });
+const BOXES = ['menuBox', 'loginBox', 'resetBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'achBox', 'plusBox', 'hintBox', 'adBox'];
+const showOnly = id => BOXES.forEach(b => { $(b).hidden = b !== id; });
+// Android back button (android/): closes the open window and returns true; false lets the app go to the background.
+window.toppleBack = () => {
+  const open = BOXES.find(b => !$(b).hidden);
+  if (!open || (open === 'menuBox' && !ctx)) return false;
+  if (ctx) showOnly(null); else openMenu();
+  return true;
+};
 
 // --- layout & rendering ------------------------------------------------------
 function layout() {
@@ -1036,8 +1048,8 @@ function openLogin() {
   setLoginTab(imported ? 'register' : loginTab);
   if (imported && !$('lName').value) $('lName').value = imported;
   showOnly('loginBox');
-  googleButton($('gBtn')); $('gOr').hidden = !(googleId || APP) || !online;
-  $('appSign').hidden = !APP || !online; $('googleAppBtn').hidden = !googleIos;
+  googleButton($('gBtn')); $('gOr').hidden = !(googleId || IOS_APP) || !online;
+  $('appSign').hidden = !IOS_APP || !online; $('googleAppBtn').hidden = !googleIos;
   if (online) (loginTab === 'register' ? $('lName') : $('lLogin')).focus();
 }
 // --- forgotten password: ask for a link by e-mail, then set a new password from the link ---
@@ -1388,7 +1400,7 @@ function reportAd(kind) {
   if (signedInNow()) headers.Authorization = 'Bearer ' + user.token;
   fetch(API + '/api/ad', { method: 'POST', headers, body: JSON.stringify({ kind, guest: signedInNow() ? undefined : guestId() }), keepalive: true }).catch(() => {});
 }
-function plusMenuSub() { $('mPlus').hidden = !APP; $('mPlusSub').textContent = plus ? t('plus.ownedShort') : t('plus.sub'); }
+function plusMenuSub() { $('mPlus').hidden = !IOS_APP; $('mPlusSub').textContent = plus ? t('plus.ownedShort') : t('plus.sub'); }
 function openPlus() {
   $('plusStatus').textContent = plus ? t('plus.owned') : '';
   $('plusBuy').hidden = plus;
@@ -1432,7 +1444,7 @@ function openHintShop() {
   $('adStatus').textContent = '';
   const btn = $('adBtn');
   btn.hidden = !ADS.client && ADS.simulate === false;
-  $('shopPlus').hidden = !APP;
+  $('shopPlus').hidden = !IOS_APP;
   btn.disabled = true; btn.onclick = null;
   showOnly('hintBox');
   reportAd('shop');
@@ -1489,7 +1501,7 @@ function setSkin(id) {
 }
 // Game Center (app only): total stars and endless puzzles solved, and earned achievements.
 function gameCenter() {
-  if (!APP) return;
+  if (!IOS_APP) return;
   native({ type: 'gc', stars: Object.values(best).reduce((a, b) => a + b, 0), endless: prog.endless.next - 1, achievements: earned() });
 }
 // --- daily streak, achievements, sharing -----------------------------------------------
@@ -1714,7 +1726,7 @@ function start() {
 }
 start();
 // Offline play: the service worker keeps the game files; results go to the server when the connection is back.
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol !== 'file:' && !TOPPLE_IN_APP) navigator.serviceWorker.register('sw.js').catch(() => {});
 window.addEventListener('online', () => { sync(); reportGuest(); });
 </script>
 </body>

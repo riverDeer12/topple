@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older: back up the game's progress (WebView local storage lives in app_webview). -->
+<full-backup-content>
+    <include domain="root" path="app_webview/" />
+    <exclude domain="root" path="app_webview/Default/Cache/" />
+    <exclude domain="root" path="app_webview/Default/Code Cache/" />
+</full-backup-content>
