@@ -68,6 +68,7 @@ class MainActivity : ComponentActivity() {
             WebView.setWebContentsDebuggingEnabled(true) // chrome://inspect on the computer
         }
         createWebView()
+        AppleSignIn.result(this, intent?.data)?.let { pendingSignIn = it }
 
         // Back: the game closes its open window (menu, leaderboard...); otherwise the app goes to the background.
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -117,11 +118,17 @@ class MainActivity : ComponentActivity() {
                 return true
             }
 
+            override fun onPageFinished(view: WebView, url: String) {
+                pageReady = true
+                pendingSignIn?.let { pendingSignIn = null; signedIn(it) }
+            }
+
             // The web content process can be ended by Android when memory is low: start the game again.
             override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
                 root.removeView(view)
                 view.destroy()
                 web = null
+                pageReady = false
                 createWebView()
                 return true
             }
@@ -141,17 +148,32 @@ class MainActivity : ComponentActivity() {
             "haptic" -> web?.let { Haptics.play(it, msg.optString("style", "light")) }
             "share" -> Share.present(this, msg.optString("text"))
             "remind" -> remind(msg)
-            "signin" -> if (msg.optString("provider") == "google") {
-                GoogleSignIn.start(this, msg.optString("clientId")) { result ->
-                    web?.evaluateJavascript("window.toppleSignedIn && toppleSignedIn($result)", null)
-                }
+            "signin" -> when (msg.optString("provider")) {
+                "google" -> GoogleSignIn.start(this, msg.optString("clientId")) { signedIn(it) }
+                "apple" -> AppleSignIn.start(this, msg.optString("clientId")) { signedIn(it) }
             }
             "plus" -> Store.handle(this, msg.optString("action", "status")) { result ->
                 web?.evaluateJavascript("window.topplePlus && topplePlus($result)", null)
             }
             "gc" -> GamesServices.report(this, msg) // achievements and leaderboards (Google Play Games)
-            // Not on Android: Apple sign-in.
         }
+    }
+
+    // Sign-in result for the game; kept until the page has loaded (the app may have been closed
+    // while Apple's sign-in page was open).
+    private var pendingSignIn: JSONObject? = null
+    private var pageReady = false
+
+    private fun signedIn(result: JSONObject) {
+        val w = web
+        if (w == null || !pageReady) { pendingSignIn = result; return }
+        w.evaluateJavascript("window.toppleSignedIn && toppleSignedIn($result)", null)
+    }
+
+    // Back from Apple's sign-in page (software.rdd.topple://apple?...).
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        AppleSignIn.result(this, intent.data)?.let { signedIn(it) }
     }
 
     private fun remind(msg: JSONObject) {

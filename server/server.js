@@ -3,7 +3,7 @@
 // Every submitted solution is replayed with web/core.js before it is stored,
 // so a score can only be recorded by actually solving the puzzle.
 //
-// Env: PORT (8787), HOST (127.0.0.1), DB_PATH (server/topple.db), TZ_GAME (Europe/Zagreb), GOOGLE_CLIENT_ID,
+// Env: PORT (8787), HOST (127.0.0.1), DB_PATH (server/topple.db), TZ_GAME (Europe/Zagreb), GOOGLE_CLIENT_ID, APPLE_SERVICE_ID,
 //      SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM (password reset e-mails, see mail.js), PUBLIC_URL,
 //      ALLOWED_ORIGIN (* or a comma-separated list, e.g. https://topple.rdd.software,http://localhost:8080)
 const http = require('http');
@@ -259,6 +259,12 @@ let GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 // (identity tokens for the app's bundle ID, APPLE_BUNDLE_ID).
 const GOOGLE_IOS_CLIENT_IDS = (process.env.GOOGLE_IOS_CLIENT_ID || '').split(',').map(x => x.trim()).filter(Boolean);
 let APPLE_AUDS = (process.env.APPLE_BUNDLE_ID || 'software.rdd.topple').split(',').map(x => x.trim()).filter(Boolean);
+// Android (and any non-Apple device) signs in with Apple on Apple's web page, for a Services ID
+// (APPLE_SERVICE_ID) whose return URL is <server>/api/apple/callback; empty = not offered.
+let APPLE_SERVICE_ID = process.env.APPLE_SERVICE_ID || '';
+const APP_SCHEME = 'software.rdd.topple'; // the Android app's link: software.rdd.topple://apple
+// Web sign-ins waiting for the app: SHA-256 of the app's secret (sent as `state`) -> verified token.
+const applePending = new Map();
 const googleAuds = () => [GOOGLE_CLIENT_ID, ...GOOGLE_IOS_CLIENT_IDS].filter(Boolean);
 // Public keys of a sign-in provider (JWKS), cached as long as the provider allows.
 function jwks(url) {
@@ -290,7 +296,7 @@ async function verifyIdToken(token, keyOf, issuers, auds) {
   return payload;
 }
 const verifyGoogle = t => verifyIdToken(t, googleKey, ['accounts.google.com', 'https://accounts.google.com'], googleAuds());
-const verifyApple = t => verifyIdToken(t, appleKey, ['https://appleid.apple.com'], APPLE_AUDS);
+const verifyApple = (t, auds = APPLE_AUDS) => verifyIdToken(t, appleKey, ['https://appleid.apple.com'], auds);
 
 // Signs in with a provider account (column google_sub or apple_sub): links it when already
 // signed in, finds the owner, or the account with the same verified e-mail, or makes a new one.
@@ -377,6 +383,14 @@ function readJson(req) {
     req.on('error', reject);
   });
 }
+function readForm(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', c => { data += c; if (data.length > 32768) { reject(new Error('too large')); req.destroy(); } });
+    req.on('end', () => resolve(Object.fromEntries(new URLSearchParams(data))));
+    req.on('error', reject);
+  });
+}
 function userFrom(req) {
   const m = /^Bearer ([A-Za-z0-9_-]{20,100})$/.exec(req.headers.authorization || '');
   const u = m ? db.prepare('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?').get(sha(m[1])) : null;
@@ -446,7 +460,11 @@ function board(mode, date, me, only) {
 function deleteUser(id) {
   // Sign in with Apple: tell Apple the app no longer uses this Apple ID (Apple requires it).
   const ar = db.prepare('SELECT apple_refresh FROM users WHERE id = ?').get(id);
-  if (ar && ar.apple_refresh) appleAuth.revoke(ar.apple_refresh, APPLE_AUDS[0]).catch(e => console.error('Apple revoke failed:', e.message));
+  // Stored as "<client ID> <token>" (or just the token for the iOS app's bundle ID, from before).
+  if (ar && ar.apple_refresh) {
+    const [cid, rt] = ar.apple_refresh.includes(' ') ? ar.apple_refresh.split(' ') : [APPLE_AUDS[0], ar.apple_refresh];
+    appleAuth.revoke(rt, cid).catch(e => console.error('Apple revoke failed:', e.message));
+  }
   db.exec('BEGIN');
   try {
     for (const t of ['campaign', 'daily', 'endless', 'sessions', 'password_resets', 'push_subs']) db.prepare(`DELETE FROM ${t} WHERE user_id = ?`).run(id);
@@ -655,7 +673,7 @@ async function route(req, res) {
     return send(res, 200, { admin, ...adminStats() });
   }
 
-  if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null, googleIos: GOOGLE_IOS_CLIENT_IDS.length > 0, passwordReset: !!mail.config(), pushKey: push.vapidKeys().publicKey, remindHour: REMIND_HOUR });
+  if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null, googleIos: GOOGLE_IOS_CLIENT_IDS.length > 0, passwordReset: !!mail.config(), pushKey: push.vapidKeys().publicKey, remindHour: REMIND_HOUR, appleWeb: APPLE_SERVICE_ID || null });
 
   // Daily reminder: subscribe, unsubscribe, and tell the server today's puzzle is solved.
   if (req.method === 'POST' && p.startsWith('/api/push/')) {
@@ -754,16 +772,44 @@ async function route(req, res) {
     return socialSignIn(req, res, 'google_sub', g.sub, g.email_verified ? cleanEmail(g.email) : '', g.given_name || g.name, guest, { taken: 'google_taken' });
   }
   // Sign in with Apple (iOS app). Apple gives the name only on the very first sign-in, so the app sends it along.
+  // Apple's web sign-in (Android app) returns here (form_post): the token is checked and kept for
+  // a few minutes under `state`, and the browser goes back to the app, which then sends its secret
+  // to /api/apple ({verifier}). The token itself never passes through the app link.
+  if (req.method === 'POST' && p === '/api/apple/callback') {
+    if (limited(req, 'apple', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
+    let form;
+    try { form = await readForm(req); } catch (e) { return send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' }); }
+    const state = /^[A-Za-z0-9_-]{43}$/.test(form.state || '') ? form.state : '';
+    const back = q => { res.writeHead(303, { Location: `${APP_SCHEME}://apple?${new URLSearchParams(q)}`, 'Cache-Control': 'no-store' }); res.end(); };
+    if (!state) return send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' });
+    if (form.error) return back({ state, error: form.error === 'user_cancelled_authorize' ? 'cancel' : 'failed' });
+    const a = APPLE_SERVICE_ID ? await verifyApple(form.id_token, [APPLE_SERVICE_ID]) : null;
+    if (!a) return back({ state, error: 'failed' });
+    let name = '';
+    try { const n = JSON.parse(form.user || '{}').name || {}; name = [n.firstName, n.lastName].filter(Boolean).join(' '); } catch (e) {}
+    const now = Date.now();
+    for (const [k, v] of applePending) if (now - v.at > 10 * 60e3) applePending.delete(k);
+    if (applePending.size < 1000) applePending.set(state, { a, code: form.code || '', name, at: now });
+    return back({ state });
+  }
+
   if (req.method === 'POST' && p === '/api/apple') {
     if (limited(req, 'apple', 20, 15 * 60e3)) return send(res, 429, { error: 'Previše pokušaja, pokušaj za 15 minuta.', code: 'too_many_15' });
-    const { identityToken, code, name, guest } = await readJson(req);
-    const a = await verifyApple(identityToken);
+    let { identityToken, code, name, guest, verifier } = await readJson(req);
+    let a;
+    if (verifier !== undefined) { // web sign-in finished in /api/apple/callback
+      const key = crypto.createHash('sha256').update(String(verifier)).digest('base64url');
+      const w = applePending.get(key);
+      applePending.delete(key);
+      a = w && Date.now() - w.at <= 10 * 60e3 ? w.a : null;
+      if (a) { code = w.code; name = w.name; }
+    } else a = await verifyApple(identityToken);
     if (!a) return send(res, 401, { error: 'Prijava s Appleom nije uspjela.', code: 'apple_failed' });
     const verified = a.email_verified === true || a.email_verified === 'true';
     socialSignIn(req, res, 'apple_sub', a.sub, verified ? cleanEmail(a.email) : '', String(name || '').slice(0, 40), guest, { taken: 'apple_taken' });
     // The one-time code becomes a refresh token, kept only to revoke the sign-in on account deletion.
     if (typeof code === 'string' && code.length < 1000) {
-      appleAuth.exchange(code, a.aud).then(rt => { if (rt) db.prepare('UPDATE users SET apple_refresh = ? WHERE apple_sub = ?').run(rt, a.sub); })
+      appleAuth.exchange(code, a.aud).then(rt => { if (rt) db.prepare('UPDATE users SET apple_refresh = ? WHERE apple_sub = ?').run(a.aud + ' ' + rt, a.sub); })
         .catch(e => console.error('Apple code exchange failed:', e.message));
     }
     return;
@@ -945,5 +991,5 @@ if (require.main === module) {
 }
 // Test hook: use local keys and client ID instead of Google's.
 function setGoogleForTests(keys, clientId) { googleKey = async kid => keys[kid]; GOOGLE_CLIENT_ID = clientId; }
-function setAppleForTests(keys, bundleId) { appleKey = async kid => keys[kid]; APPLE_AUDS = [bundleId]; }
+function setAppleForTests(keys, bundleId, serviceId = '') { appleKey = async kid => keys[kid]; APPLE_AUDS = [bundleId]; APPLE_SERVICE_ID = serviceId; }
 module.exports = { server, sendReminders, deleteUser, replay, puzzle, db, setGoogleForTests, setAppleForTests, hashPassword, checkPassword, EMAIL_RE, cleanEmail, validPassword };
