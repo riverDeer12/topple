@@ -3,16 +3,18 @@
 // sizes App Store Connect wants: iPhone 6.9" (1320 × 2868) and iPad 13" (2064 × 2752), for
 // hr, en-US, it and de-DE. Sample progress and leaderboard data are filled in.
 // Needs Playwright with Chromium (npx playwright install chromium). Output: ios/screenshots/<locale>/.
+// With --android: Google Play phone screenshots (1080 × 2160) in android/store/<locale>/.
 //
-//   node ios/tools/make-screenshots.js [--no-ipad]
+//   node ios/tools/make-screenshots.js [--no-ipad] [--android]
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
 const WEB = path.join(__dirname, '..', '..', 'web');
-const OUT = path.join(__dirname, '..', 'screenshots');
+const ANDROID = process.argv.includes('--android');
+const OUT = ANDROID ? path.join(__dirname, '..', '..', 'android', 'store') : path.join(__dirname, '..', 'screenshots');
 const LANGS = { hr: 'hr', 'en-US': 'en', it: 'it', 'de-DE': 'de' };
-const DEVICES = [
+const DEVICES = ANDROID ? [{ name: 'phone', width: 360, height: 720, scale: 3, touch: true }] : [ // 1080 × 2160
   { name: 'iphone', width: 440, height: 956, scale: 3 },      // 1320 × 2868
   { name: 'ipad', width: 1032, height: 1376, scale: 2, touch: true }, // 2064 × 2752
 ];
