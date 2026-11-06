@@ -13,7 +13,9 @@ Igra zna da je u Android aplikaciji po `window.ToppleAndroid` (`ANDROID_APP` u `
 
 Prijava: korisničko ime ili e-mail i **Google** (nativni izbornik računa, Credential Manager, `GoogleSignIn.kt`). Aplikacija dobiva ID tokena za serverov web client ID (`/api/config`), pa ga server provjerava kao prijavu s weba (`/api/google`), bez promjena na serveru.
 
-Još nije na Androidu: prijava s Appleom, Topple Plus (Google Play Billing) i Google Play Games. U aplikaciji nema web reklama, kao ni na iOS-u.
+**Topple Plus**: jednokratna kupnja na Google Playu (Play Billing, `Store.kt`), ista kao na iOS-u: neograničeni savjeti, ponuda u izborniku i kad nestane savjeta. Aplikacija šalje igri `window.topplePlus({owned, price, play})`, a igra serveru token kupnje (`/api/plus {play: {token}}`); server ga provjerava s Google Play Developer API-jem (`server/play.js`) i daje oznaku PLUS, a povrat novca je briše.
+
+Još nije na Androidu: prijava s Appleom i Google Play Games. U aplikaciji nema web reklama, kao ni na iOS-u.
 
 Svaka promjena web igre ulazi u sljedeći build: `web/` se kopira u aplikaciju pri svakom buildu (bez `admin/`).
 
@@ -27,6 +29,20 @@ Google prepoznaje aplikaciju po nazivu paketa i SHA-1 otisku certifikata kojim j
 | Google Play (testiranje i objava) | `software.rdd.topple` | Play Console → Test and release → Setup → **App signing** → *App signing key certificate* → SHA-1 |
 
 Client ID Android klijenta ne upisuje se nikamo. Debug ključ je `app/debug.keystore` (u gitu, standardne lozinke `android`, nije tajna), pa svi debug buildovi imaju isti otisak. Ako Google prijava javi grešku, najčešće otisak ili naziv paketa nije upisan ili OAuth zaslon za pristanak nije objavljen (In production).
+
+## Topple Plus na Google Playu (jednom)
+
+1. **Payments profile** u Play Consoleu (Setup → Payments profile), kao Paid Apps Agreement kod Applea; treba za svaku naplatu.
+2. Proizvod se može napraviti tek kad je u Play Consoleu barem jedan build s Play Billingom (bilo koji uploadani `.aab` iz ove verzije). Zatim: **Monetize with Play → Products → One-time products → Create**:
+   - Product ID: `software.rdd.topple.plus` (isti kao na iOS-u, ne može se promijeniti)
+   - Name: `Topple Plus`, Description: `Neograničeni savjeti u razinama i beskonačnim zagonetkama.` (prijevodi za en, it, de)
+   - cijena (npr. ista kao na App Storeu; Google preračuna za ostale zemlje), pa **Activate**.
+3. **Testiranje bez naplate**: Setup → **License testing** → dodaj svoj Google račun (i testere). Njima kupnja prikaže probnu karticu i ništa ne naplaćuje. Kupnja radi samo u aplikaciji instaliranoj s Google Playa (zatvoreno testiranje), ne u debug APK-u s GitHuba.
+4. **Oznaka PLUS na serveru** (provjera kupnje):
+   - Google Cloud Console (isti projekt kao Google prijava): APIs & Services → Library → **Google Play Android Developer API** → Enable.
+   - IAM & Admin → Service Accounts → **Create service account** (npr. `topple-play`), bez uloga → Keys → Add key → JSON (preuzme se datoteka).
+   - Play Console → **Users and permissions** → Invite new users → e-mail servisnog računa (`…@….iam.gserviceaccount.com`) → App permissions: Topple → **View financial data, orders and cancellation survey responses** → Invite.
+   - Na serveru: `node server/admin.js set-play C:\putanja\topple-play-xxxx.json` (spremi u `play.json` uz bazu, nije u gitu). Dozvole u Play Consoleu ponekad počnu vrijediti tek nakon nekoliko sati.
 
 ## 1. Build bez instalacije ičega (GitHub Actions)
 
@@ -78,9 +94,9 @@ Android Studio → Open → mapa `android/`. Pokreni na mobitelu (USB, uključen
    - Privacy policy: `https://topple.rdd.software/privatnost.html`
    - Ads: **No** (aplikacija nema reklama)
    - App access: dio mogućnosti traži prijavu. Upiši demo račun (isti kao za Apple, `AppReview`) i napomenu da se igra može igrati i kao gost.
-   - Content rating (IARC upitnik): kategorija Puzzle/Game, bez nasilja, kockanja i sl.; korisnici ne razmjenjuju poruke (samo korisničko ime na ljestvici), nema kupnje u ovoj verziji.
+   - Content rating (IARC upitnik): kategorija Puzzle/Game, bez nasilja, kockanja i sl.; korisnici ne razmjenjuju poruke (samo korisničko ime na ljestvici); ima kupnju u aplikaciji (Topple Plus, digitalna roba).
    - Target audience: **13+** (13–15, 16–17, 18+). Ako uključiš mlađe od 13, vrijede stroža pravila za obitelji (Families).
    - Data safety: prikuplja se **korisničko ime, e-mail (po želji, ili iz Google računa kod Google prijave)**, **ID korisnika i anonimni ID gosta**, **aktivnost u aplikaciji** (riješene razine, rezultati, potezi). Svrha: funkcionalnost aplikacije i račun. Ne dijeli se s trećima, šifrirano u prijenosu (HTTPS), korisnik može tražiti brisanje.
    - Account deletion URL: `https://topple.rdd.software/privatnost.html` (opisuje brisanje u profilu i e-mailom); račun se može izbrisati i u igri na webu.
    - Government apps, Financial features, Health: No.
-4. **Store presence → Main store listing**: kratki opis (do 80 znakova), puni opis (do 4000), ikona `store/icon-512.png`, naslovna grafika `store/feature-graphic.png` (1024 × 500) i snimke zaslona `store/<jezik>/0N-phone.png` (1080 × 2160, ponovno: `node ios/tools/make-screenshots.js --android`). Tekstovi mogu biti isti kao za App Store (`ios/AppStore.md`), bez dijelova o Game Centeru i Topple Plusu.
+4. **Store presence → Main store listing**: kratki opis (do 80 znakova), puni opis (do 4000), ikona `store/icon-512.png`, naslovna grafika `store/feature-graphic.png` (1024 × 500) i snimke zaslona `store/<jezik>/0N-phone.png` (1080 × 2160, ponovno: `node ios/tools/make-screenshots.js --android`). Tekstovi mogu biti isti kao za App Store (`ios/AppStore.md`), bez dijela o Game Centeru.

@@ -351,6 +351,46 @@ function solution(level) {
     ok('Topple Plus: verified App Store transaction gives the badge, refund removes it, forgeries rejected');
   }
 
+  // Topple Plus on Android: the purchase token is checked with the Google Play Developer API
+  // (service account JWT -> access token -> purchases.products.get), mocked here.
+  {
+    const playCalls = [], states = { good: 0, pend: 2, refunded: 1 };
+    const playSrv = require('http').createServer((q, res) => { let b = ''; q.on('data', d => { b += d; }); q.on('end', () => {
+      playCalls.push({ url: q.url, auth: q.headers.authorization, form: Object.fromEntries(new URLSearchParams(b)) });
+      res.setHeader('Content-Type', 'application/json');
+      if (q.url === '/token') return res.end(JSON.stringify({ access_token: 'at-1', expires_in: 3600 }));
+      const tok = decodeURIComponent(q.url.split('/tokens/')[1] || '');
+      if (!(tok in states)) { res.writeHead(404); return res.end('{}'); }
+      res.end(JSON.stringify({ purchaseState: states[tok], orderId: 'GPA.1234-' + (tok === 'refunded' ? 'r' : 'g') }));
+    }); });
+    await new Promise(okk => playSrv.listen(0, '127.0.0.1', okk));
+    const base = `http://127.0.0.1:${playSrv.address().port}`;
+    Object.assign(process.env, { PLAY_OAUTH_URL: base + '/token', PLAY_API_URL: base });
+    const playMod = require('../server/play.js');
+    r = await call('/api/plus', { play: { token: 'good' } }, ana); assert.strictEqual(r.body.code, 'plus_invalid', 'not set up: no badge');
+    const rsa = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+    fs.writeFileSync(playMod.configFile(), JSON.stringify({ client_email: 'topple@proj.iam.gserviceaccount.com', private_key: rsa.privateKey.export({ type: 'pkcs8', format: 'pem' }) }));
+    r = await call('/api/plus', { play: { token: 'good' } }, ana); assert.deepStrictEqual(r.body, { plus: true });
+    const tokenCall = playCalls.find(c => c.url === '/token');
+    const [h, pl, sg] = tokenCall.form.assertion.split('.');
+    assert.ok(crypto.verify('sha256', Buffer.from(h + '.' + pl), rsa.publicKey, Buffer.from(sg, 'base64url')), 'assertion signed with the service account key');
+    const claims = JSON.parse(Buffer.from(pl, 'base64url'));
+    assert.strictEqual(claims.iss, 'topple@proj.iam.gserviceaccount.com'); assert.strictEqual(claims.scope, 'https://www.googleapis.com/auth/androidpublisher');
+    const apiCall = playCalls.find(c => c.url.includes('/tokens/'));
+    assert.strictEqual(apiCall.url, '/androidpublisher/v3/applications/software.rdd.topple/purchases/products/software.rdd.topple.plus/tokens/good');
+    assert.strictEqual(apiCall.auth, 'Bearer at-1');
+    r = await call('/api/me', null, ana); assert.strictEqual(r.body.plus, true);
+    r = await call('/api/plus', { play: { token: 'nope' } }, ana); assert.strictEqual(r.body.code, 'plus_invalid', 'unknown token');
+    r = await call('/api/plus', { play: { token: 'pend' } }, ana); assert.strictEqual(r.body.code, 'plus_invalid', 'pending purchase');
+    states.good = 1; // refunded
+    r = await call('/api/plus', { play: { token: 'good' } }, ana); assert.deepStrictEqual(r.body, { plus: false });
+    r = await call('/api/me', null, ana); assert.strictEqual(r.body.plus, false);
+    assert.strictEqual(playCalls.filter(c => c.url === '/token').length, 1, 'access token reused');
+    fs.rmSync(playMod.configFile(), { force: true });
+    playSrv.close();
+    ok('Topple Plus on Android: Google Play purchase checked with the Developer API, refund removes the badge');
+  }
+
   r = await call('/api/admin/stats'); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/login', { user: 'Boss', password: 'dugaLozinka!1' }); assert.strictEqual(r.status, 401);
   r = await call('/api/admin/stats', null, ana); assert.strictEqual(r.status, 401);
