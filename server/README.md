@@ -246,6 +246,7 @@ Ista naredba mijenja lozinku i odjavljuje sve stare prijave tog administratora. 
 | `GOOGLE_CLIENT_ID` | (prazno) | Google OAuth Client ID; prazno = bez gumba „Prijava s Googleom” |
 | `REMIND_HOUR` | `17` | sat (po `TZ_GAME`) kad se šalje podsjetnik za dnevnu zagonetku |
 | `GOOGLE_IOS_CLIENT_ID` | (prazno) | Google OAuth Client ID iOS aplikacije (`install.ps1 -GoogleIosClientId`) |
+| `APPLE_SERVICE_ID` | (prazno) | Apple Services ID za prijavu s Appleom u Android aplikaciji (`install.ps1 -AppleServiceId`, vidi `android/README.md`) |
 | `APPLE_BUNDLE_ID` | `software.rdd.topple` | bundle ID iOS aplikacije za Sign in with Apple |
 | `PUBLIC_URL` | `https://topple.rdd.software` | adresa igre u e-mailu za novu lozinku |
 | `SMTP_HOST` … | (prazno) | umjesto `smtp.json`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` |

@@ -579,8 +579,8 @@ function needAccount(what) {
 }
 // iOS app (ios/): the game runs from the app bundle (topple:// scheme) and asks the app for
 // native features: haptics, sharing, the daily reminder (local notification) and Game Center.
-// Android app (android/): the same messages through window.ToppleAndroid, with Google sign-in,
-// Topple Plus (Google Play) and Google Play Games for "gc"; Apple sign-in is iOS only (IOS_APP).
+// Android app (android/): the same messages through window.ToppleAndroid, with Google and Apple
+// sign-in, Topple Plus (Google Play) and Google Play Games for "gc".
 const IOS_APP = location.protocol === 'topple:' && window.webkit && webkit.messageHandlers && webkit.messageHandlers.topple;
 const ANDROID_APP = !IOS_APP && window.ToppleAndroid && { postMessage: m => window.ToppleAndroid.post(JSON.stringify(m)) };
 const APP = IOS_APP || ANDROID_APP || null;
@@ -1002,13 +1002,13 @@ $('who').addEventListener('click', e => {
 });
 
 // --- sign-in: username or e-mail + password, or Google -------------------------------
-let loginTab = 'login', googleId = null, googleWeb = null, googleLoaded = null; // googleWeb: the server's web client ID, kept for the Android app
+let loginTab = 'login', googleId = null, googleWeb = null, appleWeb = null, googleLoaded = null; // googleWeb, appleWeb: the server's web client IDs for the Android app
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} _.-]{1,15}$/u;
 let resetOn = false; // the server can send password reset e-mails
 let googleIos = false; // the server accepts Google sign-in from the iOS app
 let pushKey = null, remindHour = 17; // public VAPID key and local hour of the daily reminder
 async function loadConfig() {
-  if (API) try { const c = await api('/api/config'); googleId = googleWeb = c.googleClientId; resetOn = !!c.passwordReset; pushKey = c.pushKey || null; remindHour = c.remindHour ?? 17; googleIos = !!c.googleIos; } catch (e) {}
+  if (API) try { const c = await api('/api/config'); googleId = googleWeb = c.googleClientId; resetOn = !!c.passwordReset; pushKey = c.pushKey || null; remindHour = c.remindHour ?? 17; googleIos = !!c.googleIos; appleWeb = c.appleWeb || null; } catch (e) {}
   initRemind();
   $('forgot').hidden = !resetOn || loginTab !== 'login';
 }
@@ -1040,14 +1040,15 @@ function googleButton(el) {
     google.accounts.id.renderButton(el, { theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', locale: 'hr', width: 260 });
   });
 }
-// Native sign-in buttons: Apple and Google in the iOS app, Google in the Android app (with the
-// server's web client ID); on the web, Google's own button (googleButton).
+// Native sign-in buttons: Apple and Google in the iOS app; in the Android app Google (native) and
+// Apple (Apple's web page, finished by the server), with the server's web client IDs;
+// on the web, Google's own button (googleButton).
 function appButtons(online) {
-  const android = !!(ANDROID_APP && googleWeb);
-  $('appSign').hidden = !online || !(IOS_APP || android);
-  $('appleBtn').hidden = !IOS_APP;
+  const android = !!(ANDROID_APP && googleWeb), androidApple = !!(ANDROID_APP && appleWeb);
+  $('appSign').hidden = !online || !(IOS_APP || android || androidApple);
+  $('appleBtn').hidden = !(IOS_APP || androidApple);
   $('googleAppBtn').hidden = IOS_APP ? !googleIos : !android;
-  $('gOr').hidden = !online || !(googleId || IOS_APP || android);
+  $('gOr').hidden = !online || !(googleId || IOS_APP || android || androidApple);
 }
 function openLogin() {
   const online = !!API;
@@ -1133,13 +1134,13 @@ async function onGoogle(credential) {
 }
 $('loginSkip').onclick = () => { store.set('asked', true); openMenu(); };
 // iOS app: Sign in with Apple / Google happen natively (SignIn.swift), which calls back here.
-$('appleBtn').onclick = () => { $('loginErr').textContent = ''; native({ type: 'signin', provider: 'apple' }); };
+$('appleBtn').onclick = () => { $('loginErr').textContent = ''; native({ type: 'signin', provider: 'apple', clientId: appleWeb || '' }); };
 $('googleAppBtn').onclick = () => { $('loginErr').textContent = ''; native({ type: 'signin', provider: 'google', clientId: googleWeb || '' }); };
 window.toppleSignedIn = async d => {
   if (!d || d.error) { if (!d || d.error !== 'cancel') $('loginErr').textContent = t(d && d.error === 'google_off' ? 'srv.google_off' : 'login.socialFailed'); return; }
   try {
     const r = d.provider === 'apple'
-      ? await api('/api/apple', { method: 'POST', body: JSON.stringify({ identityToken: d.token, code: d.code || '', name: d.name || '', guest: guestId() }) })
+      ? await api('/api/apple', { method: 'POST', body: JSON.stringify(d.verifier ? { verifier: d.verifier, guest: guestId() } : { identityToken: d.token, code: d.code || '', name: d.name || '', guest: guestId() }) })
       : await api('/api/google', { method: 'POST', body: JSON.stringify({ credential: d.token, guest: guestId() }) });
     signedIn(r);
   } catch (x) { $('loginErr').textContent = errText(x); }

@@ -17,7 +17,7 @@ Prijava: korisničko ime ili e-mail i **Google** (nativni izbornik računa, Cred
 
 **Google Play Games**: ista postignuća (15) i ljestvice (zvjezdice, beskonačne zagonetke) kao Game Center na iOS-u, iz iste poruke igre (`gc`, `GamesServices.kt`). Igrač se u Play Games prijavi automatski. ID-jevi su u `app/src/main/res/values/games-ids.xml`; dok su prazni, Play Games se ne pokreće.
 
-Nije na Androidu: prijava s Appleom. U aplikaciji nema web reklama, kao ni na iOS-u.
+**Prijava s Appleom**: Apple nema Android SDK, pa aplikacija otvori Appleovu stranicu za prijavu (Custom Tab, `AppleSignIn.kt`) za serverov **Services ID**. Apple pošalje rezultat serveru (`/api/apple/callback`), server ga provjeri i vrati preglednik u aplikaciju (`software.rdd.topple://apple`), a igra se prijavi tajnom koju zna samo aplikacija (`/api/apple {verifier}`). Gumb se pokaže tek kad je na serveru postavljen `APPLE_SERVICE_ID`. U aplikaciji nema web reklama, kao ni na iOS-u.
 
 Svaka promjena web igre ulazi u sljedeći build: `web/` se kopira u aplikaciju pri svakom buildu (bez `admin/`).
 
@@ -31,6 +31,16 @@ Google prepoznaje aplikaciju po nazivu paketa i SHA-1 otisku certifikata kojim j
 | Google Play (testiranje i objava) | `software.rdd.topple` | Play Console → Test and release → Setup → **App signing** → *App signing key certificate* → SHA-1 |
 
 Client ID Android klijenta ne upisuje se nikamo. Debug ključ je `app/debug.keystore` (u gitu, standardne lozinke `android`, nije tajna), pa svi debug buildovi imaju isti otisak. Ako Google prijava javi grešku, najčešće otisak ili naziv paketa nije upisan ili OAuth zaslon za pristanak nije objavljen (In production).
+
+## Prijava s Appleom (jednom)
+
+1. developer.apple.com → Certificates, Identifiers & Profiles → **Identifiers → +** → **Services IDs** → Description `Topple Sign in`, Identifier `software.rdd.topple.signin` → Register.
+2. Otvori taj Services ID → uključi **Sign in with Apple** → Configure: Primary App ID `software.rdd.topple`, Domains `topple.rdd.software`, Return URLs `https://topple.rdd.software/api/apple/callback` → Save → Continue → Save.
+3. Na serveru (PowerShell kao Administrator) ponovno pokreni instalacijsku skriptu sa Services ID-jem; ranije postavljeni Google ID-jevi ostaju:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File C:\inetpub\wwwroot\topple\server\install.ps1 -AppleServiceId "software.rdd.topple.signin"
+   ```
+   Ključ za poništavanje prijave (`admin.js set-apple`) vrijedi i za ovo, jer je Services ID vezan uz isti App ID.
 
 ## Topple Plus na Google Playu (jednom)
 

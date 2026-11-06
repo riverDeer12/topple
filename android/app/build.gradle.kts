@@ -82,6 +82,8 @@ dependencies {
     implementation("com.android.billingclient:billing:8.0.0")
     // Google Play Games Services: achievements and leaderboards
     implementation("com.google.android.gms:play-services-games-v2:20.1.2")
+    // Sign in with Apple: Apple's page in a Custom Tab
+    implementation("androidx.browser:browser:1.8.0")
     // Sign in with Google (Credential Manager)
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")

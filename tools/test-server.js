@@ -310,8 +310,25 @@ function solution(level) {
   assert.ok(rv && rv.form.token === 'rt-123' && rv.form.client_id === 'software.rdd.topple' && rv.form.token_type_hint === 'refresh_token', 'revoked at Apple');
   r = await call('/api/apple', { identityToken: ajwt({ sub: 'ap2', email: 'n@example.com', email_verified: true }), code: 'c-1', name: 'Nora' }); assert.strictEqual(r.status, 201);
   for (let k = 0; k < 50 && !adb.prepare("SELECT apple_refresh FROM users WHERE apple_sub = 'ap2'").get().apple_refresh; k++) await new Promise(okk => setTimeout(okk, 20));
-  assert.strictEqual(adb.prepare("SELECT apple_refresh FROM users WHERE apple_sub = 'ap2'").get().apple_refresh, 'rt-123', 'code exchanged for a refresh token');
+  assert.strictEqual(adb.prepare("SELECT apple_refresh FROM users WHERE apple_sub = 'ap2'").get().apple_refresh, 'software.rdd.topple rt-123', 'code exchanged for a refresh token');
   assert.strictEqual(appleCalls.find(c => c.url === '/auth/token').form.code, 'c-1');
+  // Android: Apple's web sign-in for the Services ID, finished through /api/apple/callback.
+  setAppleForTests({ a1: ak.publicKey }, 'software.rdd.topple', 'software.rdd.topple.web');
+  r = await call('/api/config'); assert.strictEqual(r.body.appleWeb, 'software.rdd.topple.web');
+  const verifier = crypto.randomBytes(32).toString('base64url'), state = crypto.createHash('sha256').update(verifier).digest('base64url');
+  const form = f => fetch(base + '/api/apple/callback', { method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(f) });
+  let cb = await form({ state, id_token: ajwt({ sub: 'ap3' }), code: 'c-2' });
+  assert.strictEqual(cb.status, 303); assert.ok(cb.headers.get('location').endsWith('error=failed'), 'token for another client rejected');
+  cb = await form({ state, error: 'user_cancelled_authorize' }); assert.strictEqual(cb.headers.get('location'), `software.rdd.topple://apple?state=${state}&error=cancel`);
+  cb = await form({ state: 'bad', id_token: 'x' }); assert.strictEqual(cb.status, 400);
+  cb = await form({ state, id_token: ajwt({ sub: 'ap3', email: 'w@example.com', email_verified: 'true' }, 'software.rdd.topple.web'), code: 'c-2', user: JSON.stringify({ name: { firstName: 'Vid', lastName: 'K' } }) });
+  assert.strictEqual(cb.headers.get('location'), `software.rdd.topple://apple?state=${state}`);
+  r = await call('/api/apple', { verifier: 'wrong' }); assert.strictEqual(r.status, 401);
+  r = await call('/api/apple', { verifier, guest: undefined }); assert.strictEqual(r.status, 201); assert.strictEqual(r.body.name, 'Vid K');
+  r = await call('/api/apple', { verifier }); assert.strictEqual(r.status, 401, 'a web sign-in is used once');
+  for (let k = 0; k < 50 && !adb.prepare("SELECT apple_refresh FROM users WHERE apple_sub = 'ap3'").get().apple_refresh; k++) await new Promise(okk => setTimeout(okk, 20));
+  assert.strictEqual(adb.prepare("SELECT apple_refresh FROM users WHERE apple_sub = 'ap3'").get().apple_refresh, 'software.rdd.topple.web rt-123', 'refresh token kept with its client ID');
+  ok('Apple on Android: web sign-in through the callback, then the app\'s secret signs in once');
   appleSrv.close();
   ok('Apple: code exchanged at sign-in, sign-in revoked when the account is deleted');
 
@@ -400,16 +417,16 @@ function solution(level) {
   const adm = r.body.token;
   r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 200);
   const st = r.body;
-  assert.strictEqual(st.totals.users, 7); assert.strictEqual(st.totals.converted, 1); assert.strictEqual(st.totals.guests, 0);
+  assert.strictEqual(st.totals.users, 8); assert.strictEqual(st.totals.converted, 1); assert.strictEqual(st.totals.guests, 0);
   assert.ok(st.online.users >= 1); assert.strictEqual(st.days.length, 14); assert.strictEqual(st.days[13].date, st.today);
-  assert.ok(st.days[13].players >= 2); assert.strictEqual(st.days[13].daily, 2); assert.strictEqual(st.days[13].newUsers, 7);
+  assert.ok(st.days[13].players >= 2); assert.strictEqual(st.days[13].daily, 2); assert.strictEqual(st.days[13].newUsers, 8);
   assert.strictEqual(st.levels.length, LEVELS.length); assert.strictEqual(st.levels[9].players, 1);
   const d3 = st.difficulty[2];
   assert.deepStrictEqual([d3.started, d3.solved, d3.attempts, d3.hints, d3.extraMoves, d3.medianTimeS, d3.perfect], [2, 1, 2, 1, 2, 61, 0]);
   assert.strictEqual(st.difficulty.length, LEVELS.length);
   assert.deepStrictEqual([st.ads.shop[3], st.ads.viewed[0], st.ads.sim[1], st.ads.players[2]], [2, 1, 1, 1]);
   assert.strictEqual(st.days[13].ads, 1); assert.strictEqual(st.days[13].adsSim, 1);
-  assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 7);
+  assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 8);
   assert.ok(!JSON.stringify(st).includes('password_hash') && !JSON.stringify(st).includes('@'), 'no secrets or e-mails in admin stats');
   r = await call('/api/admin/logout', {}, adm); r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 401);
   ok('admin: sign-in from the admins table, stats, logout');
