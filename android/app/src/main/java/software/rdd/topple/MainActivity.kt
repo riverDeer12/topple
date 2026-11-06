@@ -140,7 +140,12 @@ class MainActivity : ComponentActivity() {
             "haptic" -> web?.let { Haptics.play(it, msg.optString("style", "light")) }
             "share" -> Share.present(this, msg.optString("text"))
             "remind" -> remind(msg)
-            // Not on Android yet: Game Center ("gc"), native sign-in ("signin"), Topple Plus ("plus").
+            "signin" -> if (msg.optString("provider") == "google") {
+                GoogleSignIn.start(this, msg.optString("clientId")) { result ->
+                    web?.evaluateJavascript("window.toppleSignedIn && toppleSignedIn($result)", null)
+                }
+            }
+            // Not on Android yet: Game Center ("gc"), Apple sign-in, Topple Plus ("plus").
         }
     }
 
