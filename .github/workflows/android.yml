@@ -1,0 +1,51 @@
+name: Android app
+# Builds the Android app (android/) with the web game inside it.
+# Always: a debug APK to install on a phone for testing.
+# With the upload key in the repository secrets (see android/README.md): a signed .aab for Google Play.
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['android/**', 'web/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Debug APK
+        run: ./gradlew --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: topple-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Signed bundle for Google Play
+        if: env.HAS_KEY == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          TOPPLE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          TOPPLE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          TOPPLE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          TOPPLE_KEYSTORE="$RUNNER_TEMP/upload.jks" ./gradlew --no-daemon bundleRelease
+          rm -f "$RUNNER_TEMP/upload.jks"
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('android/app/build/outputs/bundle/release/app-release.aab') != ''
+        with:
+          name: topple-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab

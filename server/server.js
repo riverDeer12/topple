@@ -18,9 +18,9 @@ const PUZZLES = require('../web/puzzles.js');
 const PORT = Number(process.env.PORT || 8787);
 const ORIGINS = (process.env.ALLOWED_ORIGIN || '*').split(',').map(s => s.trim().replace(/\/+$/, '')).filter(Boolean);
 // Echo the caller's origin when it is on the list (CORS allows only one value per response).
-// The iOS app's web view has the origin topple://app and is always allowed.
-const APP_ORIGIN = 'topple://app';
-const corsOrigin = req => ORIGINS.includes('*') ? '*' : (ORIGINS.includes(req.headers.origin) || req.headers.origin === APP_ORIGIN ? req.headers.origin : ORIGINS[0]);
+// The apps' web views are always allowed: iOS topple://app, Android https://appassets.androidplatform.net.
+const APP_ORIGINS = ['topple://app', 'https://appassets.androidplatform.net'];
+const corsOrigin = req => ORIGINS.includes('*') ? '*' : (ORIGINS.includes(req.headers.origin) || APP_ORIGINS.includes(req.headers.origin) ? req.headers.origin : ORIGINS[0]);
 const TZ = process.env.TZ_GAME || 'Europe/Zagreb';
 const db = new DatabaseSync(process.env.DB_PATH || path.join(__dirname, 'topple.db'));
 
