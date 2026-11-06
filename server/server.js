@@ -179,6 +179,8 @@ if (db.prepare('PRAGMA user_version').get().user_version < 12) {
 const plusCheck = require('./plus.js');
 const PLUS_PRODUCT = 'software.rdd.topple.plus', PLUS_SHARE = 6; // one purchase: family sharing, a few accounts
 const appleAuth = require('./apple.js');
+const playCheck = require('./play.js');
+const ANDROID_PACKAGE = process.env.ANDROID_PACKAGE || 'software.rdd.topple';
 const push = require('./push.js');
 const REMIND_HOUR = Number(process.env.REMIND_HOUR || 17); // local time (TZ_GAME) of the daily reminder
 const REMIND = {
@@ -818,16 +820,31 @@ async function route(req, res) {
     return send(res, 200, { ok: true });
   }
 
-  // Topple Plus: the iOS app sends the App Store's signed transaction; the account gets the badge.
+  // Topple Plus: the iOS app sends the App Store's signed transaction (jws), the Android app its
+  // Google Play purchase token (play.token, checked with Google); the account gets the badge.
   if (req.method === 'POST' && p === '/api/plus') {
     const u = userFrom(req);
     if (!u) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
     if (limited(req, 'plus', 30, 15 * 60e3)) return send(res, 429, { error: 'Previše zahtjeva.', code: 'too_many' });
-    const { jws } = await readJson(req);
-    const tx = plusCheck.verifyTransaction(jws);
-    if (!tx || tx.productId !== PLUS_PRODUCT || !APPLE_AUDS.includes(tx.bundleId)) return send(res, 400, { error: 'Kupnja nije potvrđena.', code: 'plus_invalid' });
-    const txId = String(tx.originalTransactionId || tx.transactionId);
-    if (tx.revocationDate) {
+    const { jws, play } = await readJson(req);
+    let txId, revoked = false;
+    if (play) {
+      const token = String(play.token || '');
+      let r = null;
+      try { if (token && token.length < 4096) r = await playCheck.verifyPurchase(ANDROID_PACKAGE, PLUS_PRODUCT, token); } catch (e) {
+        console.error('Google Play check failed:', e.message);
+        return send(res, 502, { error: 'Kupnja nije potvrđena.', code: 'plus_invalid' });
+      }
+      if (!r || r.off || r.state === 'pending') return send(res, 400, { error: 'Kupnja nije potvrđena.', code: 'plus_invalid' });
+      txId = 'gp:' + (r.orderId || crypto.createHash('sha256').update(token).digest('hex').slice(0, 32));
+      revoked = r.state === 'canceled';
+    } else {
+      const tx = plusCheck.verifyTransaction(jws);
+      if (!tx || tx.productId !== PLUS_PRODUCT || !APPLE_AUDS.includes(tx.bundleId)) return send(res, 400, { error: 'Kupnja nije potvrđena.', code: 'plus_invalid' });
+      txId = String(tx.originalTransactionId || tx.transactionId);
+      revoked = !!tx.revocationDate;
+    }
+    if (revoked) {
       db.prepare('UPDATE users SET plus = 0 WHERE plus_tx = ?').run(txId);
       return send(res, 200, { plus: false });
     }

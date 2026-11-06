@@ -7,6 +7,7 @@
 //   node server/admin.js set-smtp <host> <port> <user> <password> "<from>"   (e-mail for "forgot password")
 //   node server/admin.js test-mail <email>                      (sends a test e-mail with those settings)
 //   node server/admin.js set-apple <teamId> <keyId> <path to .p8>  (revokes Sign in with Apple on account deletion)
+//   node server/admin.js set-play <path to service account .json>  (checks Topple Plus bought on Google Play)
 //   node server/admin.js delete <name> [--yes]                  (removes the player and all their data; without --yes only shows what would go)
 // Uses DB_PATH, or --db <path>. On the Windows server: --db C:\inetpub\topple-data\topple.db
 const args = process.argv.slice(2);
@@ -78,6 +79,16 @@ if (cmd === 'list') {
   try { crypto.createPrivateKey(key); } catch (e) { fail('Datoteka nije ispravan .p8 ključ.'); }
   fs.writeFileSync(apple.configFile(), JSON.stringify({ teamId, keyId, key }, null, 2));
   console.log(`Spremljeno u ${apple.configFile()}. Od sada se Apple prijava poništava kod brisanja računa (za prijave nakon ovoga).`);
+} else if (cmd === 'set-play') {
+  const [file] = rest;
+  if (!file) fail('Nedostaje putanja. Primjer: node server/admin.js set-play C:\\Users\\Admin\\Downloads\\topple-play-123abc.json');
+  const fs = require('fs'), crypto = require('crypto'), play = require('./play.js');
+  if (!fs.existsSync(file)) fail(`Nema datoteke ${file}. Upiši pravu putanju do preuzetog JSON ključa servisnog računa.`);
+  let key;
+  try { key = JSON.parse(fs.readFileSync(file, 'utf8')); crypto.createPrivateKey(key.private_key); } catch (e) { fail('Datoteka nije ispravan JSON ključ servisnog računa (treba client_email i private_key).'); }
+  if (!key.client_email) fail('U datoteci nema client_email.');
+  fs.writeFileSync(play.configFile(), JSON.stringify({ client_email: key.client_email, private_key: key.private_key }, null, 2));
+  console.log(`Spremljeno u ${play.configFile()} (${key.client_email}). Od sada server provjerava Topple Plus kupljen na Google Playu.`);
 } else if (cmd === 'delete') {
   const yes = rest.includes('--yes');
   const name = rest.filter(a => a !== '--yes').join(' ');
@@ -89,5 +100,5 @@ if (cmd === 'list') {
   deleteUser(u.id);
   console.log(`Obrisano: ${summary}.`);
 } else {
-  console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | set-admin <ime> <lozinka> | set-smtp <host> <port> <korisnik> <lozinka> <od> | test-mail <email> | set-apple <teamId> <keyId> <p8> | delete <ime> [--yes]   [--db putanja]');
+  console.log('Naredbe: list | stats | set-login <ime> <email> <lozinka> | set-password <ime> <lozinka> | set-admin <ime> <lozinka> | set-smtp <host> <port> <korisnik> <lozinka> <od> | test-mail <email> | set-apple <teamId> <keyId> <p8> | set-play <json> | delete <ime> [--yes]   [--db putanja]');
 }

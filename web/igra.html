@@ -579,8 +579,8 @@ function needAccount(what) {
 }
 // iOS app (ios/): the game runs from the app bundle (topple:// scheme) and asks the app for
 // native features: haptics, sharing, the daily reminder (local notification) and Game Center.
-// Android app (android/): the same messages through window.ToppleAndroid, with Google sign-in;
-// Apple sign-in, Topple Plus and Game Center are iOS only (IOS_APP).
+// Android app (android/): the same messages through window.ToppleAndroid, with Google sign-in and
+// Topple Plus (Google Play); Apple sign-in and Game Center are iOS only (IOS_APP).
 const IOS_APP = location.protocol === 'topple:' && window.webkit && webkit.messageHandlers && webkit.messageHandlers.topple;
 const ANDROID_APP = !IOS_APP && window.ToppleAndroid && { postMessage: m => window.ToppleAndroid.post(JSON.stringify(m)) };
 const APP = IOS_APP || ANDROID_APP || null;
@@ -1284,7 +1284,7 @@ $('lbClose').onclick = () => (ctx && won_ ? showOnly('winBox') : openMenu());
 // --- hints: the next move of a shortest solution from the current position ------------------
 // Players get 3 hints to start and one more each day (up to HINT_MAX). More come from rewarded ads.
 const HINT_START = 3, HINT_DAILY = 1, HINT_MAX = 10;
-// Topple Plus (iOS app, one-time purchase through the App Store): unlimited hints.
+// Topple Plus (one-time purchase in the apps: App Store on iOS, Google Play on Android): unlimited hints.
 // The app tells the game whether it is owned (window.topplePlus); kept locally between launches.
 let plus = store.get('plus', false), plusPrice = '';
 let hints = null, plan = null, hintWorker = null, hintReq = 0;
@@ -1408,7 +1408,7 @@ function reportAd(kind) {
   if (signedInNow()) headers.Authorization = 'Bearer ' + user.token;
   fetch(API + '/api/ad', { method: 'POST', headers, body: JSON.stringify({ kind, guest: signedInNow() ? undefined : guestId() }), keepalive: true }).catch(() => {});
 }
-function plusMenuSub() { $('mPlus').hidden = !IOS_APP; $('mPlusSub').textContent = plus ? t('plus.ownedShort') : t('plus.sub'); }
+function plusMenuSub() { $('mPlus').hidden = !APP; $('mPlusSub').textContent = plus ? t('plus.ownedShort') : t('plus.sub'); }
 function openPlus() {
   $('plusStatus').textContent = plus ? t('plus.owned') : '';
   $('plusBuy').hidden = plus;
@@ -1423,14 +1423,16 @@ $('plusClose').onclick = () => (ctx ? showOnly(null) : openMenu());
 $('plusBuy').onclick = () => { $('plusBuy').disabled = true; $('plusStatus').textContent = t('plus.loading'); native({ type: 'plus', action: 'buy' }); };
 $('plusRestore').onclick = () => { $('plusStatus').textContent = t('plus.loading'); native({ type: 'plus', action: 'restore' }); };
 let plusSent = null; // the transaction already sent to the server this visit
-function sendPlus(jws) {
-  if (!jws || !signedInNow() || !API || plusSent === jws) return;
-  plusSent = jws;
-  api('/api/plus', { method: 'POST', body: JSON.stringify({ jws }) }).catch(() => { plusSent = null; });
+// Proof of the purchase for the server: Apple's signed transaction (iOS) or the Google Play purchase token (Android).
+function sendPlus(d) {
+  const key = d.jws || d.play;
+  if (!key || !signedInNow() || !API || plusSent === key) return;
+  plusSent = key;
+  api('/api/plus', { method: 'POST', body: JSON.stringify(d.jws ? { jws: d.jws } : { play: { token: d.play } }) }).catch(() => { plusSent = null; });
 }
 window.topplePlus = d => {
   const was = plus;
-  if (d.owned) sendPlus(d.jws); // the badge on the account, seen by everyone
+  if (d.owned) sendPlus(d); // the badge on the account, seen by everyone
   plus = !!d.owned; plusPrice = d.price || plusPrice;
   store.set('plus', plus); refreshHints(); plusMenuSub();
   if (!$('plusBox').hidden) {
@@ -1452,7 +1454,7 @@ function openHintShop() {
   $('adStatus').textContent = '';
   const btn = $('adBtn');
   btn.hidden = !ADS.client && ADS.simulate === false;
-  $('shopPlus').hidden = !IOS_APP;
+  $('shopPlus').hidden = !APP;
   btn.disabled = true; btn.onclick = null;
   showOnly('hintBox');
   reportAd('shop');

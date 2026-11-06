@@ -78,6 +78,8 @@ dependencies {
     implementation("androidx.webkit:webkit:1.14.0")
     implementation("androidx.work:work-runtime-ktx:2.10.2")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
+    // Topple Plus (Google Play Billing)
+    implementation("com.android.billingclient:billing:8.0.0")
     // Sign in with Google (Credential Manager)
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")

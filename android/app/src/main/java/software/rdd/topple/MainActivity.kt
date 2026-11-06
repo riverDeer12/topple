@@ -145,7 +145,10 @@ class MainActivity : ComponentActivity() {
                     web?.evaluateJavascript("window.toppleSignedIn && toppleSignedIn($result)", null)
                 }
             }
-            // Not on Android yet: Game Center ("gc"), Apple sign-in, Topple Plus ("plus").
+            "plus" -> Store.handle(this, msg.optString("action", "status")) { result ->
+                web?.evaluateJavascript("window.topplePlus && topplePlus($result)", null)
+            }
+            // Not on Android: Game Center ("gc"), Apple sign-in.
         }
     }
 
