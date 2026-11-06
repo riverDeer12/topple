@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Google Play Games Services IDs, written by android/tools/playgames-upload.js. Empty = not set up. -->
+<resources>
+    <string name="game_services_project_id" translatable="false"></string>
+    <string name="achievement_first" translatable="false"></string>
+    <string name="achievement_levels25" translatable="false"></string>
+    <string name="achievement_levels60" translatable="false"></string>
+    <string name="achievement_levelsAll" translatable="false"></string>
+    <string name="achievement_perfect10" translatable="false"></string>
+    <string name="achievement_perfect50" translatable="false"></string>
+    <string name="achievement_nohint20" translatable="false"></string>
+    <string name="achievement_daily1" translatable="false"></string>
+    <string name="achievement_daily10" translatable="false"></string>
+    <string name="achievement_streak3" translatable="false"></string>
+    <string name="achievement_streak7" translatable="false"></string>
+    <string name="achievement_streak30" translatable="false"></string>
+    <string name="achievement_endless10" translatable="false"></string>
+    <string name="achievement_endless50" translatable="false"></string>
+    <string name="achievement_skins5" translatable="false"></string>
+    <string name="leaderboard_stars" translatable="false"></string>
+    <string name="leaderboard_endless" translatable="false"></string>
+</resources>
