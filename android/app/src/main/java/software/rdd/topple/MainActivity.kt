@@ -63,6 +63,7 @@ class MainActivity : ComponentActivity() {
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
             WindowInsetsCompat.CONSUMED
         }
+        GamesServices.init(this)
         if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             WebView.setWebContentsDebuggingEnabled(true) // chrome://inspect on the computer
         }
@@ -148,7 +149,8 @@ class MainActivity : ComponentActivity() {
             "plus" -> Store.handle(this, msg.optString("action", "status")) { result ->
                 web?.evaluateJavascript("window.topplePlus && topplePlus($result)", null)
             }
-            // Not on Android: Game Center ("gc"), Apple sign-in.
+            "gc" -> GamesServices.report(this, msg) // achievements and leaderboards (Google Play Games)
+            // Not on Android: Apple sign-in.
         }
     }
 

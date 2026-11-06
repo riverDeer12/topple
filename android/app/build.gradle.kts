@@ -80,6 +80,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
     // Topple Plus (Google Play Billing)
     implementation("com.android.billingclient:billing:8.0.0")
+    // Google Play Games Services: achievements and leaderboards
+    implementation("com.google.android.gms:play-services-games-v2:20.1.2")
     // Sign in with Google (Credential Manager)
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")

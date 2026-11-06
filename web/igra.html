@@ -579,8 +579,8 @@ function needAccount(what) {
 }
 // iOS app (ios/): the game runs from the app bundle (topple:// scheme) and asks the app for
 // native features: haptics, sharing, the daily reminder (local notification) and Game Center.
-// Android app (android/): the same messages through window.ToppleAndroid, with Google sign-in and
-// Topple Plus (Google Play); Apple sign-in and Game Center are iOS only (IOS_APP).
+// Android app (android/): the same messages through window.ToppleAndroid, with Google sign-in,
+// Topple Plus (Google Play) and Google Play Games for "gc"; Apple sign-in is iOS only (IOS_APP).
 const IOS_APP = location.protocol === 'topple:' && window.webkit && webkit.messageHandlers && webkit.messageHandlers.topple;
 const ANDROID_APP = !IOS_APP && window.ToppleAndroid && { postMessage: m => window.ToppleAndroid.post(JSON.stringify(m)) };
 const APP = IOS_APP || ANDROID_APP || null;
@@ -1509,9 +1509,9 @@ function setSkin(id) {
   if (ri >= 0 && els[ri]) els[ri].className = els[ri].className.replace(/\bskin-\S+/, 'skin-' + id);
   if (signedInNow()) api('/api/account', { method: 'POST', body: JSON.stringify({ skin: id }) }).catch(() => {});
 }
-// Game Center (app only): total stars and endless puzzles solved, and earned achievements.
+// Game Center / Google Play Games (apps only): total stars and endless puzzles solved, and earned achievements.
 function gameCenter() {
-  if (!IOS_APP) return;
+  if (!APP) return; // iOS: Game Center, Android: Google Play Games
   native({ type: 'gc', stars: Object.values(best).reduce((a, b) => a + b, 0), endless: prog.endless.next - 1, achievements: earned() });
 }
 // --- daily streak, achievements, sharing -----------------------------------------------

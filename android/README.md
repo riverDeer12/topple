@@ -15,7 +15,9 @@ Prijava: korisničko ime ili e-mail i **Google** (nativni izbornik računa, Cred
 
 **Topple Plus**: jednokratna kupnja na Google Playu (Play Billing, `Store.kt`), ista kao na iOS-u: neograničeni savjeti, ponuda u izborniku i kad nestane savjeta. Aplikacija šalje igri `window.topplePlus({owned, price, play})`, a igra serveru token kupnje (`/api/plus {play: {token}}`); server ga provjerava s Google Play Developer API-jem (`server/play.js`) i daje oznaku PLUS, a povrat novca je briše.
 
-Još nije na Androidu: prijava s Appleom i Google Play Games. U aplikaciji nema web reklama, kao ni na iOS-u.
+**Google Play Games**: ista postignuća (15) i ljestvice (zvjezdice, beskonačne zagonetke) kao Game Center na iOS-u, iz iste poruke igre (`gc`, `GamesServices.kt`). Igrač se u Play Games prijavi automatski. ID-jevi su u `app/src/main/res/values/games-ids.xml`; dok su prazni, Play Games se ne pokreće.
+
+Nije na Androidu: prijava s Appleom. U aplikaciji nema web reklama, kao ni na iOS-u.
 
 Svaka promjena web igre ulazi u sljedeći build: `web/` se kopira u aplikaciju pri svakom buildu (bez `admin/`).
 
@@ -43,6 +45,20 @@ Client ID Android klijenta ne upisuje se nikamo. Debug ključ je `app/debug.keys
    - IAM & Admin → Service Accounts → **Create service account** (npr. `topple-play`), bez uloga → Keys → Add key → JSON (preuzme se datoteka).
    - Play Console → **Users and permissions** → Invite new users → e-mail servisnog računa (`…@….iam.gserviceaccount.com`) → App permissions: Topple → **View financial data, orders and cancellation survey responses** → Invite.
    - Na serveru: `node server/admin.js set-play C:\putanja\topple-play-xxxx.json` (spremi u `play.json` uz bazu, nije u gitu). Dozvole u Play Consoleu ponekad počnu vrijediti tek nakon nekoliko sati.
+
+## Google Play Games (jednom)
+
+1. Play Console → aplikacija → **Grow users → Play Games Services → Setup and management → Configuration** → *No, my game doesn't use Google APIs* → naziv `Topple` → Create. Zapiši **Project ID** (broj od 12 znamenki, piše na toj stranici).
+2. Isto mjesto → **Credentials → Add credential → Android**: odaberi Android OAuth klijent iz Google Clouda (onaj za Google Play, SHA-1 *App signing key*). Za probu s debug APK-om dodaj i drugi, s debug SHA-1. Ako ga nema na popisu, napravi ga ovdje.
+3. Servisnom računu (onom za Topple Plus) u Play Consoleu → Users and permissions → Topple dodaj i dozvolu za **Play Games Services** (*Edit and delete draft apps* i *Manage Play Games Services*; ako skripta javi HTTP 403, privremeno mu daj Admin).
+4. Postignuća i ljestvice unese skripta (tekstovi iz `ios/GameCenter.md`, ikone iz `store/achievements/`, 800 bodova od dopuštenih 1000):
+   ```bash
+   node android/tools/playgames-upload.js --dry-run
+   node android/tools/playgames-upload.js --key ~/Downloads/topple-play-xxxx.json --app 123456789012
+   ```
+   Skripta upiše ID-jeve u `app/src/main/res/values/games-ids.xml`. Pošalji tu datoteku u repozitorij (ili je javi meni), pa je u sljedećem buildu.
+   Ručno: Play Games Services → Achievements / Leaderboards → Add, pa **Get resources** (Android XML) i ID-jeve upiši u `games-ids.xml` pod imenima `achievement_<id>` (npr. `achievement_first`) i `leaderboard_stars`, `leaderboard_endless`.
+5. Configuration → **Review and publish**. Dok nije objavljeno, Play Games radi samo za testere upisane pod *Testers* u Play Games Services.
 
 ## 1. Build bez instalacije ičega (GitHub Actions)
 
