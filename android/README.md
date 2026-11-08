@@ -122,7 +122,7 @@ Android Studio → Open → mapa `android/`. Pokreni na mobitelu (USB, uključen
    - App access: dio mogućnosti traži prijavu. Upiši demo račun (isti kao za Apple, `AppReview`) i napomenu da se igra može igrati i kao gost.
    - Content rating (IARC upitnik): kategorija Puzzle/Game, bez nasilja, kockanja i sl.; korisnici ne razmjenjuju poruke (samo korisničko ime na ljestvici); ima kupnju u aplikaciji (Topple Plus, digitalna roba).
    - Target audience: **13+** (13–15, 16–17, 18+). Ako uključiš mlađe od 13, vrijede stroža pravila za obitelji (Families).
-   - Data safety: prikuplja se **korisničko ime, e-mail (po želji, ili iz Google računa kod Google prijave)**, **ID korisnika i anonimni ID gosta**, **aktivnost u aplikaciji** (riješene razine, rezultati, potezi). Svrha: funkcionalnost aplikacije i račun. Ne dijeli se s trećima, šifrirano u prijenosu (HTTPS), korisnik može tražiti brisanje.
-   - Account deletion URL: `https://topple.rdd.software/privatnost.html` (opisuje brisanje u profilu i e-mailom); račun se može izbrisati i u igri na webu.
+   - Data safety: odgovori su gotovi u `store/data_safety.csv` (Data safety → **Import from CSV** → Save); kad se promijeni što aplikacija sprema, izvezi novi CSV i ažuriraj ga.
+   - Account deletion URL: `https://topple.rdd.software/brisanje-racuna.html` (opisuje brisanje u profilu i e-mailom); račun se može izbrisati i u igri na webu.
    - Government apps, Financial features, Health: No.
 4. **Store presence → Main store listing**: kratki opis (do 80 znakova), puni opis (do 4000), ikona `store/icon-512.png`, naslovna grafika `store/feature-graphic.png` (1024 × 500) i snimke zaslona `store/<jezik>/0N-phone.png` (1080 × 2160, ponovno: `node ios/tools/make-screenshots.js --android`). Tekstovi su u `PlayStore.md` (4 jezika); skriptom `node android/tools/playstore-upload.js --key <json> --images` upišu se i tekstovi i grafike.
