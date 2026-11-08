@@ -16,9 +16,13 @@ window.TOPPLE_IOS_APP_ID = '1234567890';
 
 Početna stranica tada pokaže Appleov službeni gumb na jeziku stranice, a Safari na iPhoneu pokaže traku za otvaranje ili preuzimanje aplikacije (Smart App Banner). U samoj aplikaciji se ne prikazuje ništa od toga.
 
+## Gumb „Get it on Google Play”
+
+Kad je Android aplikacija objavljena (produkcija na Google Playu), u `web/config.js` postavi `window.TOPPLE_PLAY_LIVE = true;`. Početna stranica tada pokaže Googleov službeni gumb na jeziku stranice, uz App Store gumb (ne u aplikacijama). Tekstovi za Google Play su u `android/PlayStore.md`.
+
 ## Objave za društvene mreže
 
-Uz objavu priloži video (`ios/previews/<jezik>.mp4`) ili snimku zaslona (`ios/screenshots/<jezik>/01-iphone.png`). Poveznicu zamijeni pravom adresom iz App Storea kad je aplikacija objavljena.
+Uz objavu priloži video (`ios/previews/<jezik>.mp4`) ili snimku zaslona (`ios/screenshots/<jezik>/01-iphone.png`). Poveznicu zamijeni pravom adresom iz App Storea kad je aplikacija objavljena; za Android dodaj https://play.google.com/store/apps/details?id=software.rdd.topple.
 
 ### Hrvatski
 

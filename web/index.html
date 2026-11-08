@@ -39,6 +39,9 @@ h1 { font: 600 clamp(2.6rem, 6vw, 4.2rem) var(--display); line-height: 1; margin
 .cta { display: flex; gap: 12px; flex-wrap: wrap; }
 .appstore { display: inline-flex; align-items: center; }
 .appstore img { height: 50px; width: auto; display: block; }
+/* Google's badge image has a transparent margin of its own; the visible badge matches the App Store one. */
+.playstore { display: inline-flex; align-items: center; margin: -10px -9px; }
+.playstore img { height: 70px; width: auto; display: block; }
 .facts { display: flex; gap: 26px; flex-wrap: wrap; margin-top: 30px; }
 .facts div { display: flex; flex-direction: column; }
 .facts b { font: 500 1.6rem var(--mono); line-height: 1.1; }
@@ -117,6 +120,7 @@ footer { border-top: 1px solid var(--panel-line); padding: 22px 0 32px; color: v
         <a class="btn go" href="igra.html" data-i18n="home.playFree">Igraj besplatno</a>
         <a class="btn alt" href="#ljestvica" data-i18n="home.boardBtn">Ljestvica</a>
         <a class="appstore" id="appStore" hidden rel="noopener"><img alt="Download on the App Store" width="150" height="50"></a>
+        <a class="playstore" id="playStore" hidden rel="noopener"><img alt="Get it on Google Play" width="181" height="70"></a>
       </div>
       <div class="facts" id="facts"></div>
     </div>
@@ -263,6 +267,14 @@ async function boards() {
 ['lbDaily', 'lbEndless', 'lbCampaign'].forEach(id => { $(id).innerHTML = `<li class="empty">${esc(t('home.loading'))}</li>`; });
 boards();
 // App Store badge (official artwork from Apple's marketing tools) once the app is live, not inside the app.
+if (window.TOPPLE_PLAY_LIVE && !TOPPLE_IN_APP) {
+  const hl = { hr: 'hr', en: 'en', it: 'it', de: 'de' }[ToppleI18n.lang] || 'en';
+  const a = $('playStore');
+  a.href = `https://play.google.com/store/apps/details?id=software.rdd.topple&hl=${hl}`;
+  a.querySelector('img').src = `https://play.google.com/intl/en_us/badges/static/images/badges/${hl}_badge_web_generic.png`;
+  a.querySelector('img').alt = 'Google Play';
+  a.hidden = false;
+}
 if (window.TOPPLE_IOS_APP_ID && !TOPPLE_IN_APP) {
   const loc = { hr: 'hr-hr', en: 'en-us', it: 'it-it', de: 'de-de' }[ToppleI18n.lang] || 'en-us';
   const a = $('appStore');

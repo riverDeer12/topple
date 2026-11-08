@@ -18,6 +18,10 @@ if (TOPPLE_IN_APP) window.TOPPLE_ADS = { client: '', test: false, simulate: fals
 // Empty = no App Store badge on the home page yet.
 window.TOPPLE_IOS_APP_ID = '';
 
+// Android app on Google Play: true once it is published (package software.rdd.topple).
+// false = no Google Play badge on the home page yet.
+window.TOPPLE_PLAY_LIVE = false;
+
 // Safari on iPhone/iPad: Smart App Banner (open or download the app) on the web pages.
 if (window.TOPPLE_IOS_APP_ID && !TOPPLE_IN_APP && document.head) {
   const m = document.createElement('meta');
