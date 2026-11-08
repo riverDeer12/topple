@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#24443F">
+<title>Topple · Brisanje računa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lexend:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="theme.css">
+<style>
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--body); line-height: 1.6; }
+main { max-width: 760px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 48px; }
+nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+.logo { font: 600 1.6rem var(--display); text-decoration: none; color: var(--ink); }
+.logo span { color: var(--hero); }
+h1 { font: 600 2rem var(--display); margin: 0 0 4px; }
+h2 { font: 600 1.2rem var(--display); margin: 26px 0 6px; }
+p, li { color: var(--ink); }
+.muted { color: var(--muted); font-size: .9rem; }
+a { color: var(--hero); }
+.langsel { font: 600 .8rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 7px 10px; }
+section[lang] { display: none; }
+section[lang].on { display: block; }
+</style>
+</head>
+<body>
+<main>
+  <nav><a class="logo" href="./">Top<span>ple</span></a><span id="lang"></span></nav>
+
+  <section lang="hr">
+    <h1>Brisanje računa</h1>
+    <p class="muted">Kako izbrisati svoj Topple račun i podatke uz njega (aplikacije za Android i iOS i web topple.rdd.software).</p>
+    <h2>Sam, u igri</h2>
+    <ol><li>Otvori Topple (aplikaciju ili <a href="igra.html">igru u pregledniku</a>) i prijavi se.</li><li>Otvori izbornik (gumb „Izbornik” ispod ploče) i dodirni „profil” uz svoje ime.</li><li>Na dnu profila dodirni „Izbriši račun”.</li><li>Upiši lozinku (ili korisničko ime ako se prijavljuješ Googleom ili Appleom) i potvrdi „Trajno izbriši račun”.</li></ol>
+    <p>Račun se briše odmah i to se ne može poništiti.</p>
+    <h2>E-mailom</h2>
+    <p>Ako ne možeš u igru, pošalji e-mail na <a href="mailto:info@rdd.software?subject=Brisanje%20ra%C4%8Duna">info@rdd.software</a> s adrese povezane s računom i navedi korisničko ime. Račun brišemo u roku od 30 dana i javimo kad je gotovo.</p>
+    <h2>Što se briše</h2>
+    <ul><li>korisničko ime, e-mail, lozinka (hash) i poveznica s Google ili Apple računom; kod Apple prijave poništavamo i dopuštenje kod Applea</li><li>rezultati razina, dnevnih i beskonačnih zagonetki i mjesta na ljestvicama</li><li>prijatelji (i tvoje mjesto na njihovim popisima)</li><li>podaci o pokušajima razina, prijave na uređajima, poveznice za novu lozinku i pretplate na podsjetnik</li><li>oznaka Topple Plus na računu (sama kupnja ostaje na tvom Apple ili Google računu i vraća se gumbom „Vrati prijašnju kupnju”)</li></ul>
+    <h2>Što ostaje i koliko dugo</h2>
+    <ul><li>sigurnosne kopije baze: najviše 30 dana, zatim se brišu same</li><li>brojke bez veze s tobom (npr. ukupan broj prikazanih reklama) i anonimni napredak igranja kao gost, bez imena i e-maila</li><li>napredak spremljen na tvom uređaju, dok ne izbrišeš aplikaciju ili podatke preglednika; možeš nastaviti igrati kao gost</li></ul>
+    <p class="muted">Više u <a href="privatnost.html">pravilima privatnosti</a>.</p>
+  </section>
+  <section lang="en">
+    <h1>Delete your account</h1>
+    <p class="muted">How to delete your Topple account and the data that goes with it (Android and iOS apps and the web at topple.rdd.software).</p>
+    <h2>Yourself, in the game</h2>
+    <ol><li>Open Topple (the app or the <a href="igra.html">game in your browser</a>) and sign in.</li><li>Open the menu (the “Menu” button below the board) and tap “profile” next to your name.</li><li>At the bottom of the profile, tap “Delete account”.</li><li>Enter your password (or your username if you sign in with Google or Apple) and confirm “Delete account for good”.</li></ol>
+    <p>The account is deleted immediately and this cannot be undone.</p>
+    <h2>By e-mail</h2>
+    <p>If you cannot get into the game, e-mail <a href="mailto:info@rdd.software?subject=Delete%20account">info@rdd.software</a> from the address linked to your account and include your username. We delete the account within 30 days and let you know when it is done.</p>
+    <h2>What is deleted</h2>
+    <ul><li>username, e-mail, password (hash) and the link to your Google or Apple account; for Sign in with Apple we also revoke the permission at Apple</li><li>results of levels, daily and endless puzzles, and leaderboard places</li><li>friends (and your place on their lists)</li><li>level attempt data, device sign-ins, password reset links and reminder subscriptions</li><li>the Topple Plus badge on the account (the purchase itself stays with your Apple or Google account and comes back with “Restore purchase”)</li></ul>
+    <h2>What is kept, and for how long</h2>
+    <ul><li>database backups: at most 30 days, then they are deleted automatically</li><li>numbers not linked to you (e.g. the total number of ads shown) and anonymous guest play progress, without name or e-mail</li><li>progress stored on your device, until you delete the app or browser data; you can keep playing as a guest</li></ul>
+    <p class="muted">More in the <a href="privatnost.html">privacy policy</a>.</p>
+  </section>
+  <section lang="it">
+    <h1>Eliminare l’account</h1>
+    <p class="muted">Come eliminare il tuo account Topple e i dati collegati (app Android e iOS e web su topple.rdd.software).</p>
+    <h2>Da solo, nel gioco</h2>
+    <ol><li>Apri Topple (l’app o il <a href="igra.html">gioco nel browser</a>) e accedi.</li><li>Apri il menu (il pulsante “Menu” sotto il tabellone) e tocca “profilo” accanto al tuo nome.</li><li>In fondo al profilo tocca “Elimina account”.</li><li>Inserisci la password (o il nome utente se accedi con Google o Apple) e conferma “Elimina l’account per sempre”.</li></ol>
+    <p>L’account viene eliminato subito e non si può annullare.</p>
+    <h2>Via e-mail</h2>
+    <p>Se non riesci ad entrare nel gioco, scrivi a <a href="mailto:info@rdd.software?subject=Eliminazione%20account">info@rdd.software</a> dall’indirizzo collegato all’account indicando il nome utente. Eliminiamo l’account entro 30 giorni e ti avvisiamo quando è fatto.</p>
+    <h2>Cosa viene eliminato</h2>
+    <ul><li>nome utente, e-mail, password (hash) e il collegamento con l’account Google o Apple; con Accedi con Apple revochiamo anche l’autorizzazione presso Apple</li><li>risultati di livelli, rompicapi del giorno e infiniti e posti in classifica</li><li>amici (e il tuo posto nelle loro liste)</li><li>dati sui tentativi dei livelli, accessi dai dispositivi, link per nuove password e iscrizioni al promemoria</li><li>il distintivo Topple Plus sull’account (l’acquisto resta sul tuo account Apple o Google e si recupera con “Ripristina acquisto”)</li></ul>
+    <h2>Cosa resta e per quanto</h2>
+    <ul><li>backup del database: al massimo 30 giorni, poi vengono eliminati da soli</li><li>numeri non collegati a te (ad es. il totale delle pubblicità mostrate) e i progressi anonimi da ospite, senza nome né e-mail</li><li>i progressi salvati sul tuo dispositivo, finché non elimini l’app o i dati del browser; puoi continuare a giocare come ospite</li></ul>
+    <p class="muted">Maggiori dettagli nell’<a href="privatnost.html">informativa sulla privacy</a>.</p>
+  </section>
+  <section lang="de">
+    <h1>Konto löschen</h1>
+    <p class="muted">So löschst du dein Topple-Konto und die zugehörigen Daten (Android- und iOS-App und das Web unter topple.rdd.software).</p>
+    <h2>Selbst, im Spiel</h2>
+    <ol><li>Öffne Topple (die App oder das <a href="igra.html">Spiel im Browser</a>) und melde dich an.</li><li>Öffne das Menü (die Schaltfläche „Menü“ unter dem Spielfeld) und tippe neben deinem Namen auf „Profil“.</li><li>Tippe unten im Profil auf „Konto löschen“.</li><li>Gib dein Passwort ein (oder deinen Benutzernamen, wenn du dich mit Google oder Apple anmeldest) und bestätige „Konto endgültig löschen“.</li></ol>
+    <p>Das Konto wird sofort gelöscht, das lässt sich nicht rückgängig machen.</p>
+    <h2>Per E-Mail</h2>
+    <p>Wenn du nicht ins Spiel kommst, schreib an <a href="mailto:info@rdd.software?subject=Konto%20l%C3%B6schen">info@rdd.software</a> von der mit dem Konto verknüpften Adresse und nenne deinen Benutzernamen. Wir löschen das Konto innerhalb von 30 Tagen und melden uns, wenn es erledigt ist.</p>
+    <h2>Was gelöscht wird</h2>
+    <ul><li>Benutzername, E-Mail, Passwort (Hash) und die Verknüpfung mit dem Google- oder Apple-Konto; bei „Mit Apple anmelden“ widerrufen wir auch die Berechtigung bei Apple</li><li>Ergebnisse von Leveln, Tages- und Endlos-Rätseln und Ranglistenplätze</li><li>Freunde (und dein Platz in ihren Listen)</li><li>Daten zu Level-Versuchen, Anmeldungen auf Geräten, Links für neue Passwörter und Erinnerungs-Abos</li><li>das Topple-Plus-Abzeichen am Konto (der Kauf selbst bleibt bei deinem Apple- oder Google-Konto und kommt mit „Kauf wiederherstellen“ zurück)</li></ul>
+    <h2>Was bleibt und wie lange</h2>
+    <ul><li>Datenbank-Sicherungen: höchstens 30 Tage, danach werden sie automatisch gelöscht</li><li>Zahlen ohne Bezug zu dir (z. B. die Gesamtzahl gezeigter Werbung) und anonymer Spielfortschritt als Gast, ohne Name und E-Mail</li><li>der Fortschritt auf deinem Gerät, bis du die App oder die Browserdaten löschst; du kannst als Gast weiterspielen</li></ul>
+    <p class="muted">Mehr in der <a href="privatnost.html">Datenschutzerklärung</a>.</p>
+  </section>
+</main>
+<script src="i18n.js"></script>
+<script>
+const L = ToppleI18n.lang;
+document.documentElement.lang = L;
+document.querySelector(`section[lang="${L}"]`).classList.add('on');
+document.title = 'Topple · ' + ToppleI18n.t('acc.delete');
+document.getElementById('lang').appendChild(ToppleI18n.picker());
+</script>
+</body>
+</html>

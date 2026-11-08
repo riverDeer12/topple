@@ -6,7 +6,7 @@ const FILES = [
   './', 'index.html', 'igra.html', 'theme.css', 'config.js', 'core.js', 'gen.js', 'gen-worker.js',
   'levels.js', 'puzzles.js', 'audio.js', 'i18n.js', 'content.js', 'manifest.webmanifest',
   'favicon.ico', 'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
-  'privatnost.html', 'uvjeti.html', 'kontakt.html',
+  'privatnost.html', 'uvjeti.html', 'kontakt.html', 'brisanje-racuna.html',
 ];
 
 self.addEventListener('install', e => {
