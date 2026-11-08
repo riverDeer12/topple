@@ -1,5 +1,14 @@
 # Topple: tekstovi za Google Play
 
+**Skriptom:** `android/tools/playstore-upload.js` upiše naziv, kratki i puni opis iz ove datoteke za sva 4 jezika preko Google Play Developer API-ja, a s `--images` i ikonu, naslovnu grafiku i snimke zaslona iz `android/store/`. Koristi isti JSON ključ servisnog računa kao Topple Plus (`android/README.md`); servisni račun u Play Consoleu treba dozvolu **Manage store presence**. Aplikacija mora već postojati u Play Consoleu s barem jednim uploadanim buildom.
+
+```bash
+node android/tools/playstore-upload.js --dry-run
+node android/tools/playstore-upload.js --key ~/Downloads/topple-play-xxxx.json --images
+```
+
+**Ručno:**
+
 Kopiraj u Play Console → aplikacija → **Grow users → Store presence → Main store listing**. Zadani jezik je hrvatski; ostale jezike dodaj pod **Manage translations → Add your own translations** (English (United States) – en-US, Italian – it-IT, German – de-DE). Ograničenja: naziv do 30 znakova, kratki opis do 80, puni opis do 4000. Bilješke o izdanju upisuju se kod svakog izdanja (Release notes), po jeziku u oznakama `<hr>…</hr>`, `<en-US>…</en-US>` itd.
 
 Grafike su u `android/store/`: ikona `icon-512.png`, naslovna grafika `feature-graphic.png` (1024 × 500), snimke zaslona mobitela `<jezik>/0N-phone.png` (za hr, en-US, it, de-DE). Kategorija: **Game → Puzzle**. Kontakt: info@rdd.software, web https://topple.rdd.software, pravila privatnosti https://topple.rdd.software/privatnost.html.
