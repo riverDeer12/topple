@@ -2,11 +2,23 @@ name: Android app
 # Builds the Android app (android/) with the web game inside it.
 # Always: a debug APK to install on a phone for testing.
 # With the upload key in the repository secrets (see android/README.md): a signed .aab for Google Play.
+# Run by hand with "upload" set and the PLAY_SERVICE_ACCOUNT_JSON secret: the .aab also goes to that
+# Google Play track (alpha = closed testing) and is sent for review.
 on:
   push:
     branches: [main, 'claude/**']
     paths: ['android/**', 'web/**', '.github/workflows/android.yml']
   workflow_dispatch:
+    inputs:
+      upload:
+        description: 'Upload the signed .aab to Google Play'
+        type: choice
+        options: [none, alpha, internal]
+        default: none
+      notes:
+        description: 'Release notes (Croatian)'
+        type: string
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -17,6 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      HAS_PLAY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
     defaults:
       run:
         working-directory: android
@@ -49,3 +62,12 @@ jobs:
         with:
           name: topple-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
+      - name: Upload to Google Play
+        if: github.event_name == 'workflow_dispatch' && inputs.upload != 'none' && env.HAS_PLAY == 'true' && hashFiles('android/app/build/outputs/bundle/release/app-release.aab') != ''
+        env:
+          PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          printf '%s' "$PLAY_KEY" > "$RUNNER_TEMP/play.json"
+          node tools/play-upload.js --key "$RUNNER_TEMP/play.json" --aab app/build/outputs/bundle/release/app-release.aab --track "${{ inputs.upload }}" --notes "$NOTES"
+          rm -f "$RUNNER_TEMP/play.json"
