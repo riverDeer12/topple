@@ -24,7 +24,7 @@ Tekstovi su isti kao za App Store (`ios/AppStore.md`), s Google Play Games umjes
 **Kratki opis (Short description, 76/80):**
 Pomakni blok i sve iznad njega padne. 120 razina i nova zagonetka svaki dan.
 
-**Puni opis (Full description, 1776/4000):**
+**Puni opis (Full description, 1856/4000):**
 Topple je klizna slagalica s gravitacijom. Pravila stanu u jednu rečenicu: pomakni blok lijevo ili desno, a sve što ostane bez oslonca padne. Ali svaki potez pokreće lanac koji treba predvidjeti.
 
 Izvedi crveni blok do izlaza u što manje poteza i osvoji tri zvjezdice.
@@ -50,7 +50,7 @@ KAD ZAPNEŠ
 • Neograničeni savjeti uz Topple Plus, jednokratnu kupnju bez pretplate
 
 UGODNO IGRANJE
-• Bez reklama
+• Reklame samo ako ih sam želiš: kratka reklama za dodatni savjet, bez reklama uz Topple Plus
 • Radi i bez interneta, rezultati se pošalju kad se veza vrati
 • Podsjetnik za dnevnu zagonetku navečer, samo ako zagonetka još nije riješena
 • Zvukovi drveta i Bachov Preludij u C-duru, uz vibraciju
@@ -71,7 +71,7 @@ Prva verzija Toppla za Android: 120 razina, dnevna zagonetka, beskonačni niz, l
 **Kratki opis (Short description, 75/80):**
 Slide a block and everything above it falls. 120 levels and a daily puzzle.
 
-**Puni opis (Full description, 1814/4000):**
+**Puni opis (Full description, 1886/4000):**
 Topple is a sliding puzzle with gravity. The rules fit in one sentence: slide a block left or right, and anything left without support falls. But every move sets off a chain you have to see coming.
 
 Get the red block to the exit in as few moves as possible and earn three stars.
@@ -97,7 +97,7 @@ WHEN YOU'RE STUCK
 • Unlimited hints with Topple Plus, a one-time purchase, no subscription
 
 EASY TO ENJOY
-• No ads
+• Ads only if you want them: a short ad for an extra hint, none with Topple Plus
 • Works offline; results are sent when you're back online
 • An evening reminder for the daily puzzle, only if it's still unsolved
 • Wooden sounds and Bach's Prelude in C major, with haptics
@@ -118,7 +118,7 @@ The first version of Topple for Android: 120 levels, the daily puzzle, the endle
 **Kratki opis (Short description, 76/80):**
 Sposta un blocco e tutto sopra cade. 120 livelli e un rompicapo ogni giorno.
 
-**Puni opis (Full description, 1949/4000):**
+**Puni opis (Full description, 2027/4000):**
 Topple è un puzzle scorrevole con la gravità. Le regole stanno in una frase: sposta un blocco a sinistra o a destra, e tutto ciò che resta senza appoggio cade. Ma ogni mossa scatena una catena da prevedere.
 
 Porta il blocco rosso all'uscita con il minor numero di mosse e conquista tre stelle.
@@ -144,7 +144,7 @@ QUANDO TI BLOCCHI
 • Suggerimenti illimitati con Topple Plus, acquisto unico senza abbonamento
 
 GIOCO PIACEVOLE
-• Senza pubblicità
+• Pubblicità solo se la vuoi: un breve video per un suggerimento in più, nessuna con Topple Plus
 • Funziona offline; i risultati vengono inviati quando torni online
 • Un promemoria serale per il rompicapo del giorno, solo se non è ancora risolto
 • Suoni di legno e il Preludio in do maggiore di Bach, con vibrazione
@@ -165,7 +165,7 @@ La prima versione di Topple per Android: 120 livelli, il rompicapo del giorno, l
 **Kratki opis (Short description, 77/80):**
 Schieb einen Block und alles darüber fällt. 120 Level und täglich ein Rätsel.
 
-**Puni opis (Full description, 1965/4000):**
+**Puni opis (Full description, 2042/4000):**
 Topple ist ein Schiebepuzzle mit Schwerkraft. Die Regeln passen in einen Satz: Schieb einen Block nach links oder rechts, und alles, was keinen Halt mehr hat, fällt. Aber jeder Zug löst eine Kette aus, die du vorhersehen musst.
 
 Bring den roten Block mit möglichst wenigen Zügen zum Ausgang und hol dir drei Sterne.
@@ -191,7 +191,7 @@ WENN DU FESTSTECKST
 • Unbegrenzte Tipps mit Topple Plus, einmaliger Kauf, kein Abo
 
 ENTSPANNT SPIELEN
-• Ohne Werbung
+• Werbung nur, wenn du willst: ein kurzes Video für einen Extra-Tipp, keine mit Topple Plus
 • Funktioniert offline; Ergebnisse werden gesendet, sobald du wieder online bist
 • Eine Erinnerung am Abend an das Tagesrätsel, nur wenn es noch ungelöst ist
 • Holzklänge und Bachs Präludium in C-Dur, mit Vibration

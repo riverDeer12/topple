@@ -268,6 +268,7 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
     <a class="link" href="privatnost.html" data-i18n="privacy.link">Pravila privatnosti</a>
     <a class="link" href="uvjeti.html" data-i18n="terms.link">Uvjeti korištenja</a>
     <a class="link" href="kontakt.html" data-i18n="contact.link">Kontakt</a>
+    <button class="link" id="adPrivacy" type="button" hidden data-i18n="ads.privacy">Postavke privatnosti za reklame</button>
     <div class="row" id="langRow"></div>
     <button class="link" id="menuClose" type="button" data-i18n="menu.back">Natrag na igru</button>
   </div>
@@ -1450,15 +1451,39 @@ function grantHint() {
   showOnly(null);
   useHint();
 }
+// Android app: rewarded ads from AdMob (android/.../Ads.kt) instead of the web's H5 Games Ads.
+// The app reports {ready, loading, privacy, result?} through window.toppleAds.
+let appAds = null;
+function appAdButton() {
+  const btn = $('adBtn');
+  btn.disabled = !(appAds && appAds.ready);
+  btn.onclick = () => { btn.disabled = true; $('adStatus').textContent = ''; native({ type: 'ad', action: 'show' }); };
+  $('adStatus').textContent = appAds && appAds.ready ? '' : appAds && appAds.loading ? t('shop.loading') : appAds ? t('shop.unavailable') : t('shop.loading');
+}
+window.toppleAds = d => {
+  appAds = d;
+  $('adPrivacy').hidden = !d.privacy;
+  const open = !$('hintBox').hidden;
+  if (d.result === 'rewarded') { reportAd('viewed'); if (open) grantHint(); return; }
+  if (open) appAdButton();
+  if (d.result === 'dismissed') { reportAd('dismissed'); if (open) $('adStatus').textContent = t('shop.dismissed'); }
+  if (d.result === 'none') { reportAd('none'); if (open) $('adStatus').textContent = t('shop.unavailable'); }
+};
+$('adPrivacy').onclick = () => native({ type: 'ad', action: 'privacy' });
 function openHintShop() {
   $('shopText').textContent = t('shop.text', { max: HINT_MAX });
   $('adStatus').textContent = '';
   const btn = $('adBtn');
-  btn.hidden = !ADS.client && ADS.simulate === false;
+  btn.hidden = !ANDROID_APP && !ADS.client && ADS.simulate === false;
   $('shopPlus').hidden = !APP;
   btn.disabled = true; btn.onclick = null;
   showOnly('hintBox');
   reportAd('shop');
+  if (ANDROID_APP) {
+    appAdButton();
+    native({ type: 'ad', action: 'load' }); // loads one if none is ready; the answer updates the button
+    return;
+  }
   if (ADS.client) {
     $('adStatus').textContent = t('shop.loading');
     let musicWas = false, offered = false;
@@ -1729,6 +1754,7 @@ function start() {
   openCampaign(i);
   setTimeout(gameCenter, 3000); // after the first sync
   native({ type: 'plus', action: 'status' }); // Topple Plus owned? (app only)
+  if (ANDROID_APP) native({ type: 'ad', action: 'status' }); // ads ready, privacy settings needed?
   if (resetToken && API) openReset('new');
   else if (!signedInNow() && !store.get('asked', false)) openLogin(); else openMenu();
   started = true;

@@ -17,7 +17,7 @@ Prijava: korisničko ime ili e-mail i **Google** (nativni izbornik računa, Cred
 
 **Google Play Games**: ista postignuća (15) i ljestvice (zvjezdice, beskonačne zagonetke) kao Game Center na iOS-u, iz iste poruke igre (`gc`, `GamesServices.kt`). Igrač se u Play Games prijavi automatski. ID-jevi su u `app/src/main/res/values/games-ids.xml`; dok su prazni, Play Games se ne pokreće.
 
-**Prijava s Appleom**: Apple nema Android SDK, pa aplikacija otvori Appleovu stranicu za prijavu (Custom Tab, `AppleSignIn.kt`) za serverov **Services ID**. Apple pošalje rezultat serveru (`/api/apple/callback`), server ga provjeri i vrati preglednik u aplikaciju (`software.rdd.topple://apple`), a igra se prijavi tajnom koju zna samo aplikacija (`/api/apple {verifier}`). Gumb se pokaže tek kad je na serveru postavljen `APPLE_SERVICE_ID`. U aplikaciji nema web reklama, kao ni na iOS-u.
+**Prijava s Appleom**: Apple nema Android SDK, pa aplikacija otvori Appleovu stranicu za prijavu (Custom Tab, `AppleSignIn.kt`) za serverov **Services ID**. Apple pošalje rezultat serveru (`/api/apple/callback`), server ga provjeri i vrati preglednik u aplikaciju (`software.rdd.topple://apple`), a igra se prijavi tajnom koju zna samo aplikacija (`/api/apple {verifier}`). Gumb se pokaže tek kad je na serveru postavljen `APPLE_SERVICE_ID`. Web reklame (AdSense) u aplikaciji su isključene; umjesto njih su AdMob reklame s nagradom (vidi niže). Na iOS-u reklama nema.
 
 Svaka promjena web igre ulazi u sljedeći build: `web/` se kopira u aplikaciju pri svakom buildu (bez `admin/`).
 
@@ -41,6 +41,18 @@ Client ID Android klijenta ne upisuje se nikamo. Debug ključ je `app/debug.keys
    powershell -ExecutionPolicy Bypass -File C:\inetpub\wwwroot\topple\server\install.ps1 -AppleServiceId "software.rdd.topple.signin"
    ```
    Ključ za poništavanje prijave (`admin.js set-apple`) vrijedi i za ovo, jer je Services ID vezan uz isti App ID.
+
+## Reklame za savjete: AdMob (jednom)
+
+U Android aplikaciji dodatni savjet se dobiva gledanjem reklame s nagradom (AdMob, `Ads.kt`), kao na webu. Prije prve reklame Google u EU-u pita za privolu (User Messaging Platform); promjena izbora je u izborniku („Postavke privatnosti za reklame”). Uz Topple Plus reklama nema. Dok u `gradle.properties` stoje Googleovi probni ID-jevi, prikazuju se probne reklame bez zarade.
+
+1. **apps.admob.com** → prijava istim Google računom kao AdSense → **Apps → Add app** → Android, *Is the app listed on a supported app store?* **Yes** (nakon objave) ili **No** (zasad) → naziv `Topple`. Zapiši **App ID** (`ca-app-pub-…~…`).
+2. **Ad units → Add ad unit → Rewarded** → naziv `Savjet`, nagrada `1` `savjet` → Create. Zapiši **Ad unit ID** (`ca-app-pub-…/…`).
+3. Oba ID-ja upiši u `android/gradle.properties` (`admobAppId`, `admobRewardedId`) ili ih javi meni; nisu tajni. Sljedeći build prikazuje prave reklame.
+4. **Privacy & messaging → GDPR → Create message** (European regulations): odaberi aplikaciju Topple, jezike (hr, en, it, de), poveznicu na pravila privatnosti `https://topple.rdd.software/privatnost.html` → Publish. Bez toga se obrazac za privolu ne prikazuje, a u EU-u reklame neće raditi.
+5. **app-ads.txt**: `https://topple.rdd.software/app-ads.txt` je već na serveru (isti izdavač kao AdSense, `pub-8378829605116517`). Ako AdMob pokaže drugi publisher ID, javi ga. U Play Store listingu web stranica mora biti `https://topple.rdd.software`.
+6. Play Console → App content: **Ads → Yes**, **Advertising ID → Yes** (svrha: Advertising or marketing), **Data safety → Import from CSV** (`store/data_safety.csv`, uključuje podatke koje AdMob dijeli s Googleom).
+7. Tekst *Bez reklama* u opisu više ne vrijedi; `PlayStore.md` je ažuriran, upiši novi opis u Store listing.
 
 ## Topple Plus na Google Playu (jednom)
 
@@ -118,7 +130,7 @@ Android Studio → Open → mapa `android/`. Pokreni na mobitelu (USB, uključen
 2. **Testing → Closed testing**: napravi traku, dodaj testere (Google grupa ili popis e-mailova), upload `.aab`, pošalji izdanje na pregled. Testeri se prijave preko poveznice za opt-in. Za osobne račune treba **najmanje 12 testera 14 dana zaredom** prije zahtjeva za produkciju (Dashboard → Apply for production).
 3. **App content** (lijevi izbornik, Policy):
    - Privacy policy: `https://topple.rdd.software/privatnost.html`
-   - Ads: **No** (aplikacija nema reklama)
+   - Ads: **Yes** (reklame s nagradom za savjete, AdMob)
    - App access: dio mogućnosti traži prijavu. Upiši demo račun (isti kao za Apple, `AppReview`) i napomenu da se igra može igrati i kao gost.
    - Content rating (IARC upitnik): kategorija Puzzle/Game, bez nasilja, kockanja i sl.; korisnici ne razmjenjuju poruke (samo korisničko ime na ljestvici); ima kupnju u aplikaciji (Topple Plus, digitalna roba).
    - Target audience: **13+** (13–15, 16–17, 18+). Ako uključiš mlađe od 13, vrijede stroža pravila za obitelji (Families).
