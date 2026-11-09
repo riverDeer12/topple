@@ -82,6 +82,22 @@ U Android aplikaciji dodatni savjet se dobiva gledanjem reklame s nagradom (AdMo
    Ručno: Play Games Services → Achievements / Leaderboards → Add, pa **Get resources** (Android XML) i ID-jeve upiši u `games-ids.xml` pod imenima `achievement_<id>` (npr. `achievement_first`) i `leaderboard_stars`, `leaderboard_endless`.
 5. Configuration → **Review and publish**. Dok nije objavljeno, Play Games radi samo za testere upisane pod *Testers* u Play Games Services.
 
+## Servisni račun (jednom, za automatski upload, oznaku PLUS, Play Games i tekstove)
+
+1. **Google Cloud Console** (isti projekt kao Google prijava) → APIs & Services → Library → **Google Play Android Developer API** → Enable.
+2. IAM & Admin → **Service Accounts → Create service account** → naziv `topple-play` → Create and continue → bez uloga → Done.
+3. Otvori ga → **Keys → Add key → Create new key → JSON** → preuzme se datoteka (npr. `topple-play-1a2b3c.json`). Čuvaj je kao lozinku, ne stavljaj je u repozitorij.
+4. **Play Console** → Users and permissions → **Invite new users** → e-mail servisnog računa (`topple-play@….iam.gserviceaccount.com`) → kartica *App permissions* → **Add app** → Topple → označi:
+   - *Release to testing tracks* (automatski upload),
+   - *View financial data, orders and cancellation survey responses* (oznaka PLUS),
+   - *Manage store presence* (tekstovi i slike),
+   - *Edit and delete draft apps* / Play Games Services (postignuća)
+   → Apply → Invite user. Dozvole ponekad počnu vrijediti tek nakon nekoliko sati.
+5. **GitHub** → Settings → Secrets and variables → Actions → New repository secret → Name `PLAY_SERVICE_ACCOUNT_JSON`, Secret: cijeli sadržaj JSON datoteke (otvori je u uređivaču teksta, kopiraj sve).
+6. Na serveru još `node server/admin.js set-play C:\putanja\topple-play-1a2b3c.json` (oznaka PLUS).
+
+**Novi build na Google Play jednim klikom:** GitHub → Actions → **Android app** → **Run workflow** → grana `main`, *Upload the signed .aab to Google Play*: **alpha** (zatvoreno testiranje) ili **internal**, po želji bilješke o izdanju → Run. Workflow napravi potpisani `.aab`, uploada ga u tu traku i pošalje na pregled (`tools/play-upload.js`). Na računalu isto: `node android/tools/play-upload.js --key kljuc.json --aab app-release.aab --track alpha`.
+
 ## 1. Build bez instalacije ičega (GitHub Actions)
 
 Svaki push na `main` koji mijenja `android/` ili `web/` pokrene workflow **Android app** (`.github/workflows/android.yml`). Može se pokrenuti i ručno: GitHub → Actions → Android app → Run workflow.
