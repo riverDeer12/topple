@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity() {
             WindowInsetsCompat.CONSUMED
         }
         GamesServices.init(this)
+        Ads.init(this) { status -> runOnUiThread { if (pageReady) web?.evaluateJavascript("window.toppleAds && toppleAds($status)", null) } }
         if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             WebView.setWebContentsDebuggingEnabled(true) // chrome://inspect on the computer
         }
@@ -156,6 +157,7 @@ class MainActivity : ComponentActivity() {
                 web?.evaluateJavascript("window.topplePlus && topplePlus($result)", null)
             }
             "gc" -> GamesServices.report(this, msg) // achievements and leaderboards (Google Play Games)
+            "ad" -> Ads.handle(this, msg.optString("action", "status"))
         }
     }
 

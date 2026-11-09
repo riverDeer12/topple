@@ -29,6 +29,9 @@ android {
         versionCode = (project.findProperty("versionCode") as String?)?.toInt()
             ?: System.getenv("GITHUB_RUN_NUMBER")?.toInt()?.plus(100) ?: 1
         versionName = "1.0"
+        // AdMob IDs from gradle.properties (see there).
+        manifestPlaceholders["admobAppId"] = project.property("admobAppId") as String
+        resValue("string", "admob_rewarded", project.property("admobRewardedId") as String)
     }
 
     signingConfigs {
@@ -59,7 +62,7 @@ android {
     // https://appassets.androidplatform.net/ (see MainActivity). The admin pages stay out.
     sourceSets["main"].assets.srcDirs("../../web")
     androidResources {
-        ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!admin:!web.config:!ads.txt"
+        ignoreAssetsPattern = "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!admin:!web.config:!ads.txt:!app-ads.txt"
     }
 
     compileOptions {
@@ -82,6 +85,9 @@ dependencies {
     implementation("com.android.billingclient:billing:8.0.0")
     // Google Play Games Services: achievements and leaderboards
     implementation("com.google.android.gms:play-services-games-v2:20.1.2")
+    // Rewarded ads for hints (AdMob) and the consent form for the EU (User Messaging Platform)
+    implementation("com.google.android.gms:play-services-ads:24.4.0")
+    implementation("com.google.android.ump:user-messaging-platform:3.2.0")
     // Sign in with Apple: Apple's page in a Custom Tab
     implementation("androidx.browser:browser:1.8.0")
     // Sign in with Google (Credential Manager)
