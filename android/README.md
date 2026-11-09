@@ -44,7 +44,7 @@ Client ID Android klijenta ne upisuje se nikamo. Debug ključ je `app/debug.keys
 
 ## Reklame za savjete: AdMob (jednom)
 
-U Android aplikaciji dodatni savjet se dobiva gledanjem reklame s nagradom (AdMob, `Ads.kt`), kao na webu. Prije prve reklame Google u EU-u pita za privolu (User Messaging Platform); promjena izbora je u izborniku („Postavke privatnosti za reklame”). Uz Topple Plus reklama nema. Dok u `gradle.properties` stoje Googleovi probni ID-jevi, prikazuju se probne reklame bez zarade.
+U Android aplikaciji dodatni savjet se dobiva gledanjem reklame s nagradom (AdMob, `Ads.kt`), kao na webu. Prije prve reklame Google u EU-u pita za privolu (User Messaging Platform); promjena izbora je u izborniku („Postavke privatnosti za reklame”). Uz Topple Plus reklama nema. ID-jevi su u `gradle.properties` (aplikacija `~5052538081`, jedinica „Savjet” `/4769467054`). Svoj mobitel dodaj u AdMob → Settings → Test devices, da ne klikaš vlastite prave reklame.
 
 1. **apps.admob.com** → prijava istim Google računom kao AdSense → **Apps → Add app** → Android, *Is the app listed on a supported app store?* **Yes** (nakon objave) ili **No** (zasad) → naziv `Topple`. Zapiši **App ID** (`ca-app-pub-…~…`).
 2. **Ad units → Add ad unit → Rewarded** → naziv `Savjet`, nagrada `1` `savjet` → Create. Zapiši **Ad unit ID** (`ca-app-pub-…/…`).
