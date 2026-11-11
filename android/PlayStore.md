@@ -2,6 +2,8 @@
 
 **Skriptom:** `android/tools/playstore-upload.js` upiše naziv, kratki i puni opis iz ove datoteke za sva 4 jezika preko Google Play Developer API-ja, a s `--images` i ikonu, naslovnu grafiku i snimke zaslona iz `android/store/`. Koristi isti JSON ključ servisnog računa kao Topple Plus (`android/README.md`); servisni račun u Play Consoleu treba dozvolu **Manage store presence**. Aplikacija mora već postojati u Play Consoleu s barem jednim uploadanim buildom.
 
+Ili bez računala: GitHub → Actions → **Google Play listing** → Run workflow (koristi tajnu `PLAY_SERVICE_ACCOUNT_JSON`).
+
 ```bash
 node android/tools/playstore-upload.js --dry-run
 node android/tools/playstore-upload.js --key ~/Downloads/topple-play-xxxx.json --images
