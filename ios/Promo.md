@@ -8,11 +8,7 @@ Upload: App Store Connect → aplikacija → verzija → za svaki jezik **App Pr
 
 ## Gumb „Download on the App Store” i Smart App Banner
 
-Kad je aplikacija objavljena, upiši njen Apple ID (App Store Connect → App Information → Apple ID, samo broj) u `web/config.js`:
-
-```js
-window.TOPPLE_IOS_APP_ID = '1234567890';
-```
+Apple ID aplikacije (`6830289324`) upisan je u `web/config.js` (`window.TOPPLE_IOS_APP_ID`).
 
 Početna stranica tada pokaže Appleov službeni gumb na jeziku stranice, a Safari na iPhoneu pokaže traku za otvaranje ili preuzimanje aplikacije (Smart App Banner). U samoj aplikaciji se ne prikazuje ništa od toga.
 
@@ -22,13 +18,13 @@ Kad je Android aplikacija objavljena (produkcija na Google Playu), u `web/config
 
 ## Objave za društvene mreže
 
-Uz objavu priloži video (`ios/previews/<jezik>.mp4`) ili snimku zaslona (`ios/screenshots/<jezik>/01-iphone.png`). Poveznicu zamijeni pravom adresom iz App Storea kad je aplikacija objavljena; za Android dodaj https://play.google.com/store/apps/details?id=software.rdd.topple.
+Uz objavu priloži video (`ios/previews/<jezik>.mp4`) ili snimku zaslona (`ios/screenshots/<jezik>/01-iphone.png`). App Store: https://apps.apple.com/app/id6830289324; za Android (kad bude objavljen) dodaj https://play.google.com/store/apps/details?id=software.rdd.topple.
 
 ### Hrvatski
 
 **Kratko (X, Threads):**
 Topple je stigao na iPhone! Pomakni blok i sve iznad njega padne. 120 razina, nova dnevna zagonetka svaki dan i ljestvica s prijateljima. Besplatno, bez reklama.
-https://apps.apple.com/app/idXXXXXXXXXX
+https://apps.apple.com/app/id6830289324
 #Topple #slagalica #mozgalica #iPhone
 
 **Dulje (Instagram, Facebook):**
@@ -50,7 +46,7 @@ Igraj i u pregledniku: topple.rdd.software
 
 **Short (X, Threads):**
 Topple is out on iPhone! Slide a block and everything above it falls. 120 levels, a new daily puzzle every day and leaderboards with friends. Free, no ads.
-https://apps.apple.com/app/idXXXXXXXXXX
+https://apps.apple.com/app/id6830289324
 #Topple #puzzle #brainteaser #iPhone
 
 **Long (Instagram, Facebook):**
@@ -72,7 +68,7 @@ Play in your browser too: topple.rdd.software
 
 **Breve (X, Threads):**
 Topple è arrivato su iPhone! Sposta un blocco e tutto ciò che sta sopra cade. 120 livelli, un nuovo puzzle ogni giorno e classifiche con gli amici. Gratis, senza pubblicità.
-https://apps.apple.com/app/idXXXXXXXXXX
+https://apps.apple.com/app/id6830289324
 #Topple #rompicapo #puzzle #iPhone
 
 **Lungo (Instagram, Facebook):**
@@ -94,7 +90,7 @@ Gioca anche nel browser: topple.rdd.software
 
 **Kurz (X, Threads):**
 Topple ist auf dem iPhone! Schieb einen Block und alles darüber fällt. 120 Level, jeden Tag ein neues Tagesrätsel und Bestenlisten mit Freunden. Kostenlos, ohne Werbung.
-https://apps.apple.com/app/idXXXXXXXXXX
+https://apps.apple.com/app/id6830289324
 #Topple #Rätsel #Denkspiel #iPhone
 
 **Lang (Instagram, Facebook):**

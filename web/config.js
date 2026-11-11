@@ -16,7 +16,7 @@ if (TOPPLE_IN_APP) window.TOPPLE_ADS = { client: '', test: false, simulate: fals
 
 // iOS app on the App Store: its Apple ID (the number in App Store Connect → App Information).
 // Empty = no App Store badge on the home page yet.
-window.TOPPLE_IOS_APP_ID = '';
+window.TOPPLE_IOS_APP_ID = '6830289324';
 
 // Android app on Google Play: true once it is published (package software.rdd.topple).
 // false = no Google Play badge on the home page yet.
