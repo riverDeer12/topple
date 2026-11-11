@@ -1,0 +1,31 @@
+name: Google Play listing
+# Writes the Google Play store listing (name, short and full description in hr, en-US, it-IT, de-DE
+# from android/PlayStore.md; with "images" also the icon, feature graphic and phone screenshots
+# from android/store/) through the Developer API, then sends it for review.
+# Needs the PLAY_SERVICE_ACCOUNT_JSON secret (see android/README.md). Run by hand only.
+on:
+  workflow_dispatch:
+    inputs:
+      images:
+        description: 'Also replace the icon, feature graphic and screenshots'
+        type: boolean
+        default: true
+permissions:
+  contents: read
+jobs:
+  listing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check the texts
+        run: node android/tools/playstore-upload.js --dry-run ${{ inputs.images && '--images' || '' }}
+      - name: Upload to Google Play
+        env:
+          PLAY_KEY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          printf '%s' "$PLAY_KEY" > "$RUNNER_TEMP/play.json"
+          node android/tools/playstore-upload.js --key "$RUNNER_TEMP/play.json" ${{ inputs.images && '--images' || '' }}
+          rm -f "$RUNNER_TEMP/play.json"
