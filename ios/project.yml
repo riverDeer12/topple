@@ -10,11 +10,22 @@ options:
   developmentLanguage: hr
 settings:
   base:
-    MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "2"
+    MARKETING_VERSION: "1.1"
+    CURRENT_PROJECT_VERSION: "3"
     SWIFT_VERSION: "5.0"
     DEVELOPMENT_TEAM: ""        # your Apple team ID (Xcode → Signing & Capabilities), or set it there
     GOOGLE_IOS_CLIENT_ID: "224195062999-lqe0avqbcb952jbus9tu23nsfu05jv3l.apps.googleusercontent.com"
+    # AdMob (rewarded ads for hints): Google's test IDs until the real iOS app and ad unit IDs
+    # from the AdMob account (Apps → Topple iOS) are put here.
+    ADMOB_APP_ID: "ca-app-pub-3940256099942544~1458002511"
+    ADMOB_REWARDED_ID: "ca-app-pub-3940256099942544/1712485313"
+packages:
+  GoogleMobileAds:
+    url: https://github.com/googleads/swift-package-manager-google-mobile-ads.git
+    from: 12.0.0
+  GoogleUserMessagingPlatform:
+    url: https://github.com/googleads/swift-package-manager-google-user-messaging-platform.git
+    from: 3.0.0
 targets:
   Topple:
     type: application
@@ -24,6 +35,9 @@ targets:
       - path: ../web
         type: folder
         buildPhase: resources
+    dependencies:
+      - package: GoogleMobileAds
+      - package: GoogleUserMessagingPlatform
     info:
       path: Topple/Info.plist
       properties:
@@ -39,6 +53,11 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         GKGameCenterBadgingDisabled: false
         GoogleIOSClientID: $(GOOGLE_IOS_CLIENT_ID)
+        GADApplicationIdentifier: $(ADMOB_APP_ID)
+        ToppleRewardedAdUnit: $(ADMOB_REWARDED_ID)
+        NSUserTrackingUsageDescription: "Reklame za dodatne savjete mogu biti prilagođene tebi. Topple ne prati što radiš u drugim aplikacijama."
+        SKAdNetworkItems:
+          - SKAdNetworkIdentifier: cstr6suwn9.skadnetwork
     entitlements:
       path: Topple/Topple.entitlements
       properties:

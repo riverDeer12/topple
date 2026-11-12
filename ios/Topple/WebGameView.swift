@@ -57,6 +57,10 @@ struct WebGameView: UIViewRepresentable {
                 let web = webView
                 Task { @MainActor in Store.shared.webView = web; Store.shared.handle(action) }
             case "signin": SignIn.shared.webView = webView; SignIn.shared.start(msg["provider"] as? String ?? "apple")
+            case "ad":
+                let action = msg["action"] as? String ?? "status"
+                let web = webView
+                Task { @MainActor in Ads.shared.webView = web; Ads.shared.handle(action) }
             default: break
             }
         }

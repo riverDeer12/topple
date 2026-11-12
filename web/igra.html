@@ -1451,17 +1451,22 @@ function grantHint() {
   showOnly(null);
   useHint();
 }
-// Android app: rewarded ads from AdMob (android/.../Ads.kt) instead of the web's H5 Games Ads.
-// The app reports {ready, loading, privacy, result?} through window.toppleAds.
-let appAds = null;
+// iOS and Android apps: rewarded ads from AdMob (ios/Topple/Ads.swift, android/.../Ads.kt) instead of
+// the web's H5 Games Ads. The app reports {ready, loading, privacy, result?} through window.toppleAds.
+let appAds = null, adMusic = false;
 function appAdButton() {
   const btn = $('adBtn');
   btn.disabled = !(appAds && appAds.ready);
-  btn.onclick = () => { btn.disabled = true; $('adStatus').textContent = ''; native({ type: 'ad', action: 'show' }); };
+  btn.onclick = () => {
+    btn.disabled = true; $('adStatus').textContent = '';
+    adMusic = ToppleAudio.music; ToppleAudio.setMusic(false); // the ad has its own sound
+    native({ type: 'ad', action: 'show' });
+  };
   $('adStatus').textContent = appAds && appAds.ready ? '' : appAds && appAds.loading ? t('shop.loading') : appAds ? t('shop.unavailable') : t('shop.loading');
 }
 window.toppleAds = d => {
   appAds = d;
+  if (d.result && adMusic) { ToppleAudio.setMusic(true); adMusic = false; }
   $('adPrivacy').hidden = !d.privacy;
   const open = !$('hintBox').hidden;
   if (d.result === 'rewarded') { reportAd('viewed'); if (open) grantHint(); return; }
@@ -1474,12 +1479,12 @@ function openHintShop() {
   $('shopText').textContent = t('shop.text', { max: HINT_MAX });
   $('adStatus').textContent = '';
   const btn = $('adBtn');
-  btn.hidden = !ANDROID_APP && !ADS.client && ADS.simulate === false;
+  btn.hidden = !APP && !ADS.client && ADS.simulate === false;
   $('shopPlus').hidden = !APP;
   btn.disabled = true; btn.onclick = null;
   showOnly('hintBox');
   reportAd('shop');
-  if (ANDROID_APP) {
+  if (APP) {
     appAdButton();
     native({ type: 'ad', action: 'load' }); // loads one if none is ready; the answer updates the button
     return;
@@ -1754,7 +1759,7 @@ function start() {
   openCampaign(i);
   setTimeout(gameCenter, 3000); // after the first sync
   native({ type: 'plus', action: 'status' }); // Topple Plus owned? (app only)
-  if (ANDROID_APP) native({ type: 'ad', action: 'status' }); // ads ready, privacy settings needed?
+  if (APP) native({ type: 'ad', action: 'status' }); // ads ready, privacy settings needed? (also asks for consent)
   if (resetToken && API) openReset('new');
   else if (!signedInNow() && !store.get('asked', false)) openLogin(); else openMenu();
   started = true;
