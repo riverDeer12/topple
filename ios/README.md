@@ -159,6 +159,13 @@ Igra pošalje `native({type:'ad', action})`, a `Topple/Ads.swift` odgovara s `wi
 
 ## 3. Objava (TestFlight, pa App Store)
 
+**Bez Maca (GitHub Actions):** *Actions → iOS app → Run workflow*, kvačica **release**. Workflow na GitHubovom Macu napravi privremeni distribucijski certifikat i profil (`ios/tools/ci-signing.js`), potpiše i pošalje build (broj = broj runa + 100), napravi verziju iz `MARKETING_VERSION` ako je nema, upiše tekstove iz `AppStore.md` sa „Što je novo”, pričeka obradu builda i odabere ga za verziju, pa certifikat obriše. U App Store Connectu ostaje samo **Add for Review → Submit**. Traje 30–60 minuta.
+
+Jednom: GitHub → Settings → Secrets and variables → Actions → tri tajne od App Store Connect API ključa (*Users and Access → Integrations → Team Keys*, uloga **Admin**, jer se prave certifikati):
+- `ASC_KEY_ID`: Key ID (10 znakova)
+- `ASC_ISSUER_ID`: Issuer ID (iznad popisa ključeva)
+- `ASC_KEY_P8`: cijeli sadržaj datoteke `AuthKey_XXXXXXXXXX.p8` (otvori u uređivaču teksta, kopiraj sve, s redovima BEGIN/END)
+
 **Iz terminala:** `ios/tools/release.sh` poveća broj builda u `project.yml`, pokrene `xcodegen`, napravi Archive i pošalje ga u App Store Connect, s istim API ključem kao ostale skripte:
 
 ```bash

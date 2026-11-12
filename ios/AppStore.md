@@ -61,8 +61,8 @@ UGODNO IGRANJE
 
 Može se igrati i bez računa, kao gost.
 
-**Što je novo (1.0):**
-Prva verzija Toppla za iPhone i iPad: 120 razina, dnevna zagonetka, beskonačni niz, ljestvice s prijateljima, Game Center i podsjetnik.
+**Što je novo (1.1):**
+Kad ti ponestane savjeta, pogledaj kratku reklamu i dobij još jedan. Reklame su samo za dodatne savjete i nikad se ne pojavljuju same od sebe; uz Topple Plus savjeti su neograničeni. Manji ispravci i poboljšanja.
 
 ---
 
@@ -112,8 +112,8 @@ EASY TO ENJOY
 
 You can also play as a guest, without an account.
 
-**What's New (1.0):**
-The first version of Topple for iPhone and iPad: 120 levels, the daily puzzle, the endless run, friends leaderboards, Game Center and reminders.
+**What's New (1.1):**
+Out of hints? Watch a short ad to get another one. Ads are only for extra hints and never show up on their own; with Topple Plus hints are unlimited. Small fixes and improvements.
 
 ---
 
@@ -163,8 +163,8 @@ GIOCO PIACEVOLE
 
 Si può giocare anche come ospite, senza account.
 
-**Novità (1.0):**
-La prima versione di Topple per iPhone e iPad: 120 livelli, il rompicapo del giorno, la serie infinita, classifiche con gli amici, Game Center e promemoria.
+**Novità (1.1):**
+Finiti i suggerimenti? Guarda una breve pubblicità per averne un altro. La pubblicità serve solo per i suggerimenti extra e non compare mai da sola; con Topple Plus i suggerimenti sono illimitati. Piccole correzioni e miglioramenti.
 
 ---
 
@@ -214,5 +214,5 @@ ENTSPANNT SPIELEN
 
 Du kannst auch als Gast ohne Konto spielen.
 
-**Neuigkeiten (1.0):**
-Die erste Version von Topple für iPhone und iPad: 120 Level, das Tagesrätsel, die endlose Reihe, Ranglisten mit Freunden, Game Center und Erinnerungen.
+**Neuigkeiten (1.1):**
+Keine Tipps mehr? Sieh dir eine kurze Werbung an und hol dir einen weiteren. Werbung gibt es nur für Extra-Tipps und sie erscheint nie von selbst; mit Topple Plus sind Tipps unbegrenzt. Kleine Korrekturen und Verbesserungen.

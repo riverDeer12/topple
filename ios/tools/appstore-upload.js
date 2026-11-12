@@ -5,8 +5,11 @@
 //
 //   node ios/tools/appstore-upload.js --dry-run
 //   node ios/tools/appstore-upload.js --key AuthKey_X.p8 --key-id X --issuer xxxx [--whats-new]
+//     [--version 1.1] [--build 103]
 //
 // "What's New" is left out by default: App Store Connect does not accept it for the first version.
+// --version: create that version if none is being prepared (or rename the one being prepared).
+// --build: wait until that build number has been processed and select it for the version.
 const fs = require('fs');
 const path = require('path');
 const { arg, api, all, rel, appByBundle } = require('./asc.js');
@@ -72,8 +75,16 @@ async function upsert(list, locale, type, relName, parentType, parentId, attrs) 
   const infoLocs = await all(`/v1/appInfos/${info.id}/appInfoLocalizations`);
   // The version being prepared (description, keywords, promotional text, URLs).
   const versions = await all(`/v1/apps/${app.id}/appStoreVersions?filter[platform]=IOS&limit=20`);
-  const version = versions.find(v => ['PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED', 'REJECTED', 'METADATA_REJECTED'].includes(v.attributes.appStoreState || v.attributes.appVersionState));
-  if (!version) throw new Error('Nema verzije u pripremi (Prepare for Submission).');
+  let version = versions.find(v => ['PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED', 'REJECTED', 'METADATA_REJECTED'].includes(v.attributes.appStoreState || v.attributes.appVersionState));
+  const want = arg('version');
+  if (!version && want) {
+    version = (await api('POST', '/v1/appStoreVersions', { data: { type: 'appStoreVersions', attributes: { platform: 'IOS', versionString: want }, relationships: { app: rel('apps', app.id) } } })).data;
+    console.log(`Napravljena verzija ${want}.`);
+  } else if (version && want && version.attributes.versionString !== want) {
+    await api('PATCH', `/v1/appStoreVersions/${version.id}`, { data: { type: 'appStoreVersions', id: version.id, attributes: { versionString: want } } });
+    version.attributes.versionString = want;
+  }
+  if (!version) throw new Error('Nema verzije u pripremi (Prepare for Submission); dodaj --version.');
   const verLocs = await all(`/v1/appStoreVersions/${version.id}/appStoreVersionLocalizations`);
   console.log(`\nAplikacija ${BUNDLE}, verzija ${version.attributes.versionString}`);
 
@@ -85,6 +96,24 @@ async function upsert(list, locale, type, relName, parentType, parentId, attrs) 
     if (process.argv.includes('--whats-new')) attrs.whatsNew = t.whatsNew;
     const b = await upsert(verLocs, loc, 'appStoreVersionLocalizations', 'appStoreVersion', 'appStoreVersions', version.id, attrs);
     console.log(`  ${loc.padEnd(6)} naziv i podnaslov: ${a}; opis i ključne riječi: ${b}`);
+  }
+  const buildNo = arg('build');
+  if (buildNo) {
+    // A new upload shows up in the API after a few minutes and is processed in 5-30 minutes.
+    const vs = version.attributes.versionString;
+    let build = null;
+    for (let t = 0; t < 90; t++) {
+      const list = await all(`/v1/builds?filter[app]=${app.id}&filter[version]=${encodeURIComponent(buildNo)}&filter[preReleaseVersion.version]=${encodeURIComponent(vs)}`);
+      build = list[0];
+      const state = build ? build.attributes.processingState : 'NOT_UPLOADED_YET';
+      if (state === 'VALID') break;
+      if (state === 'INVALID' || state === 'FAILED') throw new Error(`Build ${buildNo}: obrada nije uspjela (${state}), vidi e-mail od Applea.`);
+      console.log(`Build ${vs} (${buildNo}): ${state}, čekam...`);
+      await new Promise(r => setTimeout(r, 60e3));
+    }
+    if (!build || build.attributes.processingState !== 'VALID') throw new Error(`Build ${buildNo} nije obrađen ni nakon 90 minuta.`);
+    await api('PATCH', `/v1/appStoreVersions/${version.id}/relationships/build`, rel('builds', build.id));
+    console.log(`Build ${vs} (${buildNo}) odabran za verziju ${vs}.`);
   }
   console.log('\nGotovo. Provjeri tekstove u App Store Connectu (kartica Distribution, svaki jezik gore desno).');
 })().catch(e => { console.error('GREŠKA: ' + e.message); process.exit(1); });
