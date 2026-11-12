@@ -68,11 +68,6 @@ async function upsert(list, locale, type, relName, parentType, parentId, attrs) 
   if (DRY) return;
 
   const app = await appByBundle(BUNDLE);
-  // App info (name, subtitle, privacy policy): the one that can still be edited.
-  const infos = await all(`/v1/apps/${app.id}/appInfos`);
-  const editable = s => !['READY_FOR_DISTRIBUTION', 'READY_FOR_SALE', 'REPLACED_WITH_NEW_INFO'].includes(s);
-  const info = infos.find(i => editable(i.attributes.state || i.attributes.appStoreState)) || infos[0];
-  const infoLocs = await all(`/v1/appInfos/${info.id}/appInfoLocalizations`);
   // The version being prepared (description, keywords, promotional text, URLs).
   const versions = await all(`/v1/apps/${app.id}/appStoreVersions?filter[platform]=IOS&limit=20`);
   let version = versions.find(v => ['PREPARE_FOR_SUBMISSION', 'DEVELOPER_REJECTED', 'REJECTED', 'METADATA_REJECTED'].includes(v.attributes.appStoreState || v.attributes.appVersionState));
@@ -85,13 +80,21 @@ async function upsert(list, locale, type, relName, parentType, parentId, attrs) 
     version.attributes.versionString = want;
   }
   if (!version) throw new Error('Nema verzije u pripremi (Prepare for Submission); dodaj --version.');
+  // App info (name, subtitle, privacy policy): the one that can still be edited.
+  const infos = await all(`/v1/apps/${app.id}/appInfos`);
+  const editable = s => !['READY_FOR_DISTRIBUTION', 'READY_FOR_SALE', 'REPLACED_WITH_NEW_INFO'].includes(s);
+  const info = infos.find(i => editable(i.attributes.state || i.attributes.appStoreState)) || infos[0];
+  const infoLocs = await all(`/v1/appInfos/${info.id}/appInfoLocalizations`);
   const verLocs = await all(`/v1/appStoreVersions/${version.id}/appStoreVersionLocalizations`);
   console.log(`\nAplikacija ${BUNDLE}, verzija ${version.attributes.versionString}`);
 
   for (const [, loc] of LOCALES) {
     const t = texts[loc];
-    const a = await upsert(infoLocs, loc, 'appInfoLocalizations', 'appInfo', 'appInfos', info.id,
-      { name: t.name, subtitle: t.subtitle, privacyPolicyUrl: URLS.privacyPolicyUrl });
+    // Name, subtitle and privacy URL can only change together with a new version; skip them if unchanged.
+    const curInfo = infoLocs.find(x => x.attributes.locale === loc);
+    const infoAttrs = { name: t.name, subtitle: t.subtitle, privacyPolicyUrl: URLS.privacyPolicyUrl };
+    const same = curInfo && Object.entries(infoAttrs).every(([k, v]) => curInfo.attributes[k] === v);
+    const a = same ? 'bez promjene' : await upsert(infoLocs, loc, 'appInfoLocalizations', 'appInfo', 'appInfos', info.id, infoAttrs);
     const attrs = { description: t.description, keywords: t.keywords, promotionalText: t.promotionalText, supportUrl: URLS.supportUrl, marketingUrl: URLS.marketingUrl };
     if (process.argv.includes('--whats-new')) attrs.whatsNew = t.whatsNew;
     const b = await upsert(verLocs, loc, 'appStoreVersionLocalizations', 'appStoreVersion', 'appStoreVersions', version.id, attrs);

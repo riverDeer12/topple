@@ -123,7 +123,10 @@ jobs:
           PLIST
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Topple.xcarchive" -exportOptionsPlist "$SIGN/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/export"
-          xcrun altool --upload-app -f "$RUNNER_TEMP"/export/*.ipa -t ios --apiKey ${{ secrets.ASC_KEY_ID }} --apiIssuer ${{ secrets.ASC_ISSUER_ID }}
+          /usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' "$RUNNER_TEMP/Topple.xcarchive/Info.plist"
+          xcrun altool --upload-app -f "$RUNNER_TEMP"/export/*.ipa -t ios --apiKey ${{ secrets.ASC_KEY_ID }} --apiIssuer ${{ secrets.ASC_ISSUER_ID }} 2>&1 | tee "$RUNNER_TEMP/upload.log"
+          # altool can exit with 0 even when the upload was refused.
+          if grep -q "ERROR:" "$RUNNER_TEMP/upload.log"; then echo "Upload nije uspio."; exit 1; fi
           echo "Poslano: ${{ steps.v.outputs.version }} (${{ steps.v.outputs.build }})" >> "$GITHUB_STEP_SUMMARY"
       - name: Texts and build for the version
         run: |
