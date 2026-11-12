@@ -1,21 +1,33 @@
 name: iOS app
-# Compiles the iOS app (ios/, XcodeGen) for the simulator, without signing, to catch build errors
-# before a build on the Mac. Archiving and uploading to App Store Connect stay on the Mac (ios/README.md).
+# On every push to ios/: compiles the app (ios/, XcodeGen) for the simulator, without signing.
+# Run by hand with "release" ticked: a signed store build goes to App Store Connect, the texts from
+# ios/AppStore.md are written into the version (created if missing) and the build is selected for it;
+# only "Add for Review" is left to do. Needs the secrets ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8
+# (App Store Connect API key with the Admin role, see ios/README.md).
 on:
   push:
     branches: [main, 'claude/**']
     paths: ['ios/**', '.github/workflows/ios.yml']
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Upload a store build and the texts to App Store Connect'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
-  group: ios-${{ github.ref }}
-  cancel-in-progress: true
+  group: ios-${{ github.ref }}-${{ inputs.release && 'release' || 'build' }}
+  cancel-in-progress: ${{ !inputs.release }}
 jobs:
   build:
+    if: ${{ !inputs.release }}
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
       - name: Generate the Xcode project
         run: brew install xcodegen && cd ios && xcodegen
       - name: Build for the simulator
@@ -24,3 +36,102 @@ jobs:
           xcodebuild -project Topple.xcodeproj -scheme Topple -configuration Debug \
             -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build | tail -40
           exit ${PIPESTATUS[0]}
+
+  release:
+    if: ${{ inputs.release }}
+    runs-on: macos-15
+    timeout-minutes: 150
+    env:
+      ASC: --key ${{ github.workspace }}/../asc.p8 --key-id ${{ secrets.ASC_KEY_ID }} --issuer ${{ secrets.ASC_ISSUER_ID }}
+      SIGN: ${{ github.workspace }}/../signing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: API key
+        env:
+          P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          [ -n "$P8" ] || { echo "Nema tajne ASC_KEY_P8 (vidi ios/README.md)."; exit 1; }
+          printf '%s\n' "$P8" > ../asc.p8
+          mkdir -p ~/.appstoreconnect/private_keys "$SIGN"
+          cp ../asc.p8 ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+      - name: Version and build number
+        id: v
+        run: |
+          echo "version=$(sed -nE 's/^ *MARKETING_VERSION: "([^"]+)".*/\1/p' ios/project.yml)" >> "$GITHUB_OUTPUT"
+          echo "build=$(( ${{ github.run_number }} + 100 ))" >> "$GITHUB_OUTPUT"
+      - name: Temporary distribution certificate and profile
+        run: |
+          openssl req -new -newkey rsa:2048 -nodes -keyout "$SIGN/key.pem" -out "$SIGN/csr.pem" -subj "/CN=Topple CI"
+          node ios/tools/ci-signing.js create $ASC --csr "$SIGN/csr.pem" --out "$SIGN"
+          openssl x509 -inform der -in "$SIGN/cert.cer" -out "$SIGN/cert.pem"
+          TEAM=$(openssl x509 -in "$SIGN/cert.pem" -noout -subject -nameopt multiline | sed -nE 's/^ *organizationalUnitName *= *([A-Z0-9]+).*/\1/p')
+          echo "TEAM=$TEAM" >> "$GITHUB_ENV"
+          openssl pkcs12 -export -legacy -inkey "$SIGN/key.pem" -in "$SIGN/cert.pem" -out "$SIGN/cert.p12" -passout pass:ci 2>/dev/null \
+            || openssl pkcs12 -export -inkey "$SIGN/key.pem" -in "$SIGN/cert.pem" -out "$SIGN/cert.p12" -passout pass:ci
+          KC="$RUNNER_TEMP/ci.keychain-db"
+          security create-keychain -p ci "$KC"
+          security set-keychain-settings -lut 7200 "$KC"
+          security unlock-keychain -p ci "$KC"
+          curl -sSLo "$SIGN/wwdr.cer" https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer
+          security import "$SIGN/wwdr.cer" -k "$KC" -A || true
+          security import "$SIGN/cert.p12" -k "$KC" -P ci -A -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci "$KC" > /dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          UUID=$(node -p "require('$SIGN/ids.json').profileUuid")
+          for d in ~/Library/MobileDevice/Provisioning\ Profiles ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles; do
+            mkdir -p "$d" && cp "$SIGN/profile.mobileprovision" "$d/$UUID.mobileprovision"
+          done
+          echo "PROFILE_NAME=$(node -p "require('$SIGN/ids.json').profileName")" >> "$GITHUB_ENV"
+      - name: Archive
+        run: |
+          brew install xcodegen
+          cd ios
+          # Manual signing for the app target only (Swift packages are not signed separately).
+          python3 - <<'EOF'
+          import os, re
+          p = 'project.yml'; s = open(p).read()
+          extra = ("        CODE_SIGN_STYLE: Manual\n"
+                   f"        DEVELOPMENT_TEAM: {os.environ['TEAM']}\n"
+                   "        CODE_SIGN_IDENTITY: Apple Distribution\n"
+                   f"        PROVISIONING_PROFILE_SPECIFIER: \"{os.environ['PROFILE_NAME']}\"\n")
+          s, n = re.subn(r'        CODE_SIGN_STYLE: Automatic\n', extra, s)
+          assert n == 1, 'CODE_SIGN_STYLE not found in project.yml'
+          open(p, 'w').write(s)
+          EOF
+          xcodegen
+          xcodebuild -project Topple.xcodeproj -scheme Topple -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Topple.xcarchive" CURRENT_PROJECT_VERSION=${{ steps.v.outputs.build }} archive > "$RUNNER_TEMP/archive.log" 2>&1 \
+            || { grep -E "error:|warning: .*sign" "$RUNNER_TEMP/archive.log" | head -40; tail -30 "$RUNNER_TEMP/archive.log"; exit 1; }
+          tail -3 "$RUNNER_TEMP/archive.log"
+      - name: Upload to App Store Connect
+        run: |
+          cat > "$SIGN/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>export</string>
+            <key>teamID</key><string>$TEAM</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key><dict><key>software.rdd.topple</key><string>$PROFILE_NAME</string></dict>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Topple.xcarchive" -exportOptionsPlist "$SIGN/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export"
+          xcrun altool --upload-app -f "$RUNNER_TEMP"/export/*.ipa -t ios --apiKey ${{ secrets.ASC_KEY_ID }} --apiIssuer ${{ secrets.ASC_ISSUER_ID }}
+          echo "Poslano: ${{ steps.v.outputs.version }} (${{ steps.v.outputs.build }})" >> "$GITHUB_STEP_SUMMARY"
+      - name: Texts and build for the version
+        run: |
+          node ios/tools/appstore-upload.js $ASC --whats-new --version ${{ steps.v.outputs.version }} --build ${{ steps.v.outputs.build }}
+          echo "Tekstovi upisani i build odabran. U App Store Connectu ostaje Add for Review." >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove the temporary certificate
+        if: always()
+        run: |
+          [ -f ../asc.p8 ] && node ios/tools/ci-signing.js delete $ASC --out "$SIGN" || true
+          security delete-keychain "$RUNNER_TEMP/ci.keychain-db" 2>/dev/null || true
+          rm -rf ../asc.p8 ~/.appstoreconnect "$SIGN"
