@@ -15,10 +15,13 @@ settings:
     SWIFT_VERSION: "5.0"
     DEVELOPMENT_TEAM: ""        # your Apple team ID (Xcode → Signing & Capabilities), or set it there
     GOOGLE_IOS_CLIENT_ID: "224195062999-lqe0avqbcb952jbus9tu23nsfu05jv3l.apps.googleusercontent.com"
-    # AdMob (rewarded ads for hints): Google's test IDs until the real iOS app and ad unit IDs
-    # from the AdMob account (Apps → Topple iOS) are put here.
-    ADMOB_APP_ID: "ca-app-pub-3940256099942544~1458002511"
-    ADMOB_REWARDED_ID: "ca-app-pub-3940256099942544/1712485313"
+    # AdMob (rewarded ads for hints), app "Topple: Gravity Puzzle (iOS)" in the AdMob account.
+    # Debug builds use Google's test ad unit so that clicks during development don't count.
+    ADMOB_APP_ID: "ca-app-pub-8378829605116517~4261933690"
+    ADMOB_REWARDED_ID: "ca-app-pub-8378829605116517/8982797397"
+  configs:
+    Debug:
+      ADMOB_REWARDED_ID: "ca-app-pub-3940256099942544/1712485313"
 packages:
   GoogleMobileAds:
     url: https://github.com/googleads/swift-package-manager-google-mobile-ads.git
