@@ -6,12 +6,13 @@ Nativno u aplikaciji:
 - vibracija (haptika) kod klizanja, slijetanja i pobjede;
 - dijeljenje rezultata preko iOS izbornika za dijeljenje;
 - dnevni podsjetnik kao lokalna obavijest u 17:00, osim ako je dnevna zagonetka već riješena (iOS ga zakazuje sam, bez servera);
-- Game Center: ljestvice (zvjezdice u razinama, beskonačne zagonetke) i 15 postignuća.
+- Game Center: ljestvice (zvjezdice u razinama, beskonačne zagonetke) i 15 postignuća;
+- reklame s nagradom za dodatne savjete preko AdMoba (`Topple/Ads.swift`), kao na Androidu.
 
 Prijava: korisničko ime ili e-mail, **Sign in with Apple** i **Google** (preko sigurnog sistemskog prozora, `SignIn.swift`). Apple traži Apple prijavu čim aplikacija nudi Google prijavu.
 
 Razlike prema webu:
-- nema reklama za savjete, jer web reklame u aplikaciji nisu dopuštene; savjeti se pune samo jednom dnevno.
+- reklame za savjete su AdMob (nativni SDK), a ne web reklame (H5 Games Ads u aplikaciji nisu dopuštene).
 
 Svaka promjena web igre ulazi u sljedeći build aplikacije: datoteke iz `web/` kopiraju se u aplikaciju pri svakom buildu.
 
@@ -142,6 +143,19 @@ Jednokratna kupnja (non-consumable) `software.rdd.topple.plus` daje neograničen
 **Isprobavanje:**
 - **U Xcodeu (bez App Store Connecta):** projekt koristi `Topple.storekit`, pa kupnja u simulatoru ili na spojenom iPhoneu radi odmah, bez naplate. Ako se ne pojavi, provjeri *Product → Scheme → Edit Scheme → Run → Options → StoreKit Configuration: Topple.storekit*.
 - **U TestFlightu:** kupnje su besplatne (sandbox), a proizvod mora postojati u App Store Connectu.
+
+## AdMob (reklame za savjete)
+
+Igra pošalje `native({type:'ad', action})`, a `Topple/Ads.swift` odgovara s `window.toppleAds({ready, loading, privacy, result})`, isto kao Android. Redoslijed pri prvoj reklami: Googleov obrazac za privolu (UMP, samo u EU/EGP i UK), zatim Appleovo pitanje o praćenju (ATT), zatim učitavanje reklame. Glazba se pauzira dok traje reklama. Gumb „Postavke privatnosti reklama” u izborniku pojavi se kad UMP to traži.
+
+**Jednom:**
+1. [AdMob](https://admob.google.com) → **Apps → Add app → iOS**, poveži s App Store aplikacijom Topple. Zatim **Ad units → Rewarded**, naziv `Savjet`, nagrada 1 `savjet`.
+2. App ID (`ca-app-pub-…~…`) i ID jedinice (`ca-app-pub-…/…`) upiši u `project.yml` (`ADMOB_APP_ID`, `ADMOB_REWARDED_ID`; dok tamo stoje Googleovi probni ID-jevi, reklame su probne). Pokreni `xcodegen`.
+3. AdMob → **Privacy & messaging**: poruka za EU (GDPR) već postoji za Android, dodaj joj i iOS aplikaciju. Po želji i **IDFA explainer** (poruka prije Appleova pitanja o praćenju).
+4. App Store Connect → **App Privacy**: dodaj podatke koje AdMob prikuplja: *Identifiers → Device ID*, *Usage Data → Advertising Data / Product Interaction*, *Diagnostics → Crash Data / Performance Data*, *Location → Coarse Location*; svi za **Third-Party Advertising**, povezani s uređajem, **Used for tracking: Yes** (za Device ID i Advertising Data).
+5. Kad je aplikacija objavljena s reklamama, u AdMobu provjeri `app-ads.txt` (`web/app-ads.txt`, isti izdavač kao Android).
+
+`Info.plist` dobiva `GADApplicationIdentifier`, `NSUserTrackingUsageDescription` (prevedeno u `*.lproj/InfoPlist.strings`) i `SKAdNetworkItems` iz `project.yml`.
 
 ## 3. Objava (TestFlight, pa App Store)
 

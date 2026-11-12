@@ -35,7 +35,7 @@ Screen recording: attached (App Review Information > Attachment). It starts with
 Demo account: see the Sign-In Information fields (username + password). Signing in is optional: the app can be played as a guest.
 
 1. PURPOSE AND AUDIENCE
-Topple is a logic puzzle game for all ages. You slide blocks left or right; whatever loses its support falls (gravity). The goal is to bring the red block to the exit in as few moves as possible. It offers 120 handcrafted levels in 12 chapters, a daily puzzle that is the same for every player, and an endless series of generated puzzles. The value is a short, calm brain exercise: every level has a verified minimum number of moves, so players can improve and compare results with friends. No ads, no chat, works offline.
+Topple is a logic puzzle game for all ages. You slide blocks left or right; whatever loses its support falls (gravity). The goal is to bring the red block to the exit in as few moves as possible. It offers 120 handcrafted levels in 12 chapters, a daily puzzle that is the same for every player, and an endless series of generated puzzles. The value is a short, calm brain exercise: every level has a verified minimum number of moves, so players can improve and compare results with friends. No chat, works offline; optional rewarded ads give extra hints.
 
 2. HOW TO ACCESS THE MAIN FEATURES
 - Launch the app: a short rules screen appears, then level 1 starts. No sign-in is needed.
@@ -55,7 +55,8 @@ User-generated content: the only user-provided content is the username (2-16 let
 - Apple StoreKit: the Topple Plus in-app purchase; the signed transaction is verified on our server to show a PLUS badge.
 - Apple Game Center: leaderboards and achievements.
 - E-mail (SMTP, our own mailbox): password reset links only.
-No advertising, analytics, tracking, AI or third-party data providers.
+- Google AdMob (with Google's consent form in the EU/UK and Apple's App Tracking Transparency prompt): optional rewarded video ads that give an extra hint; only shown when the player taps "Watch an ad".
+No analytics, AI or other third-party data providers.
 
 4. REGIONAL DIFFERENCES
 None. The app works the same in all regions. It is localized in Croatian, English, Italian and German; the language follows the device.
