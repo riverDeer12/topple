@@ -45,6 +45,8 @@ targets:
       path: Topple/Info.plist
       properties:
         CFBundleDisplayName: Topple
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleDevelopmentRegion: hr
         CFBundleLocalizations: [hr, en, it, de]
         UILaunchScreen:
