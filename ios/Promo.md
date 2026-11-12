@@ -23,7 +23,7 @@ Uz objavu priloži video (`ios/previews/<jezik>.mp4`) ili snimku zaslona (`ios/s
 ### Hrvatski
 
 **Kratko (X, Threads):**
-Topple je stigao na iPhone! Pomakni blok i sve iznad njega padne. 120 razina, nova dnevna zagonetka svaki dan i ljestvica s prijateljima. Besplatno, bez reklama.
+Topple je stigao na iPhone! Pomakni blok i sve iznad njega padne. 120 razina, nova dnevna zagonetka svaki dan i ljestvica s prijateljima. Besplatno.
 https://apps.apple.com/app/id6830289324
 #Topple #slagalica #mozgalica #iPhone
 
@@ -35,7 +35,7 @@ Pravila stanu u jednu rečenicu: pomakni blok lijevo ili desno, a sve što ostan
 • 120 razina i 9 vrsta blokova: led, kamen, baloni, strelice, opruge…
 • Dnevna zagonetka, ista za sve, s ljestvicom
 • Beskonačni niz, 15 postignuća i 13 likova za otključati
-• Game Center, igranje bez interneta, bez reklama
+• Game Center, igranje bez interneta
 
 Preuzmi besplatno: poveznica u profilu
 Igraj i u pregledniku: topple.rdd.software
@@ -45,7 +45,7 @@ Igraj i u pregledniku: topple.rdd.software
 ### English
 
 **Short (X, Threads):**
-Topple is out on iPhone! Slide a block and everything above it falls. 120 levels, a new daily puzzle every day and leaderboards with friends. Free, no ads.
+Topple is out on iPhone! Slide a block and everything above it falls. 120 levels, a new daily puzzle every day and leaderboards with friends. Free.
 https://apps.apple.com/app/id6830289324
 #Topple #puzzle #brainteaser #iPhone
 
@@ -57,7 +57,7 @@ The rules fit in one sentence: slide a block left or right, and whatever loses i
 • 120 levels and 9 kinds of blocks: ice, stone, balloons, arrows, springs…
 • A daily puzzle, the same for everyone, with a leaderboard
 • An endless run, 15 achievements and 13 looks to unlock
-• Game Center, plays offline, no ads
+• Game Center, plays offline
 
 Download free: link in bio
 Play in your browser too: topple.rdd.software
@@ -67,7 +67,7 @@ Play in your browser too: topple.rdd.software
 ### Italiano
 
 **Breve (X, Threads):**
-Topple è arrivato su iPhone! Sposta un blocco e tutto ciò che sta sopra cade. 120 livelli, un nuovo puzzle ogni giorno e classifiche con gli amici. Gratis, senza pubblicità.
+Topple è arrivato su iPhone! Sposta un blocco e tutto ciò che sta sopra cade. 120 livelli, un nuovo puzzle ogni giorno e classifiche con gli amici. Gratis.
 https://apps.apple.com/app/id6830289324
 #Topple #rompicapo #puzzle #iPhone
 
@@ -79,7 +79,7 @@ Le regole stanno in una frase: sposta un blocco a sinistra o a destra, e ciò ch
 • 120 livelli e 9 tipi di blocchi: ghiaccio, pietra, palloncini, frecce, molle…
 • Un puzzle giornaliero, uguale per tutti, con classifica
 • Una serie infinita, 15 obiettivi e 13 aspetti da sbloccare
-• Game Center, si gioca offline, senza pubblicità
+• Game Center, si gioca offline
 
 Scarica gratis: link nella bio
 Gioca anche nel browser: topple.rdd.software
@@ -89,7 +89,7 @@ Gioca anche nel browser: topple.rdd.software
 ### Deutsch
 
 **Kurz (X, Threads):**
-Topple ist auf dem iPhone! Schieb einen Block und alles darüber fällt. 120 Level, jeden Tag ein neues Tagesrätsel und Bestenlisten mit Freunden. Kostenlos, ohne Werbung.
+Topple ist auf dem iPhone! Schieb einen Block und alles darüber fällt. 120 Level, jeden Tag ein neues Tagesrätsel und Bestenlisten mit Freunden. Kostenlos.
 https://apps.apple.com/app/id6830289324
 #Topple #Rätsel #Denkspiel #iPhone
 
@@ -101,7 +101,7 @@ Die Regeln passen in einen Satz: Schieb einen Block nach links oder rechts, und 
 • 120 Level und 9 Blockarten: Eis, Stein, Ballons, Pfeile, Federn…
 • Ein Tagesrätsel, für alle gleich, mit Bestenliste
 • Eine endlose Serie, 15 Erfolge und 13 Looks zum Freischalten
-• Game Center, spielbar offline, ohne Werbung
+• Game Center, spielbar offline
 
 Kostenlos laden: Link in der Bio
 Auch im Browser spielbar: topple.rdd.software

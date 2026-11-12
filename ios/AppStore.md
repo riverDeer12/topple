@@ -22,7 +22,7 @@ Brojke (razine, poglavlja, blokovi, likovi) vrijede za verziju 1.0. Kad dodaš r
 **Podnaslov:** Slagalica s gravitacijom
 
 **Promotivni tekst:**
-Pomakni blok i sve iznad njega padne. Nova dnevna zagonetka svaki dan, 120 razina i niz koji ne smiješ prekinuti. Bez reklama, radi i bez interneta.
+Pomakni blok i sve iznad njega padne. Nova dnevna zagonetka svaki dan, 120 razina i niz koji ne smiješ prekinuti. Radi i bez interneta, reklame samo za dodatni savjet.
 
 **Ključne riječi:**
 slagalica,zagonetka,logika,blokovi,mozgalica,dnevna,razine,klizanje,puzzle,strategija,mozak
@@ -52,7 +52,7 @@ KAD ZAPNEŠ
 • Neograničeno „Vrati” i „Ispočetka”, bez kazne
 
 UGODNO IGRANJE
-• Bez reklama
+• Reklame samo ako ih sam želiš: kratka reklama za dodatni savjet, bez reklama uz Topple Plus
 • Radi i bez interneta, rezultati se pošalju kad se veza vrati
 • Podsjetnik za dnevnu zagonetku navečer, samo ako zagonetka još nije riješena
 • Zvukovi drveta i Bachov Preludij u C-duru, uz vibraciju
@@ -73,7 +73,7 @@ Prva verzija Toppla za iPhone i iPad: 120 razina, dnevna zagonetka, beskonačni 
 **Subtitle:** Sliding puzzle with gravity
 
 **Promotional text:**
-Slide a block and everything above it falls. A new daily puzzle every day, 120 levels and a streak you won't want to break. No ads, works offline.
+Slide a block and everything above it falls. A new daily puzzle every day, 120 levels and a streak you won't want to break. Works offline, ads only for an extra hint.
 
 **Keywords:**
 puzzle,logic,blocks,brain,daily,sliding,gravity,levels,strategy,riddle,mind,teaser,falling
@@ -103,7 +103,7 @@ WHEN YOU'RE STUCK
 • Unlimited Undo and Restart, no penalty
 
 EASY TO ENJOY
-• No ads
+• Ads only if you want them: a short ad for an extra hint, none with Topple Plus
 • Works offline; results are sent when you're back online
 • An evening reminder for the daily puzzle, only if it's still unsolved
 • Wooden sounds and Bach's Prelude in C major, with haptics
@@ -124,7 +124,7 @@ The first version of Topple for iPhone and iPad: 120 levels, the daily puzzle, t
 **Sottotitolo:** Puzzle scorrevole e gravità
 
 **Testo promozionale:**
-Sposta un blocco e tutto quello che c'è sopra cade. Un nuovo rompicapo ogni giorno, 120 livelli e una serie da non interrompere. Senza pubblicità, anche offline.
+Sposta un blocco e tutto ciò che sta sopra cade. Un rompicapo nuovo ogni giorno, 120 livelli e una serie da non perdere. Gioca offline, pubblicità solo per aiuti extra.
 
 **Parole chiave:**
 puzzle,rompicapo,logica,blocchi,cervello,giornaliero,livelli,gravità,strategia,enigmi,mente
@@ -154,7 +154,7 @@ QUANDO TI BLOCCHI
 • Annulla e Ricomincia senza limiti e senza penalità
 
 GIOCO PIACEVOLE
-• Senza pubblicità
+• Pubblicità solo se la vuoi: un breve video per un suggerimento in più, nessuna con Topple Plus
 • Funziona offline; i risultati vengono inviati quando torni online
 • Un promemoria serale per il rompicapo del giorno, solo se non è ancora risolto
 • Suoni di legno e il Preludio in do maggiore di Bach, con vibrazione
@@ -175,7 +175,7 @@ La prima versione di Topple per iPhone e iPad: 120 livelli, il rompicapo del gio
 **Untertitel:** Schiebepuzzle mit Schwerkraft
 
 **Werbetext:**
-Schieb einen Block und alles darüber fällt. Jeden Tag ein neues Rätsel, 120 Level und eine Serie, die du nicht abreißen lassen willst. Ohne Werbung, auch offline.
+Schieb einen Block und alles darüber fällt. Jeden Tag ein neues Rätsel, 120 Level und eine Serie, die nicht abreißen soll. Auch offline, Werbung nur für Extra-Tipps.
 
 **Schlüsselwörter:**
 puzzle,rätsel,logik,blöcke,denkspiel,täglich,level,schwerkraft,strategie,knobelspiel,gehirn
@@ -205,7 +205,7 @@ WENN DU FESTSTECKST
 • Unbegrenztes Zurück und Neustart, ohne Strafe
 
 ENTSPANNT SPIELEN
-• Ohne Werbung
+• Werbung nur, wenn du willst: ein kurzes Video für einen Extra-Tipp, keine mit Topple Plus
 • Funktioniert offline; Ergebnisse werden gesendet, sobald du wieder online bist
 • Eine Erinnerung am Abend an das Tagesrätsel, nur wenn es noch ungelöst ist
 • Holzklänge und Bachs Präludium in C-Dur, mit Vibration

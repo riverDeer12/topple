@@ -1,0 +1,26 @@
+name: iOS app
+# Compiles the iOS app (ios/, XcodeGen) for the simulator, without signing, to catch build errors
+# before a build on the Mac. Archiving and uploading to App Store Connect stay on the Mac (ios/README.md).
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['ios/**', '.github/workflows/ios.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate the Xcode project
+        run: brew install xcodegen && cd ios && xcodegen
+      - name: Build for the simulator
+        run: |
+          cd ios
+          xcodebuild -project Topple.xcodeproj -scheme Topple -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build | tail -40
+          exit ${PIPESTATUS[0]}
