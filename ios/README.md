@@ -153,7 +153,8 @@ Igra pošalje `native({type:'ad', action})`, a `Topple/Ads.swift` odgovara s `wi
 2. App ID i ID jedinice upisani su u `project.yml` (`ADMOB_APP_ID`, `ADMOB_REWARDED_ID`). Debug build (pokretanje iz Xcodea) koristi Googleovu probnu jedinicu, a Release (Archive, TestFlight, App Store) pravu. Vlastite prave reklame nemoj klikati: AdMob to smatra nevaljanim prometom.
 3. AdMob → **Privacy & messaging**: poruka za EU (GDPR) već postoji za Android, dodaj joj i iOS aplikaciju. Po želji i **IDFA explainer** (poruka prije Appleova pitanja o praćenju).
 4. App Store Connect → **App Privacy**: dodaj podatke koje AdMob prikuplja: *Identifiers → Device ID*, *Usage Data → Advertising Data / Product Interaction*, *Diagnostics → Crash Data / Performance Data*, *Location → Coarse Location*; svi za **Third-Party Advertising**, povezani s uređajem, **Used for tracking: Yes** (za Device ID i Advertising Data).
-5. Kad je aplikacija objavljena s reklamama, u AdMobu provjeri `app-ads.txt` (`web/app-ads.txt`, isti izdavač kao Android).
+5. App Store Connect → **App Information → Age Rating**: kod **Advertising** mora biti **Yes** (inače Apple automatski odbije verziju, smjernica 2.3.6).
+6. Kad je aplikacija objavljena s reklamama, u AdMobu provjeri `app-ads.txt` (`web/app-ads.txt`, isti izdavač kao Android).
 
 `Info.plist` dobiva `GADApplicationIdentifier`, `NSUserTrackingUsageDescription` (prevedeno u `*.lproj/InfoPlist.strings`) i `SKAdNetworkItems` iz `project.yml`.
 
