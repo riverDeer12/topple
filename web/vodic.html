@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#24443F">
+<title>Topple · Vodič i strategija</title>
+<meta name="description" content="Vodič za Topple, slagalicu s gravitacijom: pravila, strategije, savjeti za svaku vrstu bloka, dnevnu zagonetku i pregled svih poglavlja.">
+<link rel="canonical" href="https://topple.rdd.software/vodic.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lexend:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="theme.css">
+<style>
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--body); line-height: 1.65; }
+main { max-width: 760px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 48px; }
+nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+.logo { font: 600 1.6rem var(--display); text-decoration: none; color: var(--ink); }
+.logo span { color: var(--hero); }
+h1 { font: 600 2rem var(--display); margin: 0 0 4px; line-height: 1.2; }
+h2 { font: 600 1.35rem var(--display); margin: 34px 0 8px; }
+h3 { font: 600 1.1rem var(--display); margin: 0 0 2px; }
+p, li { color: var(--ink); }
+.lead { color: var(--muted); font-size: 1.05rem; }
+.muted { color: var(--muted); font-size: .9rem; }
+a { color: var(--hero); }
+.langsel { font: 600 .8rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 7px 10px; }
+section[lang] { display: none; }
+section[lang].on { display: block; }
+.tip { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: start; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 16px; padding: 14px; margin: 10px 0; }
+.tip p { margin: 4px 0 0; }
+.tip .blk.sw { margin-top: 4px; }
+ol.steps li, ul.tips li { margin: 6px 0; }
+.play { display: inline-block; margin-top: 10px; padding: 12px 22px; border-radius: 999px; background: var(--hero); color: #fff; font: 600 1rem var(--display); text-decoration: none; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; margin-top: 8px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--panel-line); vertical-align: top; }
+th { font: 600 .85rem var(--body); color: var(--muted); }
+td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+footer { border-top: 1px solid var(--panel-line); margin-top: 40px; padding-top: 18px; color: var(--muted); font-size: .85rem; }
+@media (max-width: 520px) { .tip { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <nav><a class="logo" href="./">Top<span>ple</span></a><span id="lang"></span></nav>
+
+  <section lang="hr">
+    <h1>Vodič i strategija</h1>
+    <p class="lead">Sve što trebaš znati da riješiš Topple u što manje poteza: kako razmišljati o gravitaciji, kako se ponaša svaka vrsta bloka i kako pristupiti dnevnoj zagonetki.</p>
+
+    <h2>Pravila u jednoj minuti</h2>
+    <p>Topple se igra na ploči široj 6 i visokoj 8 polja. Svaki blok je visok jedno polje i širok jedno do tri polja. U jednom potezu pomičeš točno jedan blok lijevo ili desno, za koliko god slobodnih polja želiš. Gore i dolje blokovi ne idu tvojom rukom, nego samo gravitacijom: čim se potez završi, sve što ostane bez oslonca padne. Cilj je dovesti crveni blok u red sa strelicom na desnom rubu tako da dotakne desni rub ploče.</p>
+    <p>Svaka razina ima provjereni najmanji broj poteza. Ako je riješiš u tom broju, dobiješ tri zvjezdice, s do dva poteza više dvije, a inače jednu.</p>
+
+    <h2>Kako razmišljati o gravitaciji</h2>
+    <ul class="tips">
+      <li><b>Blok stoji ako je bilo što ispod barem jednog njegovog polja.</b> Široki blok koji visi preko ruba neće pasti dok ne makneš oslonac ispod svih njegovih polja. Zato su široki blokovi dobri mostovi, a teško ih je spustiti.</li>
+      <li><b>Jedan potez može pokrenuti lanac.</b> Kad makneš blok iz donjeg reda, sve iznad njega pada redom, odozdo prema gore. Prije poteza prati stupce: što će pasti, gdje će stati i hoće li na tom mjestu nekome postati oslonac.</li>
+      <li><b>Crveni blok uglavnom treba spustiti ili podići.</b> Rijetko je crveni već u izlaznom redu. Pitaj se prvo: kako će crveni doći do tog reda? Ako mora pasti, što ga drži? Ako se mora dići, možda mu treba balon.</li>
+      <li><b>Kreni od kraja.</b> Zamisli završni položaj: crveni u izlaznom redu, uz desni rub. Što mu tada mora biti ispod? Što ne smije biti desno od njega? Iz tog položaja vrati se korak po korak do početka.</li>
+      <li><b>Klizi do kraja kad god možeš.</b> Blok smiješ pomaknuti za koliko god polja, a najkraća rješenja često guraju blok sve do zida ili do drugog bloka. Jedan dugi potez vrijedi kao jedan, isto kao i kratki.</li>
+      <li><b>Redoslijed je važan.</b> Blok koji danas možeš maknuti jednim potezom, nakon pada nečeg drugog može biti zarobljen. Ako nešto treba maknuti, često je bolje to napraviti prije nego što pokreneš lanac.</li>
+      <li><b>Koristi „Vrati” i „Ponovi”.</b> Vraćanje poteza je besplatno. Isprobaj ideju, pogledaj kamo je sve palo i vrati se. Kad znaš put, kreni ispočetka i odigraj ga u najmanje poteza.</li>
+    </ul>
+
+    <h2>Savjeti za svaku vrstu bloka</h2>
+    <div class="tip"><div class="blk sw r"><div class="face"></div><div class="eyes"><span class="eye"></span><span class="eye"></span></div></div><div><h3>Crveni blok</h3><p>Ponaša se kao obični blok: klizi i pada. Pazi da ga ne spustiš u red u kojem mu put prema desnom rubu zatvara kamen; odande do izlaza ne stiže dok ne padne niže. Ponekad je najbolji prvi potez maknuti crveni s puta drugim blokovima.</p></div></div>
+    <div class="tip"><div class="blk sw n"><div class="face"></div></div><div><h3>Obični blok</h3><p>Glavni alat. Služi kao oslonac, kao prepreka i kao čep. Kad se crveni treba zaustaviti točno na nekom mjestu, često mu postaviš obični blok kao graničnik.</p></div></div>
+    <div class="tip"><div class="blk sw f"><div class="face"></div></div><div><h3>Kamen</h3><p>Nikad se ne miče i nikad ne pada. To je jedini oslonac na koji se uvijek možeš osloniti, pa oko njega gradi plan. Kamen u sredini ploče dijeli red na dva dijela: blok s jedne strane ne može prijeći na drugu.</p></div></div>
+    <div class="tip"><div class="blk sw i"><div class="face"></div></div><div><h3>Led</h3><p>Kad ga gurneš, klizi do prve prepreke i ne staje na pola puta. Ako ti treba ledeni blok na točno određenom mjestu, najprije postavi prepreku na koju će udariti. Led je izvrstan za pražnjenje reda jednim potezom.</p></div></div>
+    <div class="tip"><div class="blk sw h"><div class="face"></div></div><div><h3>Teški blok</h3><p>Kad padne barem jedan red na ispucali blok, razbije ga i pada dalje. Ako samo leži na ispucalom bloku, ništa se ne događa. Da bi razbio ispucali blok, teški mora padati: makni ono što ga drži, pa neka padne s visine.</p></div></div>
+    <div class="tip"><div class="blk sw k"><div class="face"></div></div><div><h3>Ispucali blok</h3><p>Miče se i pada kao obični, ali ga teški blok u padu razbije. To je način da makneš blok koji inače ne možeš izgurati: dovedi teški blok iznad njega i pusti ga da padne.</p></div></div>
+    <div class="tip"><div class="blk sw b"><div class="face"></div></div><div><h3>Balon</h3><p>Ne pada nego se diže dok ne udari u nešto iznad sebe. Drugi blokovi mogu stajati na njemu, pa balon može podići crveni blok prema izlazu ili ga držati u zraku. Kad makneš ono što drži balon dolje, on se sam digne, a blokovi koji su ležali na njemu padnu ako izgube oslonac.</p></div></div>
+    <div class="tip"><div class="blk sw a"><div class="face"></div></div><div><h3>Strelica</h3><p>Klizi samo u smjeru strelice, a pada kao obični blok. Strelicu koja gleda prema zidu ne možeš vratiti, pa dobro razmisli prije nego je pomakneš. Opruga je jedini način da strelica krene u suprotnom smjeru.</p></div></div>
+    <div class="tip"><div class="blk sw s"><div class="face"></div></div><div><h3>Opruga</h3><p>Ne miče se i ne pada. Blok koji se zaustavi uz nju odbije se i klizi do kraja na suprotnu stranu, jednom. Tako jednim potezom prijeđeš cijeli red. Prije poteza provjeri gdje će blok nakon odbijanja stati.</p></div></div>
+
+    <h2>Dnevna zagonetka</h2>
+    <p>Svaki dan stiže nova zagonetka, ista za sve igrače. Na ljestvici pobjeđuje manje poteza, a kod jednakog broja brže vrijeme. U dnevnoj zagonetki nema savjeta, da ljestvica ostane poštena. Nedjeljom je zagonetka teža.</p>
+    <ol class="steps">
+      <li>Prije prvog poteza dobro pogledaj ploču. Vrijeme se računa tek kod jednakog broja poteza, pa se isplati razmisliti.</li>
+      <li>Nađi bilo koje rješenje, a onda ga pokušaj skratiti: koji potez je samo pripremao drugi i može li se preskočiti?</li>
+      <li>Rješavaj svaki dan: niz dana zaredom otključava postignuća.</li>
+    </ol>
+
+    <h2>Kad zapneš</h2>
+    <ul class="tips">
+      <li>Izbroji koliko blokova stoji u izlaznom redu desno od crvenog. Svaki od njih mora otići ili pasti niže.</li>
+      <li>Pogledaj koji blok jedini drži neki stupac. Njegovo micanje često je ključni potez.</li>
+      <li>Ako ne vidiš ni jedan smislen potez, pomakni blok koji ništa ne drži i pogledaj što se otvorilo, pa ga vrati.</li>
+      <li>Savjet (žarulja) pokazuje sljedeći potez najkraćeg rješenja iz trenutnog položaja. Koristi ga kad zapneš, a ostatak pokušaj sam.</li>
+    </ul>
+
+    <h2>Poglavlja</h2>
+    <p>Razine su podijeljene u poglavlja od po deset. Svako uvodi nešto novo i postaje teže; broj poteza je najmanji mogući broj za razine tog poglavlja.</p>
+    <div class="tablewrap"><table class="chapters"></table></div>
+
+    <p><a class="play" href="igra.html">Igraj Topple</a></p>
+  </section>
+
+  <section lang="en">
+    <h1>Guide and strategy</h1>
+    <p class="lead">Everything you need to solve Topple in as few moves as possible: how to think about gravity, how each kind of block behaves and how to approach the daily puzzle.</p>
+
+    <h2>The rules in one minute</h2>
+    <p>Topple is played on a board 6 cells wide and 8 cells tall. Every block is one cell tall and one to three cells wide. In one move you slide exactly one block left or right, by as many free cells as you like. Blocks never go up or down by your hand, only by gravity: as soon as a move ends, everything that has lost its support falls. The goal is to bring the red block into the row with the arrow on the right edge, so that it touches the right edge of the board.</p>
+    <p>Every level has a verified minimum number of moves. Solve it in that number and you get three stars, with up to two moves more two stars, otherwise one.</p>
+
+    <h2>How to think about gravity</h2>
+    <ul class="tips">
+      <li><b>A block stands if there is anything under at least one of its cells.</b> A wide block hanging over an edge will not fall until you remove the support under all of its cells. That makes wide blocks great bridges, and hard to bring down.</li>
+      <li><b>One move can start a chain.</b> When you take a block out of a lower row, everything above it falls, from the bottom up. Before you move, follow the columns: what will fall, where will it land, and will it become someone's support there?</li>
+      <li><b>The red block usually has to go down or up.</b> The red block is rarely already in the exit row. Ask first: how will the red block reach that row? If it has to fall, what is holding it? If it has to rise, maybe it needs a balloon.</li>
+      <li><b>Start from the end.</b> Picture the final position: the red block in the exit row, against the right edge. What has to be under it then? What must not be to its right? From there, work back step by step to the start.</li>
+      <li><b>Slide all the way when you can.</b> You may move a block any number of cells, and the shortest solutions often push a block right up to a wall or another block. A long move counts as one, just like a short one.</li>
+      <li><b>Order matters.</b> A block you can move away in one move now may be trapped after something else falls. If something has to go, it is often best to move it before you start a chain.</li>
+      <li><b>Use Undo and Restart.</b> Undoing a move is free. Try an idea, see where everything fell and go back. Once you know the way, start over and play it in the fewest moves.</li>
+    </ul>
+
+    <h2>Tips for every kind of block</h2>
+    <div class="tip"><div class="blk sw r"><div class="face"></div><div class="eyes"><span class="eye"></span><span class="eye"></span></div></div><div><h3>Red block</h3><p>It behaves like a normal block: it slides and falls. Be careful not to drop it into a row where a stone blocks its way to the right edge; from there it cannot reach the exit until it falls lower. Sometimes the best first move is getting the red block out of the other blocks' way.</p></div></div>
+    <div class="tip"><div class="blk sw n"><div class="face"></div></div><div><h3>Normal block</h3><p>Your main tool. It is a support, an obstacle and a stopper. When the red block has to stop exactly at some place, you often put a normal block there as a buffer.</p></div></div>
+    <div class="tip"><div class="blk sw f"><div class="face"></div></div><div><h3>Stone</h3><p>It never moves and never falls. It is the one support you can always count on, so build your plan around it. A stone in the middle of the board splits its row in two: a block on one side cannot get to the other.</p></div></div>
+    <div class="tip"><div class="blk sw i"><div class="face"></div></div><div><h3>Ice</h3><p>When you push it, it slides until the first obstacle and does not stop halfway. If you need an ice block at an exact place, first put an obstacle there for it to hit. Ice is great for clearing a row in one move.</p></div></div>
+    <div class="tip"><div class="blk sw h"><div class="face"></div></div><div><h3>Heavy block</h3><p>When it falls at least one row onto a cracked block, it breaks it and keeps falling. If it just lies on a cracked block, nothing happens. To break a cracked block the heavy one has to be falling: remove what is holding it and let it drop.</p></div></div>
+    <div class="tip"><div class="blk sw k"><div class="face"></div></div><div><h3>Cracked block</h3><p>It moves and falls like a normal block, but a falling heavy block breaks it. That is how you get rid of a block you otherwise cannot push away: bring a heavy block above it and let it fall.</p></div></div>
+    <div class="tip"><div class="blk sw b"><div class="face"></div></div><div><h3>Balloon</h3><p>It does not fall, it rises until it hits something above it. Other blocks can stand on it, so a balloon can lift the red block towards the exit or hold it in the air. When you remove what holds a balloon down, it flies up on its own, and blocks resting on it fall if they lose their support.</p></div></div>
+    <div class="tip"><div class="blk sw a"><div class="face"></div></div><div><h3>Arrow</h3><p>It slides only in the direction of its arrow and falls like a normal block. An arrow pointing at a wall cannot come back, so think before you move it. A spring is the only way to send an arrow the other way.</p></div></div>
+    <div class="tip"><div class="blk sw s"><div class="face"></div></div><div><h3>Spring</h3><p>It does not move and does not fall. A block that stops against it bounces off and slides all the way to the other side, once. That crosses a whole row in one move. Before you move, check where the block will stop after the bounce.</p></div></div>
+
+    <h2>The daily puzzle</h2>
+    <p>A new puzzle arrives every day, the same for every player. On the leaderboard fewer moves win, and with the same number of moves a faster time. There are no hints in the daily puzzle, to keep the leaderboard fair. On Sundays it is harder.</p>
+    <ol class="steps">
+      <li>Take a good look at the board before your first move. Time only counts when the number of moves is equal, so thinking pays off.</li>
+      <li>Find any solution, then try to make it shorter: which move only prepared another one, and can it be skipped?</li>
+      <li>Play every day: a streak of days unlocks achievements.</li>
+    </ol>
+
+    <h2>When you get stuck</h2>
+    <ul class="tips">
+      <li>Count how many blocks are in the exit row to the right of the red block. Each one has to leave or fall lower.</li>
+      <li>Look for the block that alone holds up a column. Moving it is often the key move.</li>
+      <li>If you see no sensible move, move a block that holds nothing up, look at what opened up, then undo.</li>
+      <li>A hint (the light bulb) shows the next move of the shortest solution from the current position. Use it when you are stuck and try the rest yourself.</li>
+    </ul>
+
+    <h2>Chapters</h2>
+    <p>The levels are grouped into chapters of ten. Each one brings something new and gets harder; the moves are the minimum number of moves for the levels of that chapter.</p>
+    <div class="tablewrap"><table class="chapters"></table></div>
+
+    <p><a class="play" href="igra.html">Play Topple</a></p>
+  </section>
+
+  <section lang="it">
+    <h1>Guida e strategia</h1>
+    <p class="lead">Tutto quello che serve per risolvere Topple con meno mosse possibili: come ragionare sulla gravità, come si comporta ogni tipo di blocco e come affrontare il rompicapo del giorno.</p>
+
+    <h2>Le regole in un minuto</h2>
+    <p>Topple si gioca su un tabellone largo 6 caselle e alto 8. Ogni blocco è alto una casella e largo da una a tre. In una mossa sposti esattamente un blocco a sinistra o a destra, di quante caselle libere vuoi. In su e in giù i blocchi non li muovi tu, solo la gravità: appena finisce la mossa, tutto ciò che resta senza appoggio cade. L'obiettivo è portare il blocco rosso nella riga con la freccia sul bordo destro, in modo che tocchi il bordo destro del tabellone.</p>
+    <p>Ogni livello ha un numero minimo di mosse verificato. Se lo risolvi con quel numero ottieni tre stelle, con al massimo due mosse in più due stelle, altrimenti una.</p>
+
+    <h2>Come ragionare sulla gravità</h2>
+    <ul class="tips">
+      <li><b>Un blocco sta fermo se sotto almeno una delle sue caselle c'è qualcosa.</b> Un blocco largo che sporge da un bordo non cade finché non togli l'appoggio sotto tutte le sue caselle. Per questo i blocchi larghi sono ottimi ponti e difficili da far scendere.</li>
+      <li><b>Una mossa può avviare una catena.</b> Quando togli un blocco da una riga bassa, tutto ciò che sta sopra cade, dal basso verso l'alto. Prima di muovere segui le colonne: cosa cadrà, dove si fermerà e diventerà lì l'appoggio di qualcun altro?</li>
+      <li><b>Il blocco rosso di solito deve scendere o salire.</b> Raramente il rosso è già nella riga d'uscita. Chiediti prima: come arriverà il rosso a quella riga? Se deve cadere, cosa lo trattiene? Se deve salire, forse gli serve un palloncino.</li>
+      <li><b>Parti dalla fine.</b> Immagina la posizione finale: il rosso nella riga d'uscita, contro il bordo destro. Cosa deve esserci sotto? Cosa non deve esserci alla sua destra? Da lì torna indietro passo dopo passo fino all'inizio.</li>
+      <li><b>Scorri fino in fondo quando puoi.</b> Puoi spostare un blocco di quante caselle vuoi, e le soluzioni più corte spesso spingono un blocco fino al muro o a un altro blocco. Una mossa lunga vale una, come una corta.</li>
+      <li><b>L'ordine conta.</b> Un blocco che ora sposti con una mossa può restare intrappolato dopo che cade qualcos'altro. Se qualcosa deve andare via, spesso conviene farlo prima di avviare una catena.</li>
+      <li><b>Usa Annulla e Ricomincia.</b> Annullare una mossa è gratis. Prova un'idea, guarda dove è caduto tutto e torna indietro. Quando conosci la strada, ricomincia e giocala con meno mosse.</li>
+    </ul>
+
+    <h2>Consigli per ogni tipo di blocco</h2>
+    <div class="tip"><div class="blk sw r"><div class="face"></div><div class="eyes"><span class="eye"></span><span class="eye"></span></div></div><div><h3>Blocco rosso</h3><p>Si comporta come un blocco normale: scorre e cade. Attento a non farlo cadere in una riga in cui una pietra gli chiude la strada verso il bordo destro: da lì non arriva all'uscita finché non cade più in basso. A volte la prima mossa migliore è togliere il rosso dalla strada degli altri blocchi.</p></div></div>
+    <div class="tip"><div class="blk sw n"><div class="face"></div></div><div><h3>Blocco normale</h3><p>Il tuo strumento principale. Fa da appoggio, da ostacolo e da tappo. Quando il rosso deve fermarsi in un punto preciso, spesso ci metti un blocco normale come fermo.</p></div></div>
+    <div class="tip"><div class="blk sw f"><div class="face"></div></div><div><h3>Pietra</h3><p>Non si muove e non cade mai. È l'unico appoggio su cui puoi sempre contare, quindi costruisci il piano intorno a lei. Una pietra al centro del tabellone divide la sua riga in due: un blocco da un lato non può passare dall'altro.</p></div></div>
+    <div class="tip"><div class="blk sw i"><div class="face"></div></div><div><h3>Ghiaccio</h3><p>Quando lo spingi scivola fino al primo ostacolo e non si ferma a metà. Se ti serve un blocco di ghiaccio in un punto preciso, metti prima un ostacolo contro cui sbatterà. Il ghiaccio è ottimo per svuotare una riga con una mossa.</p></div></div>
+    <div class="tip"><div class="blk sw h"><div class="face"></div></div><div><h3>Blocco pesante</h3><p>Quando cade di almeno una riga su un blocco crepato, lo rompe e continua a cadere. Se ci sta solo appoggiato sopra, non succede niente. Per rompere un blocco crepato il pesante deve cadere: togli ciò che lo regge e lascialo cadere.</p></div></div>
+    <div class="tip"><div class="blk sw k"><div class="face"></div></div><div><h3>Blocco crepato</h3><p>Si muove e cade come uno normale, ma un blocco pesante in caduta lo rompe. È il modo per eliminare un blocco che altrimenti non riesci a spingere via: porta un pesante sopra di lui e lascialo cadere.</p></div></div>
+    <div class="tip"><div class="blk sw b"><div class="face"></div></div><div><h3>Palloncino</h3><p>Non cade ma sale, finché non urta qualcosa sopra di sé. Altri blocchi possono starci sopra, quindi un palloncino può sollevare il rosso verso l'uscita o tenerlo in aria. Quando togli ciò che tiene giù un palloncino, vola su da solo, e i blocchi appoggiati sopra cadono se perdono l'appoggio.</p></div></div>
+    <div class="tip"><div class="blk sw a"><div class="face"></div></div><div><h3>Freccia</h3><p>Scorre solo nella direzione della freccia e cade come un blocco normale. Una freccia che punta verso il muro non può tornare indietro, quindi pensaci prima di spostarla. Una molla è l'unico modo per mandare una freccia dall'altra parte.</p></div></div>
+    <div class="tip"><div class="blk sw s"><div class="face"></div></div><div><h3>Molla</h3><p>Non si muove e non cade. Un blocco che si ferma contro di lei rimbalza e scorre fino in fondo dalla parte opposta, una volta. Così attraversi un'intera riga con una mossa. Prima di muovere controlla dove si fermerà il blocco dopo il rimbalzo.</p></div></div>
+
+    <h2>Il rompicapo del giorno</h2>
+    <p>Ogni giorno arriva un nuovo rompicapo, uguale per tutti i giocatori. In classifica vincono meno mosse e, a parità di mosse, il tempo più veloce. Nel rompicapo del giorno non ci sono suggerimenti, per una classifica giusta. La domenica è più difficile.</p>
+    <ol class="steps">
+      <li>Guarda bene il tabellone prima della prima mossa. Il tempo conta solo a parità di mosse, quindi pensare conviene.</li>
+      <li>Trova una soluzione qualsiasi, poi prova ad accorciarla: quale mossa preparava solo un'altra e si può saltare?</li>
+      <li>Gioca ogni giorno: una serie di giorni di fila sblocca gli obiettivi.</li>
+    </ol>
+
+    <h2>Quando ti blocchi</h2>
+    <ul class="tips">
+      <li>Conta quanti blocchi ci sono nella riga d'uscita a destra del rosso. Ognuno deve andarsene o cadere più in basso.</li>
+      <li>Cerca il blocco che da solo regge una colonna. Spostarlo è spesso la mossa chiave.</li>
+      <li>Se non vedi nessuna mossa sensata, sposta un blocco che non regge niente, guarda cosa si è aperto e poi annulla.</li>
+      <li>Il suggerimento (la lampadina) mostra la prossima mossa della soluzione più corta dalla posizione attuale. Usalo quando sei bloccato e prova il resto da solo.</li>
+    </ul>
+
+    <h2>Capitoli</h2>
+    <p>I livelli sono divisi in capitoli da dieci. Ognuno porta qualcosa di nuovo e diventa più difficile; le mosse sono il numero minimo di mosse per i livelli di quel capitolo.</p>
+    <div class="tablewrap"><table class="chapters"></table></div>
+
+    <p><a class="play" href="igra.html">Gioca a Topple</a></p>
+  </section>
+
+  <section lang="de">
+    <h1>Anleitung und Strategie</h1>
+    <p class="lead">Alles, was du brauchst, um Topple mit möglichst wenigen Zügen zu lösen: wie man über Schwerkraft nachdenkt, wie sich jede Blockart verhält und wie man das Tagesrätsel angeht.</p>
+
+    <h2>Die Regeln in einer Minute</h2>
+    <p>Topple wird auf einem Brett gespielt, das 6 Felder breit und 8 Felder hoch ist. Jeder Block ist ein Feld hoch und ein bis drei Felder breit. Mit einem Zug schiebst du genau einen Block nach links oder rechts, um beliebig viele freie Felder. Nach oben und unten bewegen sich Blöcke nie durch deine Hand, nur durch die Schwerkraft: Sobald ein Zug endet, fällt alles, was keinen Halt mehr hat. Ziel ist es, den roten Block in die Reihe mit dem Pfeil am rechten Rand zu bringen, sodass er den rechten Rand des Bretts berührt.</p>
+    <p>Jedes Level hat eine geprüfte kleinste Zugzahl. Löst du es mit genau so vielen Zügen, bekommst du drei Sterne, mit bis zu zwei Zügen mehr zwei Sterne, sonst einen.</p>
+
+    <h2>Wie man über Schwerkraft nachdenkt</h2>
+    <ul class="tips">
+      <li><b>Ein Block hält, wenn unter mindestens einem seiner Felder etwas ist.</b> Ein breiter Block, der über eine Kante ragt, fällt erst, wenn du den Halt unter allen seinen Feldern wegnimmst. Deshalb sind breite Blöcke gute Brücken und schwer nach unten zu bringen.</li>
+      <li><b>Ein Zug kann eine Kette auslösen.</b> Nimmst du einen Block aus einer unteren Reihe, fällt alles darüber, von unten nach oben. Verfolge vor dem Zug die Spalten: Was fällt, wo landet es, und wird es dort zur Stütze für einen anderen Block?</li>
+      <li><b>Der rote Block muss meistens nach unten oder nach oben.</b> Selten ist der rote Block schon in der Ausgangsreihe. Frag dich zuerst: Wie kommt der rote Block in diese Reihe? Muss er fallen, was hält ihn? Muss er steigen, braucht er vielleicht einen Ballon.</li>
+      <li><b>Fang am Ende an.</b> Stell dir die Endstellung vor: der rote Block in der Ausgangsreihe am rechten Rand. Was muss dann unter ihm sein? Was darf rechts von ihm nicht sein? Von dort arbeitest du dich Schritt für Schritt zurück zum Anfang.</li>
+      <li><b>Schieb ganz durch, wenn du kannst.</b> Du darfst einen Block beliebig weit schieben, und die kürzesten Lösungen schieben einen Block oft bis an eine Wand oder einen anderen Block. Ein langer Zug zählt als einer, genau wie ein kurzer.</li>
+      <li><b>Die Reihenfolge zählt.</b> Ein Block, den du jetzt mit einem Zug wegschieben kannst, kann gefangen sein, nachdem etwas anderes gefallen ist. Wenn etwas weg muss, schiebst du es oft am besten weg, bevor du eine Kette auslöst.</li>
+      <li><b>Nutze Zurück und Neustart.</b> Einen Zug zurückzunehmen kostet nichts. Probier eine Idee aus, schau, wohin alles gefallen ist, und geh zurück. Wenn du den Weg kennst, fang neu an und spiel ihn mit den wenigsten Zügen.</li>
+    </ul>
+
+    <h2>Tipps für jede Blockart</h2>
+    <div class="tip"><div class="blk sw r"><div class="face"></div><div class="eyes"><span class="eye"></span><span class="eye"></span></div></div><div><h3>Roter Block</h3><p>Er verhält sich wie ein normaler Block: Er rutscht und fällt. Pass auf, dass er nicht in eine Reihe fällt, in der ihm ein Stein den Weg zum rechten Rand versperrt; von dort erreicht er den Ausgang erst, wenn er tiefer fällt. Manchmal ist der beste erste Zug, den roten Block den anderen Blöcken aus dem Weg zu schieben.</p></div></div>
+    <div class="tip"><div class="blk sw n"><div class="face"></div></div><div><h3>Normaler Block</h3><p>Dein wichtigstes Werkzeug. Er ist Stütze, Hindernis und Stopper. Wenn der rote Block an einer genauen Stelle anhalten soll, stellst du dort oft einen normalen Block als Puffer hin.</p></div></div>
+    <div class="tip"><div class="blk sw f"><div class="face"></div></div><div><h3>Stein</h3><p>Er bewegt sich nie und fällt nie. Er ist die einzige Stütze, auf die du dich immer verlassen kannst, also bau deinen Plan um ihn herum. Ein Stein in der Mitte des Bretts teilt seine Reihe in zwei Hälften: Ein Block auf der einen Seite kommt nicht auf die andere.</p></div></div>
+    <div class="tip"><div class="blk sw i"><div class="face"></div></div><div><h3>Eis</h3><p>Wenn du es schiebst, rutscht es bis zum ersten Hindernis und bleibt nicht auf halbem Weg stehen. Brauchst du einen Eisblock an einer genauen Stelle, stell zuerst ein Hindernis dorthin, an das er stößt. Eis eignet sich hervorragend, um eine Reihe mit einem Zug freizuräumen.</p></div></div>
+    <div class="tip"><div class="blk sw h"><div class="face"></div></div><div><h3>Schwerer Block</h3><p>Fällt er mindestens eine Reihe tief auf einen rissigen Block, zerbricht er ihn und fällt weiter. Liegt er nur darauf, passiert nichts. Um einen rissigen Block zu zerbrechen, muss der schwere fallen: Nimm weg, was ihn hält, und lass ihn fallen.</p></div></div>
+    <div class="tip"><div class="blk sw k"><div class="face"></div></div><div><h3>Rissiger Block</h3><p>Er bewegt sich und fällt wie ein normaler, aber ein fallender schwerer Block zerbricht ihn. So wirst du einen Block los, den du sonst nicht wegschieben kannst: Bring einen schweren Block über ihn und lass ihn fallen.</p></div></div>
+    <div class="tip"><div class="blk sw b"><div class="face"></div></div><div><h3>Ballon</h3><p>Er fällt nicht, sondern steigt, bis er oben gegen etwas stößt. Andere Blöcke können auf ihm stehen, also kann ein Ballon den roten Block zum Ausgang heben oder ihn in der Luft halten. Nimmst du weg, was einen Ballon unten hält, fliegt er von selbst nach oben, und Blöcke auf ihm fallen, wenn sie ihren Halt verlieren.</p></div></div>
+    <div class="tip"><div class="blk sw a"><div class="face"></div></div><div><h3>Pfeil</h3><p>Er rutscht nur in Pfeilrichtung und fällt wie ein normaler Block. Ein Pfeil, der zur Wand zeigt, kann nicht zurück, also überleg gut, bevor du ihn bewegst. Eine Feder ist der einzige Weg, einen Pfeil in die andere Richtung zu schicken.</p></div></div>
+    <div class="tip"><div class="blk sw s"><div class="face"></div></div><div><h3>Feder</h3><p>Sie bewegt sich nicht und fällt nicht. Ein Block, der an ihr anhält, prallt ab und rutscht einmal ganz bis zur anderen Seite. So überquerst du eine ganze Reihe mit einem Zug. Prüf vor dem Zug, wo der Block nach dem Abprallen stehen bleibt.</p></div></div>
+
+    <h2>Das Tagesrätsel</h2>
+    <p>Jeden Tag kommt ein neues Rätsel, für alle Spieler gleich. In der Rangliste gewinnen weniger Züge, bei gleicher Zugzahl die schnellere Zeit. Beim Tagesrätsel gibt es keine Tipps, damit die Rangliste fair bleibt. Sonntags ist es schwerer.</p>
+    <ol class="steps">
+      <li>Sieh dir das Brett vor dem ersten Zug gut an. Die Zeit zählt nur bei gleicher Zugzahl, Nachdenken lohnt sich also.</li>
+      <li>Finde irgendeine Lösung und versuch dann, sie zu verkürzen: Welcher Zug hat nur einen anderen vorbereitet und lässt sich überspringen?</li>
+      <li>Spiel jeden Tag: Eine Serie von Tagen hintereinander schaltet Erfolge frei.</li>
+    </ol>
+
+    <h2>Wenn du nicht weiterkommst</h2>
+    <ul class="tips">
+      <li>Zähl, wie viele Blöcke in der Ausgangsreihe rechts vom roten Block stehen. Jeder davon muss weg oder tiefer fallen.</li>
+      <li>Such den Block, der allein eine Spalte trägt. Ihn zu bewegen ist oft der entscheidende Zug.</li>
+      <li>Siehst du keinen sinnvollen Zug, schieb einen Block, der nichts trägt, schau, was sich geöffnet hat, und nimm den Zug zurück.</li>
+      <li>Ein Tipp (die Glühbirne) zeigt den nächsten Zug der kürzesten Lösung aus der aktuellen Stellung. Nutz ihn, wenn du feststeckst, und versuch den Rest selbst.</li>
+    </ul>
+
+    <h2>Kapitel</h2>
+    <p>Die Level sind in Kapitel zu je zehn aufgeteilt. Jedes bringt etwas Neues und wird schwerer; die Züge sind die kleinste Zugzahl für die Level dieses Kapitels.</p>
+    <div class="tablewrap"><table class="chapters"></table></div>
+
+    <p><a class="play" href="igra.html">Topple spielen</a></p>
+  </section>
+
+  <footer><a href="./">Topple</a> · <a href="o-igri.html" data-i18n="about.link">O igri</a> · <a href="privatnost.html" data-i18n="privacy.link">Pravila privatnosti</a> · <a href="kontakt.html" data-i18n="contact.link">Kontakt</a></footer>
+</main>
+<script src="levels.js"></script>
+<script src="i18n.js"></script>
+<script src="content.js"></script>
+<script>
+const L = ToppleI18n.lang, t = ToppleI18n.t;
+document.documentElement.lang = L;
+const sec = document.querySelector(`section[lang="${L}"]`);
+sec.classList.add('on');
+ToppleI18n.apply();
+document.title = 'Topple · ' + t('guide.link');
+document.getElementById('lang').appendChild(ToppleI18n.picker());
+
+// Chapter overview, computed from the level data: level range, fewest moves, new kinds of blocks.
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const seen = new Set(), rows = [];
+for (let c = 0; c * 10 < LEVELS.length; c++) {
+  const lv = LEVELS.slice(c * 10, c * 10 + 10), opts = lv.map(l => l.opt);
+  const fresh = [];
+  for (const l of lv) for (const b of l.blocks) { const k = b[3] || 'n'; if (!seen.has(k)) { seen.add(k); fresh.push(k); } }
+  const names = fresh.map(k => ToppleContent.TYPES[k][0]).join(', ') || '–';
+  rows.push(`<tr><td><b>${c + 1}. ${esc(ToppleI18n.chapters[c] || '')}</b></td><td class="num">${c * 10 + 1}–${c * 10 + lv.length}</td><td class="num">${Math.min(...opts)}–${Math.max(...opts)}</td><td>${esc(names)}</td></tr>`);
+}
+sec.querySelector('table.chapters').innerHTML =
+  `<thead><tr><th>${esc(t('guide.colChapter'))}</th><th>${esc(t('guide.colLevels'))}</th><th>${esc(t('guide.colMoves'))}</th><th>${esc(t('guide.colNew'))}</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+</script>
+</body>
+</html>
