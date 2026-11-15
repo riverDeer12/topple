@@ -61,8 +61,8 @@ UGODNO IGRANJE
 
 Može se igrati i bez računa, kao gost.
 
-**Što je novo (1.1):**
-Kad ti ponestane savjeta, pogledaj kratku reklamu i dobij još jedan. Reklame su samo za dodatne savjete i nikad se ne pojavljuju same od sebe; uz Topple Plus savjeti su neograničeni. Manji ispravci i poboljšanja.
+**Što je novo (1.2):**
+Aplikacija sada pamti prijavu i napredak i nakon što je zatvoriš. Novi vodič sa savjetima za svaku vrstu bloka. Manji ispravci i poboljšanja.
 
 ---
 
@@ -112,8 +112,8 @@ EASY TO ENJOY
 
 You can also play as a guest, without an account.
 
-**What's New (1.1):**
-Out of hints? Watch a short ad to get another one. Ads are only for extra hints and never show up on their own; with Topple Plus hints are unlimited. Small fixes and improvements.
+**What's New (1.2):**
+The app now keeps you signed in and keeps your progress after you close it. A new guide with tips for every kind of block. Small fixes and improvements.
 
 ---
 
@@ -163,8 +163,8 @@ GIOCO PIACEVOLE
 
 Si può giocare anche come ospite, senza account.
 
-**Novità (1.1):**
-Finiti i suggerimenti? Guarda una breve pubblicità per averne un altro. La pubblicità serve solo per i suggerimenti extra e non compare mai da sola; con Topple Plus i suggerimenti sono illimitati. Piccole correzioni e miglioramenti.
+**Novità (1.2):**
+L'app ora ricorda l'accesso e i progressi anche dopo averla chiusa. Una nuova guida con consigli per ogni tipo di blocco. Piccole correzioni e miglioramenti.
 
 ---
 
@@ -214,5 +214,5 @@ ENTSPANNT SPIELEN
 
 Du kannst auch als Gast ohne Konto spielen.
 
-**Neuigkeiten (1.1):**
-Keine Tipps mehr? Sieh dir eine kurze Werbung an und hol dir einen weiteren. Werbung gibt es nur für Extra-Tipps und sie erscheint nie von selbst; mit Topple Plus sind Tipps unbegrenzt. Kleine Korrekturen und Verbesserungen.
+**Neuigkeiten (1.2):**
+Die App merkt sich jetzt deine Anmeldung und deinen Fortschritt auch nach dem Schließen. Eine neue Anleitung mit Tipps für jede Blockart. Kleine Korrekturen und Verbesserungen.
