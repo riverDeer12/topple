@@ -337,7 +337,7 @@ const ToppleI18n = (() => {
     root.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
     root.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   }
-  function setLang(l) { try { localStorage.setItem('topple-lang', l); } catch (e) {} location.reload(); }
+  function setLang(l) { try { localStorage.setItem('topple-lang', l); } catch (e) {} if (window.webkit && webkit.messageHandlers && webkit.messageHandlers.topple && location.protocol === 'topple:') { try { webkit.messageHandlers.topple.postMessage({ type: 'store', data: Object.fromEntries(Object.keys(localStorage).filter(k => k.startsWith('topple')).map(k => [k, localStorage.getItem(k)])) }); } catch (e) {} } location.reload(); }
   function guestName() {
     const n = NAMES[lang], pick = a => a[Math.floor(Math.random() * a.length)];
     const num = 10 + Math.floor(Math.random() * 90);

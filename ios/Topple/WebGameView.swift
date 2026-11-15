@@ -16,6 +16,10 @@ struct WebGameView: UIViewRepresentable {
         config.allowsInlineMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
         config.userContentController.add(context.coordinator, name: "topple")
+        // Put back the game's saved local storage (sign-in, progress) before the page's scripts run.
+        if let restore = WebStore.restoreScript() {
+            config.userContentController.addUserScript(WKUserScript(source: restore, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         // App feel: no text selection or callouts outside text fields.
         let css = "body{-webkit-user-select:none;-webkit-touch-callout:none}input,textarea{-webkit-user-select:text}"
         let js = "var s=document.createElement('style');s.textContent='\(css)';document.documentElement.appendChild(s);"
@@ -48,6 +52,7 @@ struct WebGameView: UIViewRepresentable {
         func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
             guard let msg = message.body as? [String: Any], let type = msg["type"] as? String else { return }
             switch type {
+            case "store": if let data = msg["data"] as? [String: String] { WebStore.save(data) }
             case "haptic": Haptics.play(msg["style"] as? String ?? "light")
             case "share": Share.present(text: msg["text"] as? String ?? "")
             case "remind": Reminder.update(msg)
@@ -124,4 +129,29 @@ final class BundleSchemeHandler: NSObject, WKURLSchemeHandler {
     }
 
     func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {}
+}
+
+// A copy of the game's local storage in the app's own files. WebKit does not reliably keep the
+// local storage of a custom-scheme page (topple://) between launches, so the game sends its
+// keys here whenever they change, and they are put back when the page loads.
+enum WebStore {
+    private static var file: URL {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("webstore.json")
+    }
+
+    static func save(_ data: [String: String]) {
+        guard !data.isEmpty, let json = try? JSONSerialization.data(withJSONObject: data) else { return }
+        try? json.write(to: file, options: .atomic)
+    }
+
+    // Sets every saved key that local storage does not have (keys that are there are newer).
+    static func restoreScript() -> String? {
+        guard let json = try? Data(contentsOf: file),
+              (try? JSONSerialization.jsonObject(with: json)) is [String: String],
+              var text = String(data: json, encoding: .utf8) else { return nil }
+        text = text.replacingOccurrences(of: "\u{2028}", with: "\\u2028").replacingOccurrences(of: "\u{2029}", with: "\\u2029")
+        return "(function(d){try{for(var k in d){if(localStorage.getItem(k)===null)localStorage.setItem(k,d[k]);}}catch(e){}})(\(text));"
+    }
 }
