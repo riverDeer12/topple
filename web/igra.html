@@ -473,8 +473,24 @@ const PAD = 6, GAP = 3;
 // --- persistent state (localStorage, all reads/writes guarded) -------------
 const store = {
   get(k, d) { try { const v = localStorage.getItem('topple-' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem('topple-' + k, JSON.stringify(v)); } catch (e) {} },
+  set(k, v) { try { localStorage.setItem('topple-' + k, JSON.stringify(v)); } catch (e) {} mirror(k === 'user'); },
 };
+// In the iOS app, WebKit does not reliably keep local storage of the topple:// page when the app
+// is closed, so the app keeps a copy of it (WebGameView.swift) and puts it back at the next launch.
+let mirrorTimer = 0;
+function mirror(now) {
+  const h = location.protocol === 'topple:' && window.webkit && webkit.messageHandlers && webkit.messageHandlers.topple;
+  if (!h) return;
+  clearTimeout(mirrorTimer);
+  const send = () => {
+    const data = {};
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith('topple')) data[k] = localStorage.getItem(k); } } catch (e) { return; }
+    h.postMessage({ type: 'store', data });
+  };
+  if (now) send(); else mirrorTimer = setTimeout(send, 400);
+}
+addEventListener('pagehide', () => mirror(true));
+document.addEventListener('visibilitychange', () => { if (document.hidden) mirror(true); });
 
 // --- moving players from the old addresses to topple.rdd.software -------------------
 // Browser storage belongs to one address, so the old copies (GitHub Pages) send the
