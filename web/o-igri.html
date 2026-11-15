@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#24443F">
+<title>Topple · O igri</title>
+<meta name="description" content="O Toppleu: kako je nastala slagalica s gravitacijom, kako se slažu i provjeravaju zagonetke, na kojim uređajima se igra i tko stoji iza igre.">
+<link rel="canonical" href="https://topple.rdd.software/o-igri.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lexend:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="theme.css">
+<style>
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--body); line-height: 1.65; }
+main { max-width: 760px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left, 0px)) 48px; }
+nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+.logo { font: 600 1.6rem var(--display); text-decoration: none; color: var(--ink); }
+.logo span { color: var(--hero); }
+h1 { font: 600 2rem var(--display); margin: 0 0 4px; line-height: 1.2; }
+h2 { font: 600 1.35rem var(--display); margin: 34px 0 8px; }
+h3 { font: 600 1.1rem var(--display); margin: 0 0 2px; }
+p, li { color: var(--ink); }
+.lead { color: var(--muted); font-size: 1.05rem; }
+.muted { color: var(--muted); font-size: .9rem; }
+a { color: var(--hero); }
+.langsel { font: 600 .8rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 7px 10px; }
+section[lang] { display: none; }
+section[lang].on { display: block; }
+.tip { display: grid; grid-template-columns: 76px 1fr; gap: 14px; align-items: start; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 16px; padding: 14px; margin: 10px 0; }
+.tip p { margin: 4px 0 0; }
+.tip .blk.sw { margin-top: 4px; }
+ol.steps li, ul.tips li { margin: 6px 0; }
+.play { display: inline-block; margin-top: 10px; padding: 12px 22px; border-radius: 999px; background: var(--hero); color: #fff; font: 600 1rem var(--display); text-decoration: none; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .92rem; margin-top: 8px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--panel-line); vertical-align: top; }
+th { font: 600 .85rem var(--body); color: var(--muted); }
+td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+footer { border-top: 1px solid var(--panel-line); margin-top: 40px; padding-top: 18px; color: var(--muted); font-size: .85rem; }
+@media (max-width: 520px) { .tip { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <nav><a class="logo" href="./">Top<span>ple</span></a><span id="lang"></span></nav>
+
+  <section lang="hr">
+    <h1>O igri</h1>
+    <p class="lead">Topple je logička slagalica s gravitacijom: pomičeš blokove lijevo i desno, a sve što ostane bez oslonca padne. Kratka, mirna vježba za mozak, za sve uzraste.</p>
+
+    <h2>Ideja</h2>
+    <p>Topple spaja dvije poznate ideje: klizne slagalice, u kojima blokove pomičeš samo vodoravno, i gravitaciju, koja ih vuče dolje. Zbog gravitacije svaki potez ima posljedice koje treba predvidjeti: makneš jedan blok, a padne pola ploče. Pravila stanu u jednu rečenicu, ali iz njih nastaju zagonetke koje traže pravo planiranje.</p>
+
+    <h2>Kako nastaju zagonetke</h2>
+    <p>Igra ima <span data-stat="levels"></span> razina u <span data-stat="chapters"></span> poglavlja. Svaku razinu složio je računalni generator, a zatim ju je rješavač pretražio do kraja i provjerio koliko je poteza zaista najmanje potrebno. Zato zvjezdice uvijek znače isto: tri zvjezdice dobiješ samo ako nađeš rješenje jednako dobro kao najbolje moguće. Od generiranih ploča odabrane su one koje imaju zanimljivo rješenje i uvode po jednu novu ideju.</p>
+    <p>Dnevna zagonetka je ista za sve igrače na svijetu, jer se slaže iz datuma po istom pravilu na svakom uređaju i na serveru. Beskonačni niz počinje s <span data-stat="endless"></span> unaprijed složenih zagonetki, a zatim ih igra slaže sama, sve teže.</p>
+
+    <h2>Poštena ljestvica</h2>
+    <p>Kad pošalješ rezultat, server ne vjeruje broju poteza, nego ponovno odigra tvoje poteze na istoj ploči i provjeri da stvarno vode do izlaza. Tako na ljestvici ostaju samo stvarno odigrana rješenja.</p>
+
+    <h2>Gdje se igra</h2>
+    <ul class="tips">
+      <li><b>U pregledniku</b> na <a href="igra.html">topple.rdd.software</a>, na računalu, tabletu i mobitelu. Igra radi i bez interneta nakon prvog otvaranja.</li>
+      <li><b>Na iPhoneu i iPadu</b> kao aplikacija iz App Storea, s Game Centerom, vibracijom i podsjetnikom za dnevnu zagonetku.</li>
+      <li><b>Na Androidu</b> uskoro na Google Playu.</li>
+    </ul>
+    <p>S istim računom napredak te prati na svim uređajima. Igra je na hrvatskom, engleskom, talijanskom i njemačkom.</p>
+
+    <h2>Zvuk i glazba</h2>
+    <p>Svi zvukovi nastaju u igri, bez snimljenih datoteka: drveni zvuk klizanja i slijetanja blokova te glazba u pozadini, Bachov Preludij u C-duru (BWV 846), koji igra svira sama.</p>
+
+    <h2>Tko stoji iza igre</h2>
+    <p>Topple je napravio R.D.D., mali obrt za računalno programiranje iz Rijeke. Igru razvijamo prema tome kako se igra: pratimo koliko je koja razina teška i ugađamo ih. Prijedlozi i prijave grešaka su dobrodošli na <a href="mailto:info@rdd.software">info@rdd.software</a>.</p>
+
+    <p><a class="play" href="igra.html">Igraj Topple</a> &nbsp; <a href="vodic.html">Vodič i strategija</a></p>
+  </section>
+
+  <section lang="en">
+    <h1>About the game</h1>
+    <p class="lead">Topple is a logic puzzle with gravity: you slide blocks left and right, and whatever loses its support falls. A short, calm brain exercise for all ages.</p>
+
+    <h2>The idea</h2>
+    <p>Topple joins two familiar ideas: sliding puzzles, where blocks only move sideways, and gravity, which pulls them down. Because of gravity every move has consequences you need to foresee: take away one block and half the board comes down. The rules fit in one sentence, yet they make puzzles that need real planning.</p>
+
+    <h2>How the puzzles are made</h2>
+    <p>The game has <span data-stat="levels"></span> levels in <span data-stat="chapters"></span> chapters. Each level was put together by a computer generator, and then a solver searched it completely and checked how many moves are truly the minimum. So stars always mean the same thing: you get three stars only if your solution is as good as the best possible one. From the generated boards we picked those with an interesting solution that bring one new idea each.</p>
+    <p>The daily puzzle is the same for every player in the world, because it is built from the date by the same rule on every device and on the server. The endless run starts with <span data-stat="endless"></span> ready-made puzzles, and after that the game builds them itself, harder and harder.</p>
+
+    <h2>A fair leaderboard</h2>
+    <p>When you send a result, the server does not trust the number of moves: it replays your moves on the same board and checks that they really lead to the exit. That way only solutions that were really played stay on the leaderboard.</p>
+
+    <h2>Where to play</h2>
+    <ul class="tips">
+      <li><b>In the browser</b> at <a href="igra.html">topple.rdd.software</a>, on a computer, tablet or phone. After the first visit it also works offline.</li>
+      <li><b>On iPhone and iPad</b> as an app from the App Store, with Game Center, haptics and a reminder for the daily puzzle.</li>
+      <li><b>On Android</b> soon on Google Play.</li>
+    </ul>
+    <p>With the same account your progress follows you on every device. The game is in Croatian, English, Italian and German.</p>
+
+    <h2>Sound and music</h2>
+    <p>All sounds are made by the game itself, without recorded files: the wooden sound of blocks sliding and landing, and the background music, Bach's Prelude in C major (BWV 846), which the game plays on its own.</p>
+
+    <h2>Who is behind the game</h2>
+    <p>Topple is made by R.D.D., a small software business from Rijeka, Croatia. We develop the game based on how it is played: we follow how hard each level is and tune them. Suggestions and bug reports are welcome at <a href="mailto:info@rdd.software">info@rdd.software</a>.</p>
+
+    <p><a class="play" href="igra.html">Play Topple</a> &nbsp; <a href="vodic.html">Guide and strategy</a></p>
+  </section>
+
+  <section lang="it">
+    <h1>Il gioco</h1>
+    <p class="lead">Topple è un rompicapo logico con la gravità: sposti i blocchi a sinistra e a destra, e ciò che resta senza appoggio cade. Un breve e tranquillo esercizio per la mente, per tutte le età.</p>
+
+    <h2>L'idea</h2>
+    <p>Topple unisce due idee note: i puzzle a scorrimento, in cui i blocchi si muovono solo in orizzontale, e la gravità, che li tira giù. Per via della gravità ogni mossa ha conseguenze da prevedere: togli un blocco e cade mezzo tabellone. Le regole stanno in una frase, ma ne nascono rompicapi che richiedono vera pianificazione.</p>
+
+    <h2>Come nascono i rompicapi</h2>
+    <p>Il gioco ha <span data-stat="levels"></span> livelli in <span data-stat="chapters"></span> capitoli. Ogni livello è stato composto da un generatore al computer, poi un risolutore lo ha esplorato fino in fondo e ha verificato quante mosse sono davvero il minimo. Così le stelle significano sempre la stessa cosa: tre stelle le ottieni solo se la tua soluzione è buona quanto la migliore possibile. Tra i tabelloni generati abbiamo scelto quelli con una soluzione interessante che portano un'idea nuova ciascuno.</p>
+    <p>Il rompicapo del giorno è uguale per tutti i giocatori del mondo, perché viene costruito dalla data con la stessa regola su ogni dispositivo e sul server. La serie infinita parte con <span data-stat="endless"></span> rompicapi già pronti, poi il gioco li crea da solo, sempre più difficili.</p>
+
+    <h2>Una classifica giusta</h2>
+    <p>Quando invii un risultato, il server non si fida del numero di mosse: rigioca le tue mosse sullo stesso tabellone e controlla che portino davvero all'uscita. Così in classifica restano solo soluzioni giocate davvero.</p>
+
+    <h2>Dove si gioca</h2>
+    <ul class="tips">
+      <li><b>Nel browser</b> su <a href="igra.html">topple.rdd.software</a>, da computer, tablet o telefono. Dopo la prima visita funziona anche offline.</li>
+      <li><b>Su iPhone e iPad</b> come app dall'App Store, con Game Center, vibrazione e promemoria per il rompicapo del giorno.</li>
+      <li><b>Su Android</b> presto su Google Play.</li>
+    </ul>
+    <p>Con lo stesso account i tuoi progressi ti seguono su ogni dispositivo. Il gioco è in croato, inglese, italiano e tedesco.</p>
+
+    <h2>Suoni e musica</h2>
+    <p>Tutti i suoni nascono nel gioco, senza file registrati: il suono di legno dei blocchi che scorrono e atterrano e la musica di sottofondo, il Preludio in do maggiore di Bach (BWV 846), che il gioco suona da sé.</p>
+
+    <h2>Chi c'è dietro il gioco</h2>
+    <p>Topple è realizzato da R.D.D., una piccola impresa di programmazione di Fiume (Rijeka), in Croazia. Sviluppiamo il gioco in base a come viene giocato: seguiamo quanto è difficile ogni livello e li regoliamo. Suggerimenti e segnalazioni di errori sono benvenuti a <a href="mailto:info@rdd.software">info@rdd.software</a>.</p>
+
+    <p><a class="play" href="igra.html">Gioca a Topple</a> &nbsp; <a href="vodic.html">Guida e strategia</a></p>
+  </section>
+
+  <section lang="de">
+    <h1>Über das Spiel</h1>
+    <p class="lead">Topple ist ein Logikrätsel mit Schwerkraft: Du schiebst Blöcke nach links und rechts, und was keinen Halt mehr hat, fällt. Eine kurze, ruhige Übung für den Kopf, für jedes Alter.</p>
+
+    <h2>Die Idee</h2>
+    <p>Topple verbindet zwei bekannte Ideen: Schiebepuzzles, bei denen sich Blöcke nur seitwärts bewegen, und die Schwerkraft, die sie nach unten zieht. Wegen der Schwerkraft hat jeder Zug Folgen, die man vorhersehen muss: Nimm einen Block weg, und das halbe Brett stürzt herunter. Die Regeln passen in einen Satz, und doch entstehen daraus Rätsel, die echtes Planen verlangen.</p>
+
+    <h2>Wie die Rätsel entstehen</h2>
+    <p>Das Spiel hat <span data-stat="levels"></span> Level in <span data-stat="chapters"></span> Kapiteln. Jedes Level hat ein Computergenerator zusammengestellt, dann hat ein Löser es vollständig durchsucht und geprüft, wie viele Züge wirklich das Minimum sind. Darum bedeuten Sterne immer dasselbe: Drei Sterne bekommst du nur, wenn deine Lösung so gut ist wie die bestmögliche. Aus den erzeugten Brettern haben wir die ausgewählt, die eine interessante Lösung haben und jeweils eine neue Idee einführen.</p>
+    <p>Das Tagesrätsel ist für alle Spieler auf der Welt gleich, weil es auf jedem Gerät und auf dem Server nach derselben Regel aus dem Datum gebaut wird. Die endlose Reihe beginnt mit <span data-stat="endless"></span> fertigen Rätseln, danach baut das Spiel sie selbst, immer schwerer.</p>
+
+    <h2>Eine faire Rangliste</h2>
+    <p>Wenn du ein Ergebnis sendest, vertraut der Server der Zugzahl nicht: Er spielt deine Züge auf demselben Brett nach und prüft, dass sie wirklich zum Ausgang führen. So bleiben nur wirklich gespielte Lösungen in der Rangliste.</p>
+
+    <h2>Wo man spielt</h2>
+    <ul class="tips">
+      <li><b>Im Browser</b> auf <a href="igra.html">topple.rdd.software</a>, am Computer, Tablet oder Handy. Nach dem ersten Besuch funktioniert es auch offline.</li>
+      <li><b>Auf iPhone und iPad</b> als App aus dem App Store, mit Game Center, Vibration und Erinnerung an das Tagesrätsel.</li>
+      <li><b>Auf Android</b> bald bei Google Play.</li>
+    </ul>
+    <p>Mit demselben Konto begleitet dich dein Fortschritt auf jedem Gerät. Das Spiel gibt es auf Kroatisch, Englisch, Italienisch und Deutsch.</p>
+
+    <h2>Klang und Musik</h2>
+    <p>Alle Klänge entstehen im Spiel selbst, ohne aufgenommene Dateien: das hölzerne Geräusch der rutschenden und landenden Blöcke und die Hintergrundmusik, Bachs Präludium in C-Dur (BWV 846), die das Spiel selbst spielt.</p>
+
+    <h2>Wer hinter dem Spiel steht</h2>
+    <p>Topple wird von R.D.D. gemacht, einem kleinen Softwarebetrieb aus Rijeka in Kroatien. Wir entwickeln das Spiel danach, wie es gespielt wird: Wir verfolgen, wie schwer jedes Level ist, und passen sie an. Vorschläge und Fehlermeldungen sind willkommen unter <a href="mailto:info@rdd.software">info@rdd.software</a>.</p>
+
+    <p><a class="play" href="igra.html">Topple spielen</a> &nbsp; <a href="vodic.html">Anleitung und Strategie</a></p>
+  </section>
+
+  <footer><a href="./">Topple</a> · <a href="vodic.html" data-i18n="guide.link">Vodič</a> · <a href="privatnost.html" data-i18n="privacy.link">Pravila privatnosti</a> · <a href="kontakt.html" data-i18n="contact.link">Kontakt</a></footer>
+</main>
+<script src="levels.js"></script>
+<script src="puzzles.js"></script>
+<script src="i18n.js"></script>
+<script src="content.js"></script>
+<script>
+const L = ToppleI18n.lang;
+document.documentElement.lang = L;
+document.querySelector(`section[lang="${L}"]`).classList.add('on');
+ToppleI18n.apply();
+document.title = 'Topple · ' + ToppleI18n.t('about.link');
+document.getElementById('lang').appendChild(ToppleI18n.picker());
+// Numbers come from the game data.
+for (const el of document.querySelectorAll('[data-stat]')) el.textContent = ToppleContent.stats[el.dataset.stat];
+</script>
+</body>
+</html>
