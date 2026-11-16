@@ -603,6 +603,39 @@ const IOS_APP = location.protocol === 'topple:' && window.webkit && webkit.messa
 const ANDROID_APP = !IOS_APP && window.ToppleAndroid && { postMessage: m => window.ToppleAndroid.post(JSON.stringify(m)) };
 const APP = IOS_APP || ANDROID_APP || null;
 const native = msg => { try { if (APP) APP.postMessage(msg); } catch (e) {} };
+// Game portals (tools/package-portal.js): the packaged copy on CrazyGames or itch.io. CrazyGames
+// wants no links out of the game, no other ads or purchases, and its SDK for rewarded ads and for
+// telling it when the player is playing; itch.io allows links, so they point to topple.rdd.software.
+const PORTAL = window.TOPPLE_PORTAL || '';
+const CG = PORTAL === 'crazygames';
+const cgReady = CG ? new Promise(res => {
+  const sc = document.createElement('script');
+  sc.src = 'https://sdk.crazygames.com/crazygames-sdk-v3.js';
+  sc.onload = () => window.CrazyGames.SDK.init().then(() => res(window.CrazyGames.SDK), () => res(null));
+  sc.onerror = () => res(null);
+  document.head.appendChild(sc);
+}) : Promise.resolve(null);
+const cg = fn => cgReady.then(sdk => { if (sdk) try { return fn(sdk); } catch (e) {} });
+let cgPlaying = false;
+function cgGameplay(on) {
+  if (!CG || on === cgPlaying) return;
+  cgPlaying = on;
+  cg(sdk => on ? sdk.game.gameplayStart() : sdk.game.gameplayStop());
+}
+if (PORTAL) {
+  document.querySelectorAll('#menuBox a.link').forEach(a => {
+    if (CG) { a.hidden = true; return; }
+    a.href = new URL(a.getAttribute('href'), 'https://topple.rdd.software/').href;
+    a.target = '_blank'; a.rel = 'noopener';
+  });
+  if (CG) $('share').hidden = true;
+}
+// CrazyGames: loading until the first screen is up, and its own "mute audio" setting.
+cg(sdk => {
+  sdk.game.loadingStart();
+  const mute = () => { if (sdk.game.settings && sdk.game.settings.muteAudio) { ToppleAudio.setMusic(false); ToppleAudio.setSfx(false); } };
+  mute(); sdk.game.addSettingsChangeListener(mute);
+});
 const buzz = ms => {
   if (APP) return native({ type: 'haptic', style: Array.isArray(ms) ? 'success' : ms >= 20 ? 'medium' : 'light' });
   try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {}
@@ -612,7 +645,7 @@ const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.lo
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => ToppleI18n.plural.moves(n);
 const BOXES = ['menuBox', 'loginBox', 'resetBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'achBox', 'plusBox', 'hintBox', 'adBox'];
-const showOnly = id => BOXES.forEach(b => { $(b).hidden = b !== id; });
+const showOnly = id => { BOXES.forEach(b => { $(b).hidden = b !== id; }); cgGameplay(!id && !!ctx && !won_); };
 // Android back button (android/): closes the open window and returns true; false lets the app go to the background.
 window.toppleBack = () => {
   const open = BOXES.find(b => !$(b).hidden);
@@ -907,6 +940,7 @@ function win() {
   el.style.transform = pos(blocks[ri], 2.5);
   fx.win();
   buzz([10, 40, 10]);
+  cgGameplay(false); cg(sdk => sdk.game.happytime());
   const opt = ctx.level.opt, m = hist.length, timeMs = Date.now() - t0;
   const unlockedBefore = SKINS.filter(skinUnlocked).map(x => x.id);
   reportPlay('solve', { moves: hist.length, timeMs: Date.now() - playSession(ctx.key).t0, hints: playSession(ctx.key).hints });
@@ -1044,7 +1078,7 @@ function setLoginTab(tab) {
 document.querySelectorAll('#loginTabs .tab').forEach(b => b.onclick = () => setLoginTab(b.dataset.t));
 // Google's button script loads only when the server has a client ID configured.
 function googleButton(el) {
-  if (APP) googleId = null; // Google blocks its sign-in inside apps' web views
+  if (APP || PORTAL) googleId = null; // Google blocks its sign-in inside apps' web views; portals are not an allowed origin
   el.hidden = !googleId;
   if (!googleId) return;
   googleLoaded = googleLoaded || new Promise(res => {
@@ -1496,7 +1530,7 @@ function openHintShop() {
   $('shopText').textContent = t('shop.text', { max: HINT_MAX });
   $('adStatus').textContent = '';
   const btn = $('adBtn');
-  btn.hidden = !APP && !ADS.client && ADS.simulate === false;
+  btn.hidden = !APP && !CG && !ADS.client && ADS.simulate === false;
   $('shopPlus').hidden = !APP;
   btn.disabled = true; btn.onclick = null;
   showOnly('hintBox');
@@ -1504,6 +1538,23 @@ function openHintShop() {
   if (APP) {
     appAdButton();
     native({ type: 'ad', action: 'load' }); // loads one if none is ready; the answer updates the button
+    return;
+  }
+  if (CG) {
+    btn.disabled = false;
+    btn.onclick = () => {
+      btn.disabled = true; $('adStatus').textContent = t('shop.loading');
+      const musicWas = ToppleAudio.music;
+      const back = () => { if (musicWas) ToppleAudio.setMusic(true); };
+      cgReady.then(sdk => {
+        if (!sdk) { $('adStatus').textContent = t('shop.unavailable'); btn.disabled = false; return; }
+        sdk.ad.requestAd('rewarded', {
+          adStarted: () => ToppleAudio.setMusic(false),
+          adFinished: () => { back(); reportAd('viewed'); grantHint(); },
+          adError: () => { back(); reportAd('none'); $('adStatus').textContent = t('shop.unavailable'); btn.disabled = false; },
+        });
+      });
+    };
     return;
   }
   if (ADS.client) {
@@ -1697,7 +1748,7 @@ function setToggle(id, on) { $(id).setAttribute('aria-pressed', String(on)); }
 
 // --- daily reminder: a push notification in the evening if today's puzzle is not solved yet ---
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const canPush = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && location.protocol === 'https:';
+const canPush = () => !PORTAL && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && location.protocol === 'https:';
 async function pushSub() { try { return await (await navigator.serviceWorker.ready).pushManager.getSubscription(); } catch (e) { return null; } }
 function remindInfo(text) { $('remindMsg').hidden = !text; $('remindMsg').textContent = text || ''; }
 // In the app the reminder is a local notification scheduled by iOS, no server needed.
@@ -1778,14 +1829,15 @@ function start() {
   native({ type: 'plus', action: 'status' }); // Topple Plus owned? (app only)
   if (APP) native({ type: 'ad', action: 'status' }); // ads ready, privacy settings needed? (also asks for consent)
   if (resetToken && API) openReset('new');
-  else if (!signedInNow() && !store.get('asked', false)) openLogin(); else openMenu();
+  else if (!signedInNow() && !store.get('asked', false) && !CG) openLogin(); else openMenu(); // CrazyGames: no sign-in prompt at the start
+  cg(sdk => sdk.game.loadingStop());
   started = true;
   reportGuest(); // count this visit if playing without an account
   sync();
 }
 start();
 // Offline play: the service worker keeps the game files; results go to the server when the connection is back.
-if ('serviceWorker' in navigator && location.protocol !== 'file:' && !TOPPLE_IN_APP) navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol !== 'file:' && !TOPPLE_IN_APP && !PORTAL) navigator.serviceWorker.register('sw.js').catch(() => {});
 window.addEventListener('online', () => { sync(); reportGuest(); });
 </script>
 </body>

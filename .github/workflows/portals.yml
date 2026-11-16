@@ -1,0 +1,25 @@
+name: Game portals
+# Packs the web game for CrazyGames and itch.io (tools/package-portal.js). The zips are in the
+# run's artifacts: download, unpack the outer artifact zip, upload topple-<portal>.zip to the portal.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['web/**', 'tools/package-portal.js', '.github/workflows/portals.yml']
+permissions:
+  contents: read
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tools/package-portal.js crazygames && node tools/package-portal.js itch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: topple-portals
+          path: |
+            dist/topple-crazygames.zip
+            dist/topple-itch.zip
