@@ -8,3 +8,4 @@ server/*.json
 ios/*.xcodeproj/
 ios/Topple/Info.plist
 ios/build/
+dist/

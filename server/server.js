@@ -19,8 +19,11 @@ const PORT = Number(process.env.PORT || 8787);
 const ORIGINS = (process.env.ALLOWED_ORIGIN || '*').split(',').map(s => s.trim().replace(/\/+$/, '')).filter(Boolean);
 // Echo the caller's origin when it is on the list (CORS allows only one value per response).
 // The apps' web views are always allowed: iOS topple://app, Android https://appassets.androidplatform.net.
+// Game portals that host the packaged web game (tools/package-portal.js): CrazyGames and itch.io.
 const APP_ORIGINS = ['topple://app', 'https://appassets.androidplatform.net'];
-const corsOrigin = req => ORIGINS.includes('*') ? '*' : (ORIGINS.includes(req.headers.origin) || APP_ORIGINS.includes(req.headers.origin) ? req.headers.origin : ORIGINS[0]);
+const PORTAL_ORIGIN = /^https:\/\/([a-z0-9-]+\.)*(crazygames\.com|crazygames\.io|itch\.zone|itch\.io|hwcdn\.net)$/;
+const allowedOrigin = o => !!o && (ORIGINS.includes(o) || APP_ORIGINS.includes(o) || PORTAL_ORIGIN.test(o));
+const corsOrigin = req => ORIGINS.includes('*') ? '*' : (allowedOrigin(req.headers.origin) ? req.headers.origin : ORIGINS[0]);
 const TZ = process.env.TZ_GAME || 'Europe/Zagreb';
 const db = new DatabaseSync(process.env.DB_PATH || path.join(__dirname, 'topple.db'));
 
