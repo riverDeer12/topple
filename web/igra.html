@@ -195,6 +195,29 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
 @media (prefers-reduced-motion: reduce) { .exit svg, .stars svg.on { animation: none; } .blk.land .face { animation: none; } .blk.breaking .face { animation-duration: .05s; } }
 /* Tablets (iPad): the whole game larger, so it fills the screen like on a phone. */
 @media (min-width: 820px) and (min-height: 1000px) and (pointer: coarse) { html { zoom: 1.6; } }
+/* Wide screens (desktop, landscape tablets, game portals' 16:9 frames): title, stats and buttons in a
+   side column, so the board can be as tall as the screen allows. */
+@media (min-aspect-ratio: 5/4) and (min-width: 640px) {
+  .app { max-width: 1100px; grid-template-columns: minmax(170px, 240px) minmax(0, 1fr); grid-template-rows: 1fr auto; column-gap: 36px; }
+  header { grid-column: 1; grid-row: 1; flex-direction: column; align-items: flex-start; justify-content: center; gap: 20px; }
+  header h1 { font-size: 2.6rem; }
+  .stage { grid-column: 2; grid-row: 1 / span 2; }
+  .controls { grid-column: 1; grid-row: 2; flex-direction: column; align-items: stretch; }
+  .hint { min-height: 2.6em; max-width: 52ch; }
+}
+/* First level: a finger shows the first moves (coachStep). */
+.hand { position: absolute; left: 0; top: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; pointer-events: none; z-index: 5;
+  background: rgba(255,255,255,.85); box-shadow: 0 0 0 4px rgba(255,255,255,.35), 0 4px 12px rgba(0,0,0,.35); animation: handmove 1.9s ease-in-out infinite; }
+@keyframes handmove {
+  0%, 12% { transform: translate(var(--x0), var(--y0)) scale(1.15); opacity: 0; }
+  22% { transform: translate(var(--x0), var(--y0)) scale(.9); opacity: 1; }
+  72% { transform: translate(var(--x1), var(--y0)) scale(.9); opacity: 1; }
+  88%, 100% { transform: translate(var(--x1), var(--y0)) scale(1.1); opacity: 0; }
+}
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 100; }
+.confetti i { position: absolute; top: -16px; width: 9px; height: 14px; border-radius: 2px; animation: confetti var(--d) cubic-bezier(.25,.6,.45,1) var(--dl) forwards; }
+@keyframes confetti { to { transform: translate(var(--dx), 110vh) rotate(var(--r)); } }
+@media (prefers-reduced-motion: reduce) { .hand { animation: none; opacity: .9; transform: translate(var(--x0), var(--y0)); } .confetti { display: none; } }
 </style>
 </head>
 <body>
@@ -661,8 +684,8 @@ window.toppleBack = () => {
 function layout() {
   if (!ctx) return;
   const st = $('stage');
-  const availW = st.clientWidth - 24, availH = st.clientHeight - 40;
-  cell = Math.max(28, Math.floor(Math.min((availW - PAD * 2) / W, (availH - PAD * 2) / H, 64)));
+  const availW = st.clientWidth - 24, availH = st.clientHeight - $('hint').offsetHeight - 26; // room for the hint line under the board
+  cell = Math.max(28, Math.floor(Math.min((availW - PAD * 2) / W, (availH - PAD * 2) / H, innerWidth >= 900 ? 100 : 64)));
   board.style.width = cell * W + PAD * 2 + 'px';
   board.style.height = cell * H + PAD * 2 + 'px';
   board.querySelector('.cellbg').style.backgroundSize = `${cell}px ${cell}px`;
@@ -673,6 +696,7 @@ function layout() {
     el.style.height = cell - GAP * 2 + 'px';
   });
   place(0);
+  if (coaching) coachStep();
 }
 function pos(b, dx = 0) { return `translate(${PAD + GAP + (b.x + dx) * cell}px, ${PAD + GAP + b.y * cell}px)`; }
 function place(ms, only) {
@@ -765,6 +789,8 @@ function maybeIntro(level) {
     const types = TYPE_ORDER.filter(t => level.blocks.some(b => b[3] === t));
     for (const t of types) if (!seen.includes(t)) seen.push(t);
     store.set('seen', seen);
+    // Level 1: learn by playing, a finger shows each move; the rules stay under "?".
+    if (ctx && ctx.mode === 'campaign' && ctx.key === 0) { coaching = true; coachStep(); return; }
     introBack = null;
     showTypes(types, t('help.title'), true);
     return;
@@ -913,7 +939,8 @@ function fall() {
     els.forEach(el => el.classList.remove('breaking'));
     const ri = blocks.findIndex(b => b.t === 'r');
     els[ri].style.setProperty('--look', 0);
-    if (won(blocks, ctx.level.exit)) watching ? watchDone() : win();
+    if (won(blocks, ctx.level.exit)) { coaching = false; watching ? watchDone() : win(); }
+    else if (coaching) coachStep();
   }, maxMs + 20);
 }
 
@@ -950,6 +977,7 @@ function win() {
   const achBefore = earned();
   if (ctx.mode === 'campaign' && !ctx.hinted && !nohint.includes(ctx.key)) { nohint.push(ctx.key); store.set('nohint', nohint); }
   const s = record(ctx.mode, ctx.key, moveLog.slice(), timeMs);
+  if (s === 3 || ctx.mode === 'daily') confetti();
   const achNew = earned().filter(id => !achBefore.includes(id));
   $('winAch').hidden = !achNew.length;
   if (achNew.length) $('winAch').textContent = achNew.map(id => t('win.ach', { name: t('ach.' + id) })).join(' ');
@@ -1381,8 +1409,48 @@ function makePlan(bs) {
   });
   return p;
 }
+// --- first level: shows each move of the shortest solution with a moving finger ----------
+let coaching = false;
+function coachStep() {
+  clearHint();
+  if (!coaching || !ctx || won_ || ctx.mode !== 'campaign' || ctx.key !== 0) { coaching = false; return; }
+  const path = solvePath(blocks.map(b => ({ ...b })), ctx.level.exit);
+  if (!path || !path.length) { coaching = false; return; }
+  const [b, d] = path[0], bl = blocks[b];
+  els[b].classList.add('hinted');
+  const g = document.createElement('div');
+  g.className = 'ghost';
+  g.style.width = bl.w * cell - GAP * 2 + 'px'; g.style.height = cell - GAP * 2 + 'px';
+  g.style.transform = pos(bl, d);
+  board.appendChild(g);
+  const hand = document.createElement('div');
+  hand.className = 'hand';
+  const cx = x => PAD + (x + bl.w / 2) * cell;
+  hand.style.setProperty('--x0', cx(bl.x) + 'px'); hand.style.setProperty('--x1', cx(bl.x + d) + 'px');
+  hand.style.setProperty('--y0', PAD + (bl.y + .5) * cell + 'px');
+  board.appendChild(hand);
+  $('hint').textContent = t(hist.length ? 'coach.next' : 'coach.first');
+}
+function confetti() {
+  if (reduced) return;
+  const box = document.createElement('div');
+  box.className = 'confetti';
+  const colors = ['#E8583F', '#F2B33D', '#7FC8B4', '#B79BE6', '#BFE3EA', '#E2D3B5'];
+  for (let i = 0; i < 46; i++) {
+    const p = document.createElement('i');
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[i % colors.length];
+    p.style.setProperty('--d', 1.6 + Math.random() * 1.2 + 's');
+    p.style.setProperty('--dl', Math.random() * .35 + 's');
+    p.style.setProperty('--dx', (Math.random() - .5) * 160 + 'px');
+    p.style.setProperty('--r', (Math.random() - .5) * 900 + 'deg');
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 3400);
+}
 function clearHint() {
-  board.querySelectorAll('.ghost').forEach(g => g.remove());
+  board.querySelectorAll('.ghost, .hand').forEach(g => g.remove());
   els.forEach(el => el.classList.remove('hinted'));
 }
 async function useHint() {
@@ -1837,7 +1905,7 @@ function start() {
   else if (!(CG && !rulesSeen)) openMenu(); // CrazyGames: no sign-in prompt; a new player goes straight into level 1
   cg(sdk => sdk.game.loadingStop());
   started = true;
-  if (CG && !rulesSeen && !resetToken) maybeIntro(LEVELS[i]); // the rules first, then the level
+  if (!rulesSeen && !resetToken && ctx && ctx.key === 0) maybeIntro(LEVELS[0]); // a new player: the guided first level (under the menu or sign-in, if open)
   reportGuest(); // count this visit if playing without an account
   sync();
 }
