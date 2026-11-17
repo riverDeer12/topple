@@ -550,8 +550,10 @@ let ctx = null, blocks = [], hist = [], moveLog = [], els = [], cell = 40, busy 
 function starsFor(m, opt) { return m <= opt ? 3 : m <= opt + 2 ? 2 : 1; }
 // Guests (no account) play with limits; signed-in players get everything.
 const signedInNow = () => !!(user && user.token);
+// Everything unlocked: signed in, or on CrazyGames, where the game offers no account of its own.
+const fullAccess = () => signedInNow() || window.TOPPLE_PORTAL === 'crazygames';
 const GUEST = ToppleContent.GUEST;
-function unlocked(i) { return (i === 0 || best[i - 1] > 0) && (signedInNow() || i < GUEST.levels); }
+function unlocked(i) { return (i === 0 || best[i - 1] > 0) && (fullAccess() || i < GUEST.levels); }
 function guestName() {
   let n = store.get('guestName', '');
   if (!n) { n = ToppleI18n.guestName(); store.set('guestName', n); }
@@ -592,6 +594,7 @@ function reportGuest() {
 }
 // Explains what needs an account and offers to sign in.
 function needAccount(what) {
+  if (window.TOPPLE_PORTAL === 'crazygames') return openMenu(); // never asks to sign in there
   openLogin();
   $('loginIntro').textContent = `${what} ${t('guest.benefits')}`;
 }
@@ -628,7 +631,7 @@ if (PORTAL) {
     a.href = new URL(a.getAttribute('href'), 'https://topple.rdd.software/').href;
     a.target = '_blank'; a.rel = 'noopener';
   });
-  if (CG) $('share').hidden = true;
+  if (CG) { $('share').hidden = true; $('mBoard').hidden = true; } // CrazyGames: no external login, so no leaderboard of ours
 }
 // CrazyGames: loading until the first screen is up, and its own "mute audio" setting.
 cg(sdk => {
@@ -807,7 +810,7 @@ async function openPuzzle(mode, key) {
 }
 const openDaily = () => openPuzzle('daily', today());
 const openEndless = () => {
-  if (!signedInNow() && prog.endless.next > GUEST.endless) return needAccount(t('guest.endlessDone', { n: GUEST.endless }));
+  if (!fullAccess() && prog.endless.next > GUEST.endless) return needAccount(t('guest.endlessDone', { n: GUEST.endless }));
   openPuzzle('endless', prog.endless.next);
 };
 
@@ -971,7 +974,7 @@ function win() {
       + (!signedInNow() && c.mode !== 'campaign' ? t('win.guest') : '');
     $('retry').hidden = s === 3;
     $('watch').hidden = c.mode === 'daily'; // no solutions for the daily puzzle, it has a leaderboard
-    $('next').textContent = c.mode === 'daily' ? t('win.board') : c.mode === 'endless' ? t('win.nextPuzzle')
+    $('next').textContent = c.mode === 'daily' ? (CG ? t('win.menu') : t('win.board')) : c.mode === 'endless' ? t('win.nextPuzzle')
       : c.key === LEVELS.length - 1 ? t('win.allLevels') : t('win.nextLevel');
     showOnly('winBox');
     $('next').focus({ preventScroll: true });
@@ -1033,7 +1036,7 @@ function sync() {
 function openMenu() {
   const t = today(), d = prog.daily[t];
   $('mDailySub').textContent = d ? ToppleI18n.t('sub.dailyDone', { date: fmtDate(t), n: d.moves, moves: potez(d.moves) }) : ToppleI18n.t('sub.dailyNew', { date: fmtDate(t) });
-  $('mEndlessSub').textContent = ToppleI18n.t('sub.endless', { n: prog.endless.next, s: prog.endless.stars }) + (!signedInNow() ? ToppleI18n.t('sub.endlessGuest', { n: GUEST.endless }) : '');
+  $('mEndlessSub').textContent = ToppleI18n.t('sub.endless', { n: prog.endless.next, s: prog.endless.stars }) + (!fullAccess() ? ToppleI18n.t('sub.endlessGuest', { n: GUEST.endless }) : '');
   const stars = Object.values(best).reduce((a, b) => a + b, 0);
   $('mSkinsSub').textContent = ToppleI18n.t('menu.skinsSub', { n: SKINS.filter(skinUnlocked).length, total: SKINS.length });
   const str = streaks().current;
@@ -1043,6 +1046,7 @@ function openMenu() {
   $('mLevelsSub').textContent = ToppleI18n.t('sub.levels', { done: Object.keys(best).length, total: LEVELS.length, s: stars, max: LEVELS.length * 3 });
   $('who').innerHTML = signedInNow() ? `${ToppleI18n.t('who.signed')} <b></b> · <button class="link" id="account" type="button">${ToppleI18n.t('who.account')}</button>`
     : `${ToppleI18n.t('who.guest')} <b></b> · <button class="link" id="login" type="button">${ToppleI18n.t('who.login')}</button>`;
+  if (CG && !signedInNow()) $('who').innerHTML = `${ToppleI18n.t('who.guest')} <b></b>`; // no account of our own on CrazyGames
   $('who').querySelector('b').textContent = signedInNow() ? user.name : guestName();
   if (signedInNow() && plus) $('who').querySelector('b').appendChild(plusBadge());
   $('menuClose').hidden = !ctx;
@@ -1702,7 +1706,7 @@ function openLevels() {
     const stars = ids.reduce((a, i) => a + (best[i] || 0), 0);
     html += `<section class="chapter"><h3>${c + 1}. ${chapterName(c)}<small>★ ${stars}/${ids.length * 3}</small></h3><div class="grid">` +
       ids.map(i => {
-        const lock = !signedInNow() && i >= GUEST.levels;
+        const lock = !fullAccess() && i >= GUEST.levels;
         return `<button class="lv${i === cur ? ' cur' : ''}${lock ? ' lock' : ''}" type="button" data-i="${i}" ${unlocked(i) || lock ? '' : 'disabled'}>${i + 1}<small>${lock ? '🔒' : best[i] ? '★'.repeat(best[i]) : ''}</small></button>`;
       }).join('') +
       '</div></section>';
@@ -1738,10 +1742,10 @@ $('undo').onclick = () => {
 $('reset').onclick = () => { if (!busy && ctx) { stopWatch(); show(ctx); } };
 $('retry').onclick = () => { stopWatch(); show(ctx); };
 $('next').onclick = () => {
-  if (ctx.mode === 'daily') return openBoard('daily');
+  if (ctx.mode === 'daily') return CG ? openMenu() : openBoard('daily');
   if (ctx.mode === 'endless') return openEndless();
   if (ctx.key === LEVELS.length - 1) openLevels();
-  else if (!unlocked(ctx.key + 1) && !signedInNow()) needAccount(t('guest.levelsDone', { n: GUEST.levels }));
+  else if (!unlocked(ctx.key + 1) && !fullAccess()) needAccount(t('guest.levelsDone', { n: GUEST.levels }));
   else openCampaign(ctx.key + 1);
 };
 function setToggle(id, on) { $(id).setAttribute('aria-pressed', String(on)); }
