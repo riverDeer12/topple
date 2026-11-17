@@ -1829,9 +1829,11 @@ function start() {
   native({ type: 'plus', action: 'status' }); // Topple Plus owned? (app only)
   if (APP) native({ type: 'ad', action: 'status' }); // ads ready, privacy settings needed? (also asks for consent)
   if (resetToken && API) openReset('new');
-  else if (!signedInNow() && !store.get('asked', false) && !CG) openLogin(); else openMenu(); // CrazyGames: no sign-in prompt at the start
+  else if (!signedInNow() && !store.get('asked', false) && !CG) openLogin();
+  else if (!(CG && !rulesSeen)) openMenu(); // CrazyGames: no sign-in prompt; a new player goes straight into level 1
   cg(sdk => sdk.game.loadingStop());
   started = true;
+  if (CG && !rulesSeen && !resetToken) maybeIntro(LEVELS[i]); // the rules first, then the level
   reportGuest(); // count this visit if playing without an account
   sync();
 }

@@ -5,7 +5,7 @@ Web igra se pakira za portale skriptom `tools/package-portal.js` (`crazygames` i
 Što je drugačije u paketu (`PORTAL` u `igra.html`):
 - računi i ljestvice idu na `https://topple.rdd.software` (server pušta domene portala u CORS, `PORTAL_ORIGIN` u `server.js`);
 - nema service workera, podsjetnika (web push), Google prijave ni Topple Plusa; prijava korisničkim imenom radi;
-- **CrazyGames:** njihov SDK v3 (`sdk.crazygames.com/crazygames-sdk-v3.js`): reklama s nagradom za savjet (`ad.requestAd('rewarded')`), `gameplayStart`/`gameplayStop` (igra je u tijeku kad nijedan prozor nije otvoren), `happytime` na pobjedi, `loadingStart`/`loadingStop`, njihova postavka za utišavanje zvuka. Poveznice iz izbornika i gumb za dijeljenje su skriveni, prijava se ne nudi sama na početku;
+- **CrazyGames:** njihov SDK v3 (`sdk.crazygames.com/crazygames-sdk-v3.js`): reklama s nagradom za savjet (`ad.requestAd('rewarded')`), `gameplayStart`/`gameplayStop` (igra je u tijeku kad nijedan prozor nije otvoren), `happytime` na pobjedi, `loadingStart`/`loadingStop`, njihova postavka za utišavanje zvuka. Poveznice iz izbornika i gumb za dijeljenje su skriveni, prijava se ne nudi sama na početku; zadani jezik je engleski (bez obzira na preglednik), a novi igrač ide ravno na pravila i 1. razinu;
 - **itch.io:** nema reklama; poveznice iz izbornika otvaraju topple.rdd.software u novoj kartici.
 
 Svaka promjena web igre ulazi u sljedeći paket; na portalu treba ponovno uploadati zip.

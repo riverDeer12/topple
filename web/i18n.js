@@ -318,6 +318,7 @@ const ToppleI18n = (() => {
   function detect() {
     const saved = get();
     if (saved && S[saved]) return saved;
+    if (window.TOPPLE_PORTAL === 'crazygames') return 'en'; // CrazyGames wants English first; the menu has the picker
     const prefs = (typeof navigator !== 'undefined' && (navigator.languages || [navigator.language])) || [];
     for (const p of prefs) {
       const l = String(p || '').slice(0, 2).toLowerCase();
