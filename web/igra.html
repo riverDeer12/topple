@@ -186,6 +186,8 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
 .help { font: 600 1.1rem var(--display); width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--panel-line); background: var(--panel); color: var(--ink); cursor: pointer; padding: 0; align-self: center; }
 .hintbtn { position: relative; display: grid; place-items: center; }
 .hintbtn svg { width: 18px; height: 18px; fill: none; stroke: var(--gold); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.hintbtn.earned { animation: earned .7s ease-out 3; }
+@keyframes earned { 40% { transform: scale(1.25); box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 45%, transparent); } }
 .hintbtn .badge { position: absolute; top: -5px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; background: var(--hero); color: #fff; font: 600 .68rem/18px var(--body); }
 .blk.hinted .face { box-shadow: 0 0 0 3px var(--gold), 0 0 14px 2px var(--gold); animation: hintpulse 1s ease-in-out infinite; }
 @keyframes hintpulse { 50% { filter: brightness(1.12); } }
@@ -1568,11 +1570,15 @@ window.topplePlus = d => {
   }
   if (plus && !was) { fx.win(); buzz([10, 40, 10]); }
 };
+// A hint earned from an ad goes onto the counter (it is not used right away, so the player sees
+// it arrive); the bulb pulses and the line under the board says to tap it.
 function grantHint() {
   refreshHints();
   hints.count++; store.set('hints', hints); refreshHints();
   showOnly(null);
-  useHint();
+  const btn = $('hintBtn');
+  btn.classList.remove('earned'); void btn.offsetWidth; btn.classList.add('earned');
+  $('hint').textContent = t('hint.earned');
 }
 // iOS and Android apps: rewarded ads from AdMob (ios/Topple/Ads.swift, android/.../Ads.kt) instead of
 // the web's H5 Games Ads. The app reports {ready, loading, privacy, result?} through window.toppleAds.
