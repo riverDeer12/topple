@@ -61,8 +61,8 @@ UGODNO IGRANJE
 
 Može se igrati i bez računa, kao gost.
 
-**Što je novo (1.3):**
-Prva razina sada te vodi korak po korak. Konfeti kad riješiš razinu u najmanje poteza, a savjet dobiven za reklamu čeka na brojaču dok ga ne iskoristiš.
+**Što je novo (1.4):**
+Aplikacija sada sama javi kad izađe nova verzija. Manji ispravci i poboljšanja.
 
 ---
 
@@ -112,8 +112,8 @@ EASY TO ENJOY
 
 You can also play as a guest, without an account.
 
-**What's New (1.3):**
-The first level now guides you step by step. Confetti when you solve a level in the fewest moves, and a hint earned from an ad waits on the counter until you use it.
+**What's New (1.4):**
+The app now lets you know when a new version is out. Small fixes and improvements.
 
 ---
 
@@ -163,8 +163,8 @@ GIOCO PIACEVOLE
 
 Si può giocare anche come ospite, senza account.
 
-**Novità (1.3):**
-Il primo livello ora ti guida passo dopo passo. Coriandoli quando risolvi un livello con il minimo di mosse, e il suggerimento ottenuto con la pubblicità resta sul contatore finché non lo usi.
+**Novità (1.4):**
+L'app ora ti avvisa quando esce una nuova versione. Piccole correzioni e miglioramenti.
 
 ---
 
@@ -214,5 +214,5 @@ ENTSPANNT SPIELEN
 
 Du kannst auch als Gast ohne Konto spielen.
 
-**Neuigkeiten (1.3):**
-Das erste Level führt dich jetzt Schritt für Schritt. Konfetti, wenn du ein Level mit den wenigsten Zügen löst, und ein Tipp aus einer Werbung wartet auf dem Zähler, bis du ihn nutzt.
+**Neuigkeiten (1.4):**
+Die App sagt dir jetzt, wenn eine neue Version erscheint. Kleine Korrekturen und Verbesserungen.
