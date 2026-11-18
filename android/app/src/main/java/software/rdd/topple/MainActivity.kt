@@ -42,6 +42,10 @@ class MainActivity : ComponentActivity() {
     private var web: WebView? = null
     private var pendingReminder: JSONObject? = null
 
+    // Google's update dialog (Updates.kt); the answer needs no handling.
+    private val updateFlow = registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {}
+    private fun updateReady() = runOnUiThread { if (pageReady) web?.evaluateJavascript("window.toppleUpdate && toppleUpdate({ready: true})", null) }
+
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         pendingReminder?.let { if (granted) Reminder.update(this, it) }
         pendingReminder = null
@@ -158,6 +162,8 @@ class MainActivity : ComponentActivity() {
             }
             "gc" -> GamesServices.report(this, msg) // achievements and leaderboards (Google Play Games)
             "ad" -> Ads.handle(this, msg.optString("action", "status"))
+            "update" -> if (msg.optString("action") == "install") Updates.install()
+                else if (Updates.ready) updateReady() else Updates.check(this, updateFlow) { updateReady() }
         }
     }
 
