@@ -61,8 +61,8 @@ UGODNO IGRANJE
 
 Može se igrati i bez računa, kao gost.
 
-**Što je novo (1.2):**
-Aplikacija sada pamti prijavu i napredak i nakon što je zatvoriš. Novi vodič sa savjetima za svaku vrstu bloka. Manji ispravci i poboljšanja.
+**Što je novo (1.3):**
+Prva razina sada te vodi korak po korak. Konfeti kad riješiš razinu u najmanje poteza, a savjet dobiven za reklamu čeka na brojaču dok ga ne iskoristiš.
 
 ---
 
@@ -112,8 +112,8 @@ EASY TO ENJOY
 
 You can also play as a guest, without an account.
 
-**What's New (1.2):**
-The app now keeps you signed in and keeps your progress after you close it. A new guide with tips for every kind of block. Small fixes and improvements.
+**What's New (1.3):**
+The first level now guides you step by step. Confetti when you solve a level in the fewest moves, and a hint earned from an ad waits on the counter until you use it.
 
 ---
 
@@ -163,8 +163,8 @@ GIOCO PIACEVOLE
 
 Si può giocare anche come ospite, senza account.
 
-**Novità (1.2):**
-L'app ora ricorda l'accesso e i progressi anche dopo averla chiusa. Una nuova guida con consigli per ogni tipo di blocco. Piccole correzioni e miglioramenti.
+**Novità (1.3):**
+Il primo livello ora ti guida passo dopo passo. Coriandoli quando risolvi un livello con il minimo di mosse, e il suggerimento ottenuto con la pubblicità resta sul contatore finché non lo usi.
 
 ---
 
@@ -214,5 +214,5 @@ ENTSPANNT SPIELEN
 
 Du kannst auch als Gast ohne Konto spielen.
 
-**Neuigkeiten (1.2):**
-Die App merkt sich jetzt deine Anmeldung und deinen Fortschritt auch nach dem Schließen. Eine neue Anleitung mit Tipps für jede Blockart. Kleine Korrekturen und Verbesserungen.
+**Neuigkeiten (1.3):**
+Das erste Level führt dich jetzt Schritt für Schritt. Konfetti, wenn du ein Level mit den wenigsten Zügen löst, und ein Tipp aus einer Werbung wartet auf dem Zähler, bis du ihn nutzt.
