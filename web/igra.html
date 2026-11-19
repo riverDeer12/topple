@@ -682,6 +682,11 @@ const buzz = ms => {
 };
 const today = () => ToppleGen.today();
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(ToppleI18n.locale, { day: 'numeric', month: 'long', timeZone: 'UTC' });
+// Daily puzzles are numbered from the first one (2026-11-01 = #1), like "Topple #19", so players
+// can compare without spoiling the board; the number follows the date, the same for everyone.
+const DAILY_FIRST = '2026-11-01';
+const dailyNo = d => Math.round((Date.parse(d + 'T12:00:00Z') - Date.parse(DAILY_FIRST + 'T12:00:00Z')) / 864e5) + 1;
+const dailyLabel = d => '#' + dailyNo(d) + ' · ' + fmtDate(d);
 const fmtTime = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const potez = n => ToppleI18n.plural.moves(n);
 const BOXES = ['menuBox', 'loginBox', 'resetBox', 'accBox', 'lbBox', 'winBox', 'lvBox', 'introBox', 'skinBox', 'achBox', 'plusBox', 'hintBox', 'adBox'];
@@ -748,7 +753,7 @@ function show(c) {
     return el;
   });
   $('lvlLabel').textContent = c.mode === 'campaign' ? t('lvl.level', { n: c.key + 1, total: LEVELS.length })
-    : c.mode === 'daily' ? t('lvl.daily', { date: fmtDate(c.key) }) : t('lvl.endless', { n: c.key });
+    : c.mode === 'daily' ? t('lvl.daily', { date: dailyLabel(c.key) }) : t('lvl.endless', { n: c.key });
   $('par').textContent = c.level.opt;
   $('hint').textContent = c.mode === 'campaign' ? (HINT_KEYS.includes(c.key) ? t('hint.' + c.key) : '')
     : c.mode === 'daily' ? t('hint.daily') : '';
@@ -1077,7 +1082,7 @@ function sync() {
 // --- menu, login, leaderboard -----------------------------------------------------
 function openMenu() {
   const t = today(), d = prog.daily[t];
-  $('mDailySub').textContent = d ? ToppleI18n.t('sub.dailyDone', { date: fmtDate(t), n: d.moves, moves: potez(d.moves) }) : ToppleI18n.t('sub.dailyNew', { date: fmtDate(t) });
+  $('mDailySub').textContent = d ? ToppleI18n.t('sub.dailyDone', { date: dailyLabel(t), n: d.moves, moves: potez(d.moves) }) : ToppleI18n.t('sub.dailyNew', { date: dailyLabel(t) });
   $('mEndlessSub').textContent = ToppleI18n.t('sub.endless', { n: prog.endless.next, s: prog.endless.stars }) + (!fullAccess() ? ToppleI18n.t('sub.endlessGuest', { n: GUEST.endless }) : '');
   const stars = Object.values(best).reduce((a, b) => a + b, 0);
   $('mSkinsSub').textContent = ToppleI18n.t('menu.skinsSub', { n: SKINS.filter(skinUnlocked).length, total: SKINS.length });
@@ -1759,7 +1764,7 @@ $('achClose').onclick = openMenu;
 // Share the result: the phone's share sheet when there is one, otherwise copy the text.
 function shareText(w) {
   const s = starsFor(w.moves, w.opt);
-  const head = w.mode === 'daily' ? t('share.daily', { date: fmtDate(w.key) }) : w.mode === 'endless' ? t('share.endless', { n: w.key }) : t('share.level', { n: w.key + 1 });
+  const head = w.mode === 'daily' ? t('share.daily', { date: dailyLabel(w.key) }) : w.mode === 'endless' ? t('share.endless', { n: w.key }) : t('share.level', { n: w.key + 1 });
   const line = t('share.line', { stars: '⭐'.repeat(s) + '☆'.repeat(3 - s), n: w.moves, moves: potez(w.moves) }) + (w.mode === 'daily' ? ' · ' + fmtTime(w.timeMs) : '');
   const st = w.mode === 'daily' ? streaks().current : 0;
   return [head, line, st >= 2 ? t('share.streak', { n: st }) : ''].filter(Boolean).join('\n');

@@ -50,7 +50,7 @@ const ToppleContent = (() => {
       ],
       MODES: [
         ['Razine', `${levels} razina u ${chapters} poglavlja. Otključavaju se redom, postupno uvode nove blokove i postaju sve teže.`],
-        ['Dnevna zagonetka', 'Svaki dan nova zagonetka, ista za sve igrače. Na ljestvici pobjeđuje manje poteza, a kod jednakog broja brže vrijeme. Nedjeljom je teža.'],
+        ['Dnevna zagonetka', 'Svaki dan nova zagonetka, ista za sve igrače. Na ljestvici pobjeđuje manje poteza, a kod jednakog broja brže vrijeme. Nedjeljom je teža. Svaka ima svoj broj, pa rezultat možeš podijeliti bez otkrivanja ploče.'],
         ['Beskonačno', `Niz zagonetki koji nikad ne završava: prvih ${endless} je unaprijed složeno, a dalje ih igra slaže sama. Postaju sve teže i izmjenjuju vrste blokova.`],
       ],
       FEATURES: [
@@ -94,7 +94,7 @@ const ToppleContent = (() => {
       ],
       MODES: [
         ['Levels', `${levels} levels in ${chapters} chapters. They unlock in order, introduce new blocks step by step and get harder.`],
-        ['Daily puzzle', 'A new puzzle every day, the same for all players. Fewest moves wins the leaderboard, and with equal moves the faster time. Sundays are harder.'],
+        ['Daily puzzle', 'A new puzzle every day, the same for all players. Fewest moves wins the leaderboard, and with equal moves the faster time. Sundays are harder. Each one has a number, so you can share your result without spoiling the board.'],
         ['Endless', `A run of puzzles that never ends: the first ${endless} are prepared in advance, after that the game builds them itself. They get harder and mix the block types.`],
       ],
       FEATURES: [
@@ -138,7 +138,7 @@ const ToppleContent = (() => {
       ],
       MODES: [
         ['Livelli', `${levels} livelli in ${chapters} capitoli. Si sbloccano in ordine, introducono nuovi blocchi poco a poco e diventano sempre più difficili.`],
-        ['Rompicapo del giorno', 'Ogni giorno un nuovo rompicapo, uguale per tutti. In classifica vince chi usa meno mosse e, a parità, chi è più veloce. La domenica è più difficile.'],
+        ['Rompicapo del giorno', 'Ogni giorno un nuovo rompicapo, uguale per tutti. In classifica vince chi usa meno mosse e, a parità, chi è più veloce. La domenica è più difficile. Ognuno ha un numero, così puoi condividere il risultato senza svelare il tabellone.'],
         ['Infinito', `Una serie di rompicapi che non finisce mai: i primi ${endless} sono preparati in anticipo, poi il gioco li crea da solo. Diventano sempre più difficili e alternano i tipi di blocchi.`],
       ],
       FEATURES: [
@@ -182,7 +182,7 @@ const ToppleContent = (() => {
       ],
       MODES: [
         ['Level', `${levels} Level in ${chapters} Kapiteln. Sie werden der Reihe nach freigeschaltet, führen nach und nach neue Blöcke ein und werden immer schwerer.`],
-        ['Tagesrätsel', 'Jeden Tag ein neues Rätsel, für alle gleich. In der Rangliste gewinnt, wer die wenigsten Züge braucht, bei Gleichstand die schnellere Zeit. Sonntags ist es schwerer.'],
+        ['Tagesrätsel', 'Jeden Tag ein neues Rätsel, für alle gleich. In der Rangliste gewinnt, wer die wenigsten Züge braucht, bei Gleichstand die schnellere Zeit. Sonntags ist es schwerer. Jedes hat eine Nummer, so kannst du dein Ergebnis teilen, ohne das Brett zu verraten.'],
         ['Endlos', `Eine Reihe von Rätseln, die nie endet: Die ersten ${endless} sind vorbereitet, danach baut das Spiel sie selbst. Sie werden schwerer und wechseln die Blockarten.`],
       ],
       FEATURES: [
