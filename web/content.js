@@ -46,7 +46,7 @@ const ToppleContent = (() => {
         ['Cilj', 'Izvedi crveni blok kroz izlaz, strelicu na desnom rubu ploče. Crveni mora biti u istom redu kao strelica i dotaknuti desni rub.'],
         ['Potez', 'Povuci blok prstom ili mišem lijevo ili desno. Klizi za koliko god slobodnih polja želiš, ali nikad gore ili dolje. Na tipkovnici odaberi blok tipkom Tab i miči ga strelicama.'],
         ['Gravitacija', 'Nakon svakog poteza sve što nema oslonac padne. Blok stoji ako je ispod barem jednog njegovog dijela nešto. Jedan potez može pokrenuti cijeli lanac padova.'],
-        ['Zvjezdice', 'Cilj je najmanji mogući broj poteza. Riješiš li u tom broju, dobiješ 3 zvjezdice, s najviše 2 poteza više 2, inače 1. „Vrati” poništava zadnji potez, a „Ponovi” kreće ispočetka.'],
+        ['Zvjezdice', 'Cilj je najmanji mogući broj poteza. Riješiš li u tom broju, dobiješ 3 zvjezdice, s najviše 2 poteza više 2, inače 1. „Vrati” poništava zadnji potez, a „Ponovi” kreće ispočetka. Cilj se pokaže kad zagonetku prvi put riješiš, a u izborniku ga možeš uključiti odmah („Cilj unaprijed”).'],
       ],
       MODES: [
         ['Razine', `${levels} razina u ${chapters} poglavlja. Otključavaju se redom, postupno uvode nove blokove i postaju sve teže.`],
@@ -90,7 +90,7 @@ const ToppleContent = (() => {
         ['Goal', 'Get the red block out through the exit, the arrow on the right edge of the board. The red block has to be in the arrow’s row and touch the right edge.'],
         ['Moves', 'Drag a block left or right with your finger or mouse. It slides as many free cells as you like, but never up or down. With a keyboard, pick a block with Tab and move it with the arrow keys.'],
         ['Gravity', 'After every move, anything without support falls. A block stands if something is under at least one of its cells. One move can start a whole chain of falls.'],
-        ['Stars', 'The target is the fewest moves possible. Solve it in that many and you get 3 stars, with at most 2 extra moves 2, otherwise 1. “Undo” takes back the last move and “Restart” starts over.'],
+        ['Stars', 'The target is the fewest moves possible. Solve it in that many and you get 3 stars, with at most 2 extra moves 2, otherwise 1. “Undo” takes back the last move and “Restart” starts over. The target shows once you have solved the puzzle; turn on “Show target” in the menu to see it from the start.'],
       ],
       MODES: [
         ['Levels', `${levels} levels in ${chapters} chapters. They unlock in order, introduce new blocks step by step and get harder.`],
@@ -134,7 +134,7 @@ const ToppleContent = (() => {
         ['Obiettivo', 'Fai uscire il blocco rosso dall’uscita, la freccia sul bordo destro della tavola. Il rosso deve essere nella riga della freccia e toccare il bordo destro.'],
         ['Mosse', 'Trascina un blocco a sinistra o a destra con il dito o il mouse. Scorre di quante caselle libere vuoi, ma mai in su o in giù. Con la tastiera scegli un blocco con Tab e muovilo con le frecce.'],
         ['Gravità', 'Dopo ogni mossa tutto ciò che non ha appoggio cade. Un blocco sta fermo se sotto almeno una sua casella c’è qualcosa. Una mossa può scatenare un’intera catena di cadute.'],
-        ['Stelle', 'L’obiettivo è il minor numero di mosse possibile. Se ci riesci prendi 3 stelle, con al massimo 2 mosse in più 2, altrimenti 1. “Annulla” toglie l’ultima mossa e “Ricomincia” riparte da capo.'],
+        ['Stelle', 'L’obiettivo è il minor numero di mosse possibile. Se ci riesci prendi 3 stelle, con al massimo 2 mosse in più 2, altrimenti 1. “Annulla” toglie l’ultima mossa e “Ricomincia” riparte da capo. L’obiettivo compare dopo la prima soluzione; nel menu puoi attivare «Mostra obiettivo» per vederlo subito.'],
       ],
       MODES: [
         ['Livelli', `${levels} livelli in ${chapters} capitoli. Si sbloccano in ordine, introducono nuovi blocchi poco a poco e diventano sempre più difficili.`],
@@ -178,7 +178,7 @@ const ToppleContent = (() => {
         ['Ziel', 'Bring den roten Block durch den Ausgang hinaus, den Pfeil am rechten Rand des Bretts. Der rote Block muss in der Reihe des Pfeils sein und den rechten Rand berühren.'],
         ['Züge', 'Zieh einen Block mit Finger oder Maus nach links oder rechts. Er gleitet beliebig viele freie Felder, aber nie nach oben oder unten. Mit der Tastatur wählst du einen Block mit Tab und bewegst ihn mit den Pfeiltasten.'],
         ['Schwerkraft', 'Nach jedem Zug fällt alles, was keinen Halt hat. Ein Block steht, wenn unter mindestens einem seiner Felder etwas ist. Ein Zug kann eine ganze Kette von Stürzen auslösen.'],
-        ['Sterne', 'Das Ziel ist die kleinstmögliche Zahl an Zügen. Schaffst du das, gibt es 3 Sterne, mit höchstens 2 Zügen mehr 2, sonst 1. „Zurück“ nimmt den letzten Zug zurück, „Neu“ fängt von vorne an.'],
+        ['Sterne', 'Das Ziel ist die kleinstmögliche Zahl an Zügen. Schaffst du das, gibt es 3 Sterne, mit höchstens 2 Zügen mehr 2, sonst 1. „Zurück“ nimmt den letzten Zug zurück, „Neu“ fängt von vorne an. Das Ziel erscheint nach der ersten Lösung; mit „Ziel zeigen“ im Menü siehst du es sofort.'],
       ],
       MODES: [
         ['Level', `${levels} Level in ${chapters} Kapiteln. Sie werden der Reihe nach freigeschaltet, führen nach und nach neue Blöcke ein und werden immer schwerer.`],
