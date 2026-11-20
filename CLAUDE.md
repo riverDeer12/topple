@@ -81,3 +81,13 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 1. Postaviti igru i API na vlastiti server (31.147.206.142) na `https://topple.rdd.software` prema `server/README.md`. Server je Windows s IIS-om: IIS poslužuje `web/` i prosljeđuje `/api/` (pravila u `web/web.config`, treba URL Rewrite + ARR), API radi kao servis preko NSSM-a. Postava jednom skriptom `server/install.ps1` (kod u `C:\inetpub\wwwroot\topple`, podaci u `C:\inetpub\topple-data`); zakazani zadatak svake 2 minute pokreće `server/update.ps1` i instalira svaku novu verziju s `main`. Skripte su UTF-8 s BOM-om i CRLF zbog Windows PowerShella 5.1. GitHub Pages ostaje rezervna kopija bez ljestvice.
 2. Razine 61–120 (poglavlja 7–12; nazivi su u `CHAPTERS` u `i18n.js`; 11 = strelice, 12 = opruge). `--upto N` zapisuje samo razine 1–N u `levels.js`. Testiranje na mobitelu. Specove dodaj na kraj `SPECS`; za teške ciljeve koristi raspon (`max`) i manje blokova, inače pretraga traje satima.
 3. iOS: hibridna aplikacija u `ios/` (vidi `ios/README.md`): Game Center ID-jevi u App Store Connectu, TestFlight, objava. Kasnije po želji nativna SpriteKit ploča.
+
+## Status projekta (STATUS.md)
+
+`STATUS.md` u korijenu repozitorija je kratki pregled stanja projekta. Iz njega se puni vlasnikov dashboard svih projekata.
+
+- Na kraju svake sesije u kojoj si nešto promijenio ažuriraj `STATUS.md` i stavi ga u isti commit ili PR kao i samu promjenu.
+- Ažuriraj: **Verzija**, **Zadnje ažurirano** (današnji datum), **Zadnje isporučeno** (najnovije gore, s datumom, najviše 6 stavki, starije briši) i **Čeka** (što je otvoreno i na kome: na tebi, na klijentu, na App Storeu ili Google Playu…).
+- **Status** je jedno od: Aktivan, Čeka, Miruje, Gotov.
+- **Klijent** mijenjaj samo kad znaš da se promijenio dogovor ili komunikacija. Ne izmišljaj; ako nešto ne znaš, ostavi kako je.
+- Piši kratko i na hrvatskom, jedna stavka u jednom retku. Bez tajni, ključeva, lozinki i osobnih podataka (osim imena kontakt osobe).
