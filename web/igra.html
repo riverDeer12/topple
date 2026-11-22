@@ -1207,7 +1207,8 @@ $('resetForm').addEventListener('submit', async e => {
 function signedIn(r) {
   user = { name: r.name, token: r.token };
   plusSent = null; native({ type: 'plus', action: 'status' }); // Topple Plus badge for this account
-  if (canPush()) pushSub().then(sub => { if (sub) sendSub(sub); }); // link the reminder to the account store.set('user', user); store.set('asked', true); store.set('importedName', '');
+  store.set('user', user); store.set('asked', true); store.set('importedName', ''); // stays signed in after closing the game
+  if (canPush()) pushSub().then(sub => { if (sub) sendSub(sub); }); // link the reminder to the account
   $('lPass').value = '';
   sync();
   openMenu();
