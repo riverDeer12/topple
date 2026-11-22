@@ -19,8 +19,7 @@
 ## Čeka
 - iOS 1.5 (popravak prijave) ide na Appleov pregled.
 - Android: 14 dana testiranja ističe oko 22. 11., zatim Apply for production (vlasnik).
-- Reddit objava na r/playmygame (2026-11-21).
 - CrazyGames odbio igru, ponovna prijava kasnije.
 
 ## Klijent
-- Nema klijenta. Promocija: r/WebGames (2026-11-19), r/puzzlevideogames (2026-11-20).
+- Nema klijenta. Promocija: r/WebGames (2026-11-19), r/puzzlevideogames (2026-11-20), r/playmygame (2026-11-22).
