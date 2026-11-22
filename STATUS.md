@@ -6,15 +6,15 @@
 - **Klijent:** Vlastiti proizvod
 - **Status:** Aktivan
 - **Verzija:** iOS 1.4 (127) · Android 1.0 (177) · web, itch.io
-- **Zadnje ažurirano:** 2026-11-20
+- **Zadnje ažurirano:** 2026-11-22
 
 ## Zadnje isporučeno
+- 2026-11-22 Popravak: prijava se sad pamti nakon zatvaranja igre (web, iOS, Android)
 - 2026-11-20 Cilj skriven do prvog rješenja, tipka „Cilj unaprijed”; novi paket na itch.io
 - 2026-11-20 Zamijenjene razine 5 i 6 prema podacima igranja
 - 2026-11-19 Numerirane dnevne zagonetke, prozori viši od ekrana se skrolaju
 - 2026-11-18 iOS 1.4 i 1.3, traka za novu verziju (App Store / Play In-App Updates)
 - 2026-11-18 Savjet iz reklame ide na brojač
-- 2026-11-16 Paketi za CrazyGames i itch.io s reklamama i događajima igre
 
 ## Čeka
 - iOS 1.4 na Appleovom pregledu.
