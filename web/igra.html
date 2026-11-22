@@ -729,7 +729,28 @@ function place(ms, only) {
   });
 }
 
+// A player who seems stuck (90 s on a puzzle, or the third start of it) is reminded once that the
+// light bulb gives a hint; nothing is used up. Not in the daily puzzle (no hints there).
+let stuck = { id: null, starts: 0, timer: 0, shown: false };
+function stuckWatch(c) {
+  const id = c.mode + ':' + c.key;
+  if (stuck.id !== id) { clearTimeout(stuck.timer); stuck = { id, starts: 0, timer: 0, shown: false }; }
+  stuck.starts++;
+  clearTimeout(stuck.timer);
+  if (stuck.shown || c.mode === 'daily' || watching) return;
+  if (stuck.starts >= 3) return setTimeout(nudgeHint, 600);
+  stuck.timer = setTimeout(nudgeHint, 90000);
+}
+function nudgeHint() {
+  if (!ctx || won_ || busy || coaching || watching || ctx.mode === 'daily' || stuck.shown) return;
+  if (els.some(e => e.classList.contains('hinted'))) return; // a hint is already on the board
+  stuck.shown = true;
+  $('hint').textContent = t('hint.stuck');
+  const btn = $('hintBtn');
+  btn.classList.remove('earned'); void btn.offsetWidth; btn.classList.add('earned');
+}
 function show(c) {
+  stuckWatch(c);
   clearHint();
   ctx = c; won_ = false; busy = false;
   blocks = fromLevel(c.level.blocks);
@@ -991,6 +1012,7 @@ function win() {
   fx.win();
   buzz([10, 40, 10]);
   cgGameplay(false); cg(sdk => sdk.game.happytime());
+  clearTimeout(stuck.timer);
   const opt = ctx.level.opt, m = hist.length, timeMs = Date.now() - t0;
   const unlockedBefore = SKINS.filter(skinUnlocked).map(x => x.id);
   reportPlay('solve', { moves: hist.length, timeMs: Date.now() - playSession(ctx.key).t0, hints: playSession(ctx.key).hints });
