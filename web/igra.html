@@ -1951,8 +1951,9 @@ function start() {
   if (APP) native({ type: 'ad', action: 'status' }); // ads ready, privacy settings needed? (also asks for consent)
   if (APP) native({ type: 'update', action: 'check' }); // a newer version in the store? (at most once a day)
   if (resetToken && API) openReset('new');
-  else if (!signedInNow() && !store.get('asked', false) && !CG) openLogin();
-  else if (!(CG && !rulesSeen)) openMenu(); // CrazyGames: no sign-in prompt; a new player goes straight into level 1
+  // A player moved from an old address is offered the sign-in once; nobody else gets it at the start.
+  else if (!signedInNow() && store.get('importedName', '') && !store.get('asked', false) && !CG) openLogin();
+  else if (rulesSeen) openMenu(); // a new player goes straight into the guided level 1; sign-in is in the menu
   cg(sdk => sdk.game.loadingStop());
   started = true;
   if (!rulesSeen && !resetToken && ctx && ctx.key === 0) maybeIntro(LEVELS[0]); // a new player: the guided first level (under the menu or sign-in, if open)

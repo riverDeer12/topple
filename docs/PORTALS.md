@@ -23,6 +23,6 @@ Svaka promjena web igre ulazi u sljedeći paket; na portalu treba ponovno upload
 ## itch.io
 
 1. https://itch.io → **Upload new project**: Kind of project **HTML**, upload `topple-itch.zip`, označi **This file will be played in the browser**.
-2. Embed options: **Click to launch in fullscreen** isključeno, veličina okvira npr. 480 × 860 (mobilni omjer) i uključi **Mobile friendly** te **Fullscreen button**.
+2. Embed options: **Click to launch in fullscreen** isključeno, veličina okvira **960 × 600** (široki raspored igre: stane i na prozor visok 720 px; uz 860 px visine dio igre bio je ispod ruba), uključi **Mobile friendly** (orijentacija Portrait) te **Fullscreen button**.
 3. Naziv `Topple: Gravity Puzzle`, Genre Puzzle, tagovi: `puzzle`, `logic`, `gravity`, `sliding-puzzle`, `daily`, `casual`, `brain`, `minimalist`. Opis isti kao za CrazyGames, uz poveznice: web https://topple.rdd.software, App Store https://apps.apple.com/app/id6830289324.
 4. Pricing: **No payments** (ili „donate” ako želiš). Visibility: Public.
