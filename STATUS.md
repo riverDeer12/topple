@@ -9,12 +9,12 @@
 - **Zadnje ažurirano:** 2026-11-22
 
 ## Zadnje isporučeno
+- 2026-11-22 itch.io: gostima napomena kako sačuvati napredak (prijava ili prijenos na topple.rdd.software)
 - 2026-11-22 Podsjetnik na savjet kad igrač zapne (90 s ili treći pokušaj)
 - 2026-11-22 Ispucali blok s jasnijim pukotinama (prema komentaru s Reddita)
 - 2026-11-22 Bez obrasca za prijavu na početku: novi igrač ide ravno u 1. razinu
 - 2026-11-22 Popravak: prijava se sad pamti nakon zatvaranja igre (web, iOS, Android)
 - 2026-11-20 Cilj skriven do prvog rješenja, tipka „Cilj unaprijed”; novi paket na itch.io
-- 2026-11-20 Zamijenjene razine 5 i 6 prema podacima igranja
 
 ## Čeka
 - itch.io: uploadati novi paket i promijeniti veličinu okvira na 960 × 600 (vlasnik).
