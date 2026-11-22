@@ -61,8 +61,8 @@ UGODNO IGRANJE
 
 Može se igrati i bez računa, kao gost.
 
-**Što je novo (1.4):**
-Aplikacija sada sama javi kad izađe nova verzija. Manji ispravci i poboljšanja.
+**Što je novo (1.5):**
+Prijava se sada pamti i nakon zatvaranja aplikacije. Dnevne zagonetke imaju broj, pa rezultat možeš podijeliti bez otkrivanja ploče. Cilj se pokaže nakon prvog rješenja (ili odmah, uz „Cilj unaprijed” u izborniku). Izbornik ima gumb za zatvaranje.
 
 ---
 
@@ -112,8 +112,8 @@ EASY TO ENJOY
 
 You can also play as a guest, without an account.
 
-**What's New (1.4):**
-The app now lets you know when a new version is out. Small fixes and improvements.
+**What's New (1.5):**
+You now stay signed in after closing the app. Daily puzzles are numbered, so you can share your score without spoiling the board. The target shows after your first clear (or right away with "Show target" in the menu). The menu has a close button.
 
 ---
 
@@ -163,8 +163,8 @@ GIOCO PIACEVOLE
 
 Si può giocare anche come ospite, senza account.
 
-**Novità (1.4):**
-L'app ora ti avvisa quando esce una nuova versione. Piccole correzioni e miglioramenti.
+**Novità (1.5):**
+Ora l'accesso resta attivo anche dopo aver chiuso l'app. I rompicapi del giorno sono numerati, così puoi condividere il risultato senza svelare il tabellone. L'obiettivo compare dopo la prima soluzione (o subito, con «Mostra obiettivo» nel menu). Il menu ha un pulsante per chiuderlo.
 
 ---
 
@@ -214,5 +214,5 @@ ENTSPANNT SPIELEN
 
 Du kannst auch als Gast ohne Konto spielen.
 
-**Neuigkeiten (1.4):**
-Die App sagt dir jetzt, wenn eine neue Version erscheint. Kleine Korrekturen und Verbesserungen.
+**Neuigkeiten (1.5):**
+Du bleibst jetzt auch nach dem Schließen der App angemeldet. Tagesrätsel sind nummeriert, so kannst du dein Ergebnis teilen, ohne das Brett zu verraten. Das Ziel erscheint nach der ersten Lösung (oder sofort mit „Ziel zeigen“ im Menü). Das Menü hat eine Schließen-Taste.
