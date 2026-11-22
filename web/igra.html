@@ -55,7 +55,7 @@ h1 span { color: var(--hero); }
 
 
 .controls { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-button.ctl {
+button.ctl, a.ctl {
   font: 600 .9rem var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--panel-line);
   border-radius: 999px; padding: 11px 18px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
 }
@@ -155,6 +155,8 @@ input.nick { font: 500 1.05rem var(--body); color: var(--ink); background: var(-
 .skin.locked .blk { filter: grayscale(1) opacity(.45); }
 .skin:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .unlock { color: var(--hero); font-weight: 600; }
+.savetip { background: var(--page); border: 1px solid var(--panel-line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.savetip a.ctl { text-decoration: none; }
 ul.plus { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; text-align: left; width: 100%; }
 ul.plus li { padding-left: 28px; position: relative; font-size: .95rem; }
 ul.plus li::before { content: "✓"; position: absolute; left: 4px; color: var(--hero); font-weight: 700; }
@@ -417,6 +419,7 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
     <p id="winStreak" class="unlock" hidden></p>
     <p id="winUnlock" class="unlock" hidden></p>
     <p id="winAch" class="unlock" hidden></p>
+    <div class="savetip" id="winSave" hidden><p data-i18n="save.tip"></p><div class="row"><button class="ctl" id="saveLogin" type="button" data-i18n="save.login"></button><a class="ctl" id="saveSite" target="_blank" rel="noopener" data-i18n="save.site"></a></div></div>
     <button class="go" id="next" type="button">Sljedeća razina</button>
     <button class="share" id="share" type="button"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span data-i18n="win.share">Podijeli rezultat</span></button>
     <button class="link" id="watch" type="button" data-i18n="win.watch">Pogledaj najbolje rješenje</button>
@@ -1047,6 +1050,17 @@ function win() {
     $('watch').hidden = c.mode === 'daily'; // no solutions for the daily puzzle, it has a leaderboard
     $('next').textContent = c.mode === 'daily' ? (CG ? t('win.menu') : t('win.board')) : c.mode === 'endless' ? t('win.nextPuzzle')
       : c.key === LEVELS.length - 1 ? t('win.allLevels') : t('win.nextLevel');
+    // itch.io: some browsers wipe the storage of a game in a frame when they close, so guests are
+    // told once how to keep their progress: sign in, or move it to topple.rdd.software (#import=).
+    const saveTip = PORTAL === 'itch' && !signedInNow() && !store.get('saveTip', false);
+    $('winSave').hidden = !saveTip;
+    if (saveTip) {
+      store.set('saveTip', true);
+      const data = {};
+      for (const k of MIGRATE_KEYS) { const v = store.get(k, null); if (v !== null) data[k] = v; }
+      delete data.user;
+      $('saveSite').href = HOME + '#import=' + encodeURIComponent(JSON.stringify(data));
+    }
     showOnly('winBox');
     $('next').focus({ preventScroll: true });
   }, 650);
@@ -1858,6 +1872,7 @@ $('mLevels').onclick = openLevels;
 $('mBoard').onclick = () => openBoard('daily');
 $('menuClose').onclick = $('menuX').onclick = () => { showOnly(null); if (ctx) maybeIntro(ctx.level); };
 $('menu').onclick = () => { if (!busy) { stopWatch(); openMenu(); } };
+$('saveLogin').onclick = () => openLogin();
 $('winMenu').onclick = openMenu;
 $('undo').onclick = () => {
   clearHint();
