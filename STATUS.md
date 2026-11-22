@@ -17,7 +17,7 @@
 - 2026-11-18 Savjet iz reklame ide na brojač
 
 ## Čeka
-- iOS 1.4 na Appleovom pregledu.
+- iOS 1.5 (popravak prijave) ide na Appleov pregled.
 - Android: 14 dana testiranja ističe oko 22. 11., zatim Apply for production (vlasnik).
 - Reddit objava na r/playmygame (2026-11-21).
 - CrazyGames odbio igru, ponovna prijava kasnije.
