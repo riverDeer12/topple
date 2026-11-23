@@ -9,12 +9,12 @@
 - **Zadnje ažurirano:** 2026-11-23
 
 ## Zadnje isporučeno
+- 2026-11-23 Uputa na 6. razini (izlaz u najdonjem redu), prema komentaru s Reddita
 - 2026-11-23 Administracija: težina razina po razdoblju (24 h, 7, 30 dana, od datuma)
 - 2026-11-22 itch.io: gostima napomena kako sačuvati napredak (prijava ili prijenos na topple.rdd.software)
 - 2026-11-22 Podsjetnik na savjet kad igrač zapne (90 s ili treći pokušaj)
 - 2026-11-22 Ispucali blok s jasnijim pukotinama (prema komentaru s Reddita)
 - 2026-11-22 Bez obrasca za prijavu na početku: novi igrač ide ravno u 1. razinu
-- 2026-11-22 Popravak: prijava se sad pamti nakon zatvaranja igre (web, iOS, Android)
 
 ## Čeka
 - itch.io: uploadati novi paket i promijeniti veličinu okvira na 960 × 600 (vlasnik).
