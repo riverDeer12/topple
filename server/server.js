@@ -508,7 +508,8 @@ function profile(u) {
 }
 
 // --- admin statistics ---------------------------------------------------------
-function adminStats() {
+// playsFrom: only level plays started at or after this time (ms), for the difficulty table in /admin.
+function adminStats(playsFrom = 0) {
   const now = Date.now(), since = d => now - d * 864e5, ONLINE = 15 * 60e3;
   const n = (q, ...a) => db.prepare(q).get(...a).n;
   const method = u => u.google_sub && u.password_hash ? 'both' : u.google_sub ? 'google' : u.password_hash ? 'password' : 'device';
@@ -544,7 +545,7 @@ function adminStats() {
   // Difficulty per level from plays: how many started and solved it, and how hard the first solve was.
   const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
   const byLevel = {};
-  for (const r of db.prepare('SELECT * FROM plays').all()) (byLevel[r.level] = byLevel[r.level] || []).push(r);
+  for (const r of db.prepare('SELECT * FROM plays WHERE first_seen >= ?').all(playsFrom)) (byLevel[r.level] = byLevel[r.level] || []).push(r);
   const difficulty = LEVELS.map((lv, i) => {
     const rows = byLevel[i + 1] || [], solved = rows.filter(r => r.solved_at);
     const avg = f => (solved.length ? solved.reduce((a, r) => a + f(r), 0) / solved.length : null);
@@ -673,7 +674,8 @@ async function route(req, res) {
   if (req.method === 'GET' && p === '/api/admin/stats') {
     const admin = adminFrom(req);
     if (!admin) return send(res, 401, { error: 'Nisi prijavljen.', code: 'not_signed_in' });
-    return send(res, 200, { admin, ...adminStats() });
+    const since = Math.max(0, Number(url.searchParams.get('since')) || 0);
+    return send(res, 200, { admin, since, ...adminStats(since) });
   }
 
   if (req.method === 'GET' && p === '/api/config') return send(res, 200, { googleClientId: GOOGLE_CLIENT_ID || null, googleIos: GOOGLE_IOS_CLIENT_IDS.length > 0, passwordReset: !!mail.config(), pushKey: push.vapidKeys().publicKey, remindHour: REMIND_HOUR, appleWeb: APPLE_SERVICE_ID || null });

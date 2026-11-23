@@ -60,6 +60,8 @@
   .axis.ticks span { position: absolute; transform: translateX(-50%); }
   .chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
   .chart-head .max { font-size: .75rem; color: var(--muted); }
+  .period { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .85rem; color: var(--muted); }
+  .period select, .period input { font: .9rem var(--body); padding: 6px 10px; border-radius: 8px; border: 1px solid var(--panel-line); background: var(--page); color: var(--ink); }
   .tip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--page); font-size: .8rem; padding: 6px 9px; border-radius: 8px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); }
   .hbars { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 10px; align-items: center; font-size: .9rem; }
   .hbars .track { height: 10px; background: var(--grid); border-radius: 5px; overflow: hidden; }
@@ -133,7 +135,10 @@
     <section class="card grid" style="margin-bottom:14px">
       <div class="chart-head"><h2>Težina razina: koliko igrača koji su započeli razinu ju je i riješilo</h2>
         <button id="copyDiff" type="button" title="Za analizu i ugađanje razina">Kopiraj podatke</button></div>
-      <p class="muted small" style="margin:0">Računa se od uvođenja bilježenja: prijavljeni igrači i gosti. Pokušaj se broji kad igrač pomakne bar jedan blok. Vrijeme, potezi i savjeti su od prvog rješenja.</p>
+      <div class="period"><label for="diffPeriod">Razdoblje</label>
+        <select id="diffPeriod"><option value="all">Ukupno</option><option value="30">Zadnjih 30 dana</option><option value="7">Zadnjih 7 dana</option><option value="1">Zadnja 24 sata</option><option value="from">Od datuma…</option></select>
+        <input type="date" id="diffFrom" hidden></div>
+      <p class="muted small" style="margin:0">Računaju se razine koje su igrači započeli u odabranom razdoblju (prijavljeni igrači i gosti), npr. od dana kad su razine promijenjene. Pokušaj se broji kad igrač pomakne bar jedan blok. Vrijeme, potezi i savjeti su od prvog rješenja.</p>
       <div class="chart" id="diffChart" style="height:150px" role="img"></div>
       <div class="axis ticks" id="diffAxis"></div>
       <h2 style="margin-top:6px">Najteže razine</h2>
@@ -233,7 +238,7 @@ $('refresh').onclick = () => load();
 async function load() {
   if (!token) return showLogin();
   let r;
-  try { r = await call('stats'); } catch (e) { $('updated').textContent = 'Server nije dostupan, pokušavam ponovno…'; return; }
+  try { r = await call('stats' + sinceParam()); } catch (e) { $('updated').textContent = 'Server nije dostupan, pokušavam ponovno…'; return; }
   if (r.status === 401) { token = null; try { localStorage.removeItem(KEY); } catch (e) {} return showLogin(); }
   if (r.status !== 200) { $('updated').textContent = r.data.error || 'Greška.'; return; }
   $('loginBox').hidden = true; $('dash').hidden = false;
@@ -330,9 +335,18 @@ function renderAds(s) {
   $('adsMax').textContent = `vrh ljestvice: ${num(max)}`;
   $('adsAxis').innerHTML = `<span>${shortDay(d[0].date)}</span><span>danas</span>`;
 }
+// Period for the difficulty table: whole history, the last days, or from a date (e.g. a level change).
+function sinceParam() {
+  const v = $('diffPeriod').value;
+  if (v === 'all') return '';
+  if (v === 'from') { const d = $('diffFrom').value; return d ? '?since=' + new Date(d + 'T00:00:00').getTime() : ''; }
+  return '?since=' + (Date.now() - Number(v) * 864e5);
+}
+$('diffPeriod').onchange = () => { $('diffFrom').hidden = $('diffPeriod').value !== 'from'; if ($('diffPeriod').value !== 'from' || $('diffFrom').value) load(); };
+$('diffFrom').onchange = () => load();
 let lastDiff = [];
 $('copyDiff').onclick = async () => {
-  const text = JSON.stringify(lastDiff.filter(d => d.started), null, 1);
+  const text = JSON.stringify({ period: $('diffPeriod').selectedOptions[0].textContent + ($('diffPeriod').value === 'from' ? ' ' + $('diffFrom').value : ''), levels: lastDiff.filter(d => d.started) }, null, 1);
   try { await navigator.clipboard.writeText(text); $('copyDiff').textContent = 'Kopirano ✓'; } catch (e) { window.prompt('Kopiraj:', text); }
   setTimeout(() => { $('copyDiff').textContent = 'Kopiraj podatke'; }, 2000);
 };

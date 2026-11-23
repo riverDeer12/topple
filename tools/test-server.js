@@ -428,6 +428,8 @@ function solution(level) {
   assert.strictEqual(st.days[13].ads, 1); assert.strictEqual(st.days[13].adsSim, 1);
   assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 8);
   assert.ok(!JSON.stringify(st).includes('password_hash') && !JSON.stringify(st).includes('@'), 'no secrets or e-mails in admin stats');
+  r = await call('/api/admin/stats?since=' + (Date.now() + 864e5), null, adm); // only plays started from tomorrow: none
+  assert.strictEqual(r.status, 200); assert.ok(r.body.difficulty.every(d => d.started === 0)); assert.strictEqual(r.body.totals.users, 8);
   r = await call('/api/admin/logout', {}, adm); r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 401);
   ok('admin: sign-in from the admins table, stats, logout');
 
