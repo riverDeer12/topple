@@ -26,6 +26,14 @@ window.TOPPLE_IOS_APP_ID = '6830289324';
 // false = no Google Play badge on the home page yet.
 window.TOPPLE_PLAY_LIVE = false;
 
+// Android testers for Google Play's closed test (needed before the production release): players
+// on an Android browser get a one-time invite on the win screen until TOPPLE_PLAY_LIVE is true.
+//   join: where they sign up. A Google Group that is the tester list of the closed test, e.g.
+//         'https://groups.google.com/g/topple-testers'. Empty = an e-mail to info@rdd.software
+//         with their Google Play address, which is then added to the tester list by hand.
+//   optin: the Play opt-in page, shown after joining (testers must open it once and install).
+window.TOPPLE_ANDROID_TEST = { join: '', optin: 'https://play.google.com/apps/testing/software.rdd.topple' };
+
 // Safari on iPhone/iPad: Smart App Banner (open or download the app) on the web pages.
 if (window.TOPPLE_IOS_APP_ID && !TOPPLE_IN_APP && !window.TOPPLE_PORTAL && document.head) {
   const m = document.createElement('meta');

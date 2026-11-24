@@ -16,7 +16,7 @@ Igra i početna stranica su na četiri jezika (hrvatski zadani, engleski, talija
 - `web/puzzles.js` — unaprijed generirane zagonetke: 300 beskonačnih i dnevne za godinu dana (`npm run puzzles`). Iza kraja datoteke igra i server generiraju iste ploče iz `gen.js`.
 - `web/admin/index.html` — administracija za vlasnika (`/admin`): igrači, gosti, aktivnost, napredak po razinama.
 - `web/sw.js` — service worker za igranje bez interneta: datoteke igre mrežom prvo, iz cachea kad nema veze; `/api/` i `/admin` se ne spremaju. Nova datoteka koju igra treba mora se dodati u `FILES`.
-- `web/config.js` — adresa API servera (`TOPPLE_API`); prazno = igra bez servera.
+- `web/config.js` — adresa API servera (`TOPPLE_API`); prazno = igra bez servera. `TOPPLE_ANDROID_TEST` (`join`, `optin`): poziv Android igračima u pregledniku da postanu testeri za Google Play (blok `winTest` na ekranu pobjede, dok je `TOPPLE_PLAY_LIVE` false); bez `join` poziv otvara e-mail na info@rdd.software.
 - `web/core.js` — čista logika igre (bez DOM-a): mreža, gravitacija (`settle`), dopušteni potezi, provjera pobjede, BFS solver. Koriste je i igra i alati.
 - `web/levels.js` — podaci razina. Generira se, ne uređuj ručno bez `npm run verify`.
 - `tools/generate-levels.js` — generator: nasumično slaže blokove i solverom bira ploče s traženim optimalnim brojem poteza.
