@@ -1,0 +1,47 @@
+name: Store status
+
+# Every morning before the project dashboard refreshes (06:57 Zagreb): reads what is live, in
+# review and in testing, and writes store-status.json to the store-status branch. Read-only towards
+# the stores: it never submits, releases or changes anything. Can also be run by hand.
+on:
+  schedule:
+    - cron: "20 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: store-status
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Read App Store Connect and Google Play
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY: ${{ secrets.ASC_KEY_P8 }}
+          PLAY_KEY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: node .github/scripts/store-status.js --out store-status.json --asc-bundle software.rdd.topple --play-package software.rdd.topple
+      - name: Publish to the store-status branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # One commit on its own branch, replaced every run: main stays untouched and the
+          # branch never grows. The dashboard reads store-status.json from it.
+          mkdir -p "$RUNNER_TEMP/status" && cp store-status.json "$RUNNER_TEMP/status/"
+          cd "$RUNNER_TEMP/status"
+          git init -q -b store-status
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add store-status.json
+          git commit -q -m "Store status $(date -u +%F)"
+          git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:store-status
