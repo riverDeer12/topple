@@ -5,21 +5,21 @@
 - **Projekt:** Topple
 - **Klijent:** Vlastiti proizvod
 - **Status:** Aktivan
-- **Verzija:** iOS 1.4 (127) · Android 1.0 (177) · web, itch.io
-- **Zadnje ažurirano:** 2026-11-23
+- **Verzija:** iOS 1.5 · Android 1.0 (177) · web, itch.io
+- **Zadnje ažurirano:** 2026-11-24
 
 ## Zadnje isporučeno
+- 2026-11-24 Poziv Android igračima u pregledniku da postanu testeri za Google Play (nakon pobjede, najviše dvaput)
 - 2026-11-23 Uputa na 6. razini (izlaz u najdonjem redu), prema komentaru s Reddita
 - 2026-11-23 Administracija: težina razina po razdoblju (24 h, 7, 30 dana, od datuma)
 - 2026-11-22 itch.io: gostima napomena kako sačuvati napredak (prijava ili prijenos na topple.rdd.software)
 - 2026-11-22 Podsjetnik na savjet kad igrač zapne (90 s ili treći pokušaj)
 - 2026-11-22 Ispucali blok s jasnijim pukotinama (prema komentaru s Reddita)
-- 2026-11-22 Bez obrasca za prijavu na početku: novi igrač ide ravno u 1. razinu
 
 ## Čeka
 - itch.io: uploadati novi paket i promijeniti veličinu okvira na 960 × 600 (vlasnik).
-- iOS 1.5 (popravak prijave) ide na Appleov pregled.
-- Android: 14 dana testiranja ističe oko 22. 11., zatim Apply for production (vlasnik).
+- Android: skupiti barem 12 testera koji ostanu u zatvorenom testiranju 14 dana zaredom, zatim Apply for production (vlasnik).
+- Obnoviti Apple Developer članarinu do 2026-12-09 (vlasnik).
 - CrazyGames odbio igru, ponovna prijava kasnije.
 
 ## Klijent

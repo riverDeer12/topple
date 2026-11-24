@@ -420,6 +420,7 @@ button.share svg { width: 18px; height: 18px; fill: none; stroke: currentColor; 
     <p id="winUnlock" class="unlock" hidden></p>
     <p id="winAch" class="unlock" hidden></p>
     <div class="savetip" id="winSave" hidden><p data-i18n="save.tip"></p><div class="row"><button class="ctl" id="saveLogin" type="button" data-i18n="save.login"></button><a class="ctl" id="saveSite" target="_blank" rel="noopener" data-i18n="save.site"></a></div></div>
+    <div class="savetip" id="winTest" hidden><p data-i18n="test.text"></p><div class="row"><a class="ctl" id="testJoin" target="_blank" rel="noopener" data-i18n="test.join"></a><button class="ctl" id="testLater" type="button" data-i18n="test.later"></button></div><p class="small" id="testOptin" hidden></p></div>
     <button class="go" id="next" type="button">Sljedeća razina</button>
     <button class="share" id="share" type="button"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg><span data-i18n="win.share">Podijeli rezultat</span></button>
     <button class="link" id="watch" type="button" data-i18n="win.watch">Pogledaj najbolje rješenje</button>
@@ -1060,6 +1061,21 @@ function win() {
       for (const k of MIGRATE_KEYS) { const v = store.get(k, null); if (v !== null) data[k] = v; }
       delete data.user;
       $('saveSite').href = HOME + '#import=' + encodeURIComponent(JSON.stringify(data));
+    }
+    // Google Play closed test: Android players in a browser are asked once (and once more a week
+    // later if they did not answer) to become testers, until the app is live on Google Play.
+    const tst = window.TOPPLE_ANDROID_TEST || {};
+    const seen = store.get('testInvite', { n: 0, at: 0 });
+    const invite = !saveTip && !APP && !CG && !window.TOPPLE_PLAY_LIVE && /Android/i.test(navigator.userAgent)
+      && !seen.done && seen.n < 2 && Date.now() - seen.at > 7 * 864e5 && (Object.keys(best).length >= 2 || c.mode !== 'campaign');
+    $('winTest').hidden = !invite;
+    if (invite) {
+      store.set('testInvite', { n: seen.n + 1, at: Date.now() });
+      $('testJoin').href = tst.join || 'mailto:info@rdd.software?subject=' + encodeURIComponent(t('test.mailSubject')) + '&body=' + encodeURIComponent(t('test.mailBody'));
+      $('testOptin').hidden = !tst.join || !tst.optin;
+      $('testOptin').textContent = tst.join && tst.optin ? t('test.after', { url: tst.optin }) : '';
+      $('testJoin').onclick = () => { store.set('testInvite', { n: 2, at: Date.now(), done: true }); };
+      $('testLater').onclick = () => { $('winTest').hidden = true; };
     }
     showOnly('winBox');
     $('next').focus({ preventScroll: true });
