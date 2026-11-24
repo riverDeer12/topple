@@ -9,12 +9,12 @@
 - **Zadnje ažurirano:** 2026-11-24
 
 ## Zadnje isporučeno
+- 2026-11-24 Popravak: ponovni ili dvostruki dodir žarulje više ne troši dodatni savjet
 - 2026-11-24 Dnevni workflow „Store status”: stanje u App Storeu i na Google Playu zapisuje u store-status.json (grana store-status) za dashboard
 - 2026-11-24 Poziv Android igračima u pregledniku da postanu testeri za Google Play (nakon pobjede, najviše dvaput)
 - 2026-11-23 Uputa na 6. razini (izlaz u najdonjem redu), prema komentaru s Reddita
 - 2026-11-23 Administracija: težina razina po razdoblju (24 h, 7, 30 dana, od datuma)
 - 2026-11-22 itch.io: gostima napomena kako sačuvati napredak (prijava ili prijenos na topple.rdd.software)
-- 2026-11-22 Podsjetnik na savjet kad igrač zapne (90 s ili treći pokušaj)
 
 ## Čeka
 - itch.io: uploadati novi paket i promijeniti veličinu okvira na 960 × 600 (vlasnik).

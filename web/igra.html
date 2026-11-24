@@ -1523,19 +1523,27 @@ function confetti() {
   document.body.appendChild(box);
   setTimeout(() => box.remove(), 3400);
 }
+let hintShownAt = null, hintWorking = false; // board position of the hint on screen; a hint being worked out
 function clearHint() {
+  hintShownAt = null;
   board.querySelectorAll('.ghost, .hand').forEach(g => g.remove());
   els.forEach(el => el.classList.remove('hinted'));
 }
 async function useHint() {
-  if (!ctx || busy || won_) return;
+  if (!ctx || busy || won_ || hintWorking) return; // a second tap while one is worked out costs nothing
+  // The hint for this exact position is already on the board: show it again, free.
+  if (hintShownAt === key(blocks) && board.querySelector('.ghost')) {
+    els.forEach(el => { if (el.classList.contains('hinted')) { el.classList.remove('hinted'); void el.offsetWidth; el.classList.add('hinted'); } });
+    return;
+  }
   if (ctx.mode === 'daily') { $('hint').textContent = t('hint.dailyOff'); return; }
   refreshHints();
   if (!plus && hints.count <= 0) return openHintShop();
   const c = ctx, cur = key(blocks);
   if (!plan || plan.exit !== c.level.exit || (plan.startKey !== cur && !(plan.keys && plan.keys.includes(cur)))) plan = makePlan(blocks);
   $('hint').textContent = t('hint.thinking');
-  const p = await plan.promise;
+  hintWorking = true;
+  const p = await plan.promise.finally(() => { hintWorking = false; });
   if (ctx !== c || busy || won_) return;
   if (!p) { $('hint').textContent = t('hint.none'); return; }
   const i = p.keys.indexOf(key(blocks));
@@ -1551,6 +1559,7 @@ async function useHint() {
   g.style.width = blocks[b].w * cell - GAP * 2 + 'px'; g.style.height = cell - GAP * 2 + 'px';
   g.style.transform = pos(blocks[b], d);
   board.appendChild(g);
+  hintShownAt = key(blocks);
   $('hint').textContent = t('hint.move', { dir: d < 0 ? t('hint.left') : t('hint.right'), n: Math.abs(d) });
 }
 $('hintBtn').onclick = useHint;
