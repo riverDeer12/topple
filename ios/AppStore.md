@@ -61,8 +61,8 @@ UGODNO IGRANJE
 
 Može se igrati i bez računa, kao gost.
 
-**Što je novo (1.5):**
-Prijava se sada pamti i nakon zatvaranja aplikacije. Dnevne zagonetke imaju broj, pa rezultat možeš podijeliti bez otkrivanja ploče. Cilj se pokaže nakon prvog rješenja (ili odmah, uz „Cilj unaprijed” u izborniku). Izbornik ima gumb za zatvaranje.
+**Što je novo (1.6):**
+Igra odmah počinje vođenom prvom razinom, bez obrasca za prijavu. Kad zapneš, igra te podsjeti na savjet, a ponovni dodir žarulje više ne troši savjet. Uputa na 6. razini i jasnije pukotine na ispucalom bloku.
 
 ---
 
@@ -112,8 +112,8 @@ EASY TO ENJOY
 
 You can also play as a guest, without an account.
 
-**What's New (1.5):**
-You now stay signed in after closing the app. Daily puzzles are numbered, so you can share your score without spoiling the board. The target shows after your first clear (or right away with "Show target" in the menu). The menu has a close button.
+**What's New (1.6):**
+The game now starts right away with a guided first level, no sign-in form. If you get stuck it reminds you about hints, and tapping the bulb again no longer uses up a hint. A tip on level 6 and clearer cracks on the cracked block.
 
 ---
 
@@ -163,8 +163,8 @@ GIOCO PIACEVOLE
 
 Si può giocare anche come ospite, senza account.
 
-**Novità (1.5):**
-Ora l'accesso resta attivo anche dopo aver chiuso l'app. I rompicapi del giorno sono numerati, così puoi condividere il risultato senza svelare il tabellone. L'obiettivo compare dopo la prima soluzione (o subito, con «Mostra obiettivo» nel menu). Il menu ha un pulsante per chiuderlo.
+**Novità (1.6):**
+Il gioco ora parte subito con un primo livello guidato, senza modulo di accesso. Se ti blocchi ti ricorda i suggerimenti, e toccare di nuovo la lampadina non ne consuma un altro. Un consiglio al livello 6 e crepe più chiare sul blocco crepato.
 
 ---
 
@@ -214,5 +214,5 @@ ENTSPANNT SPIELEN
 
 Du kannst auch als Gast ohne Konto spielen.
 
-**Neuigkeiten (1.5):**
-Du bleibst jetzt auch nach dem Schließen der App angemeldet. Tagesrätsel sind nummeriert, so kannst du dein Ergebnis teilen, ohne das Brett zu verraten. Das Ziel erscheint nach der ersten Lösung (oder sofort mit „Ziel zeigen“ im Menü). Das Menü hat eine Schließen-Taste.
+**Neuigkeiten (1.6):**
+Das Spiel startet jetzt sofort mit einem geführten ersten Level, ohne Anmeldeformular. Wenn du feststeckst, erinnert es dich an Tipps, und erneutes Tippen auf die Glühbirne verbraucht keinen weiteren Tipp. Ein Hinweis in Level 6 und deutlichere Risse am rissigen Block.

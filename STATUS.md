@@ -5,7 +5,7 @@
 - **Projekt:** Topple
 - **Klijent:** Vlastiti proizvod
 - **Status:** Aktivan
-- **Verzija:** iOS 1.5 · Android 1.0 (197) · web, itch.io
+- **Verzija:** iOS 1.5 (1.6 u izradi) · Android 1.0 (197) · web, itch.io
 - **Zadnje ažurirano:** 2026-11-25
 
 ## Zadnje isporučeno
@@ -17,6 +17,7 @@
 - 2026-11-23 Administracija: težina razina po razdoblju (24 h, 7, 30 dana, od datuma)
 
 ## Čeka
+- iOS 1.6 u TestFlightu, zatim Add for Review (vlasnik).
 - itch.io: uploadati novi paket i promijeniti veličinu okvira na 960 × 600 (vlasnik).
 - Android: skupiti barem 12 testera koji ostanu u zatvorenom testiranju 14 dana zaredom, zatim Apply for production (vlasnik).
 - Obnoviti Apple Developer članarinu do 2026-12-09 (vlasnik).
