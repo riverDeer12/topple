@@ -32,7 +32,7 @@ window.TOPPLE_PLAY_LIVE = false;
 //         'https://groups.google.com/g/topple-testers'. Empty = an e-mail to info@rdd.software
 //         with their Google Play address, which is then added to the tester list by hand.
 //   optin: the Play opt-in page, shown after joining (testers must open it once and install).
-window.TOPPLE_ANDROID_TEST = { join: '', optin: 'https://play.google.com/apps/testing/software.rdd.topple' };
+window.TOPPLE_ANDROID_TEST = { join: 'https://groups.google.com/g/topple-testers-rdd', optin: 'https://play.google.com/apps/testing/software.rdd.topple' };
 
 // Safari on iPhone/iPad: Smart App Banner (open or download the app) on the web pages.
 if (window.TOPPLE_IOS_APP_ID && !TOPPLE_IN_APP && !window.TOPPLE_PORTAL && document.head) {
