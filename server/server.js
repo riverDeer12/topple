@@ -179,6 +179,24 @@ if (db.prepare('PRAGMA user_version').get().user_version < 12) {
   if (!cols.includes('plus_tx')) db.exec('ALTER TABLE users ADD COLUMN plus_tx TEXT');
   db.exec('PRAGMA user_version = 12');
 }
+// Schema v13: where players and guests play (iOS app, Android app, web, itch.io, CrazyGames) and
+// where ads for hints were watched, from the request's origin (platformOf); for /admin.
+if (db.prepare('PRAGMA user_version').get().user_version < 13) {
+  for (const t of ['users', 'guests', 'ad_events']) {
+    if (!db.prepare(`PRAGMA table_info(${t})`).all().some(c => c.name === 'platform')) db.exec(`ALTER TABLE ${t} ADD COLUMN platform TEXT`);
+  }
+  db.exec('PRAGMA user_version = 13');
+}
+const PLATFORMS = ['ios', 'android', 'web', 'itch', 'crazygames'];
+function platformOf(req) {
+  const o = String(req.headers.origin || req.headers.referer || '');
+  if (o.startsWith('topple://')) return 'ios';
+  if (o.includes('appassets.androidplatform.net')) return 'android';
+  if (/itch\.(zone|io)|hwcdn\.net/.test(o)) return 'itch';
+  if (/crazygames\./.test(o)) return 'crazygames';
+  if (/^https?:\/\/[^/]*(topple\.rdd\.software|github\.io|localhost|127\.0\.0\.1)/.test(o)) return 'web';
+  return null;
+}
 const plusCheck = require('./plus.js');
 const PLUS_PRODUCT = 'software.rdd.topple.plus', PLUS_SHARE = 6; // one purchase: family sharing, a few accounts
 const appleAuth = require('./apple.js');
@@ -398,7 +416,7 @@ function userFrom(req) {
   const m = /^Bearer ([A-Za-z0-9_-]{20,100})$/.exec(req.headers.authorization || '');
   const u = m ? db.prepare('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?').get(sha(m[1])) : null;
   // Remember when the player was last here (at most one write per 5 minutes).
-  if (u && !(u.last_seen > Date.now() - 5 * 60e3)) db.prepare('UPDATE users SET last_seen = ? WHERE id = ?').run(Date.now(), u.id);
+  if (u && !(u.last_seen > Date.now() - 5 * 60e3)) db.prepare('UPDATE users SET last_seen = ?, platform = COALESCE(?, platform) WHERE id = ?').run(Date.now(), platformOf(req), u.id);
   return u;
 }
 const ADMIN_DAYS = 7;
@@ -512,13 +530,13 @@ function profile(u) {
 function adminStats(playsFrom = 0) {
   const now = Date.now(), since = d => now - d * 864e5, ONLINE = 15 * 60e3;
   const n = (q, ...a) => db.prepare(q).get(...a).n;
-  const method = u => u.google_sub && u.password_hash ? 'both' : u.google_sub ? 'google' : u.password_hash ? 'password' : 'device';
-  const users = db.prepare(`SELECT u.id, u.name, u.email, u.password_hash, u.google_sub, u.created_at, u.last_seen, u.skin, u.plus,
+  const method = u => u.apple_sub ? 'apple' : u.google_sub && u.password_hash ? 'both' : u.google_sub ? 'google' : u.password_hash ? 'password' : 'device';
+  const users = db.prepare(`SELECT u.id, u.name, u.email, u.password_hash, u.google_sub, u.apple_sub, u.created_at, u.last_seen, u.skin, u.plus, u.platform,
       u.endless_next - 1 AS endless, u.endless_stars,
       COALESCE(c.levels, 0) AS levels, COALESCE(c.stars, 0) AS stars, COALESCE(c.top, 0) AS top,
       (SELECT COUNT(*) FROM daily WHERE user_id = u.id) AS daily
     FROM users u LEFT JOIN (SELECT user_id, COUNT(*) AS levels, SUM(stars) AS stars, MAX(level) AS top FROM campaign GROUP BY user_id) c ON c.user_id = u.id`).all();
-  const player = u => ({ name: u.name, plus: !!u.plus, method: method(u), createdAt: u.created_at, lastSeen: u.last_seen, top: u.top, levels: u.levels, stars: u.stars, endless: u.endless, daily: u.daily });
+  const player = u => ({ name: u.name, plus: !!u.plus, method: method(u), createdAt: u.created_at, lastSeen: u.last_seen, top: u.top, levels: u.levels, stars: u.stars, endless: u.endless, daily: u.daily, platform: u.platform || null });
 
   // Activity per day (game time zone), last 14 days.
   const days = [];
@@ -583,7 +601,25 @@ function adminStats(playsFrom = 0) {
     top: users.filter(u => u.levels || u.endless || u.daily)
       .sort((a, b) => b.top - a.top || b.stars - a.stars || b.endless - a.endless || b.daily - a.daily).slice(0, 20).map(player),
     methods: count(users, method), skins: count(users, u => u.skin || 'classic'), langs: count(guestRows, r => r.lang),
-    recentUsers: users.sort((a, b) => b.created_at - a.created_at).slice(0, 15).map(player),
+    recentUsers: [...users].sort((a, b) => b.created_at - a.created_at).slice(0, 15).map(player),
+    allUsers: [...users].sort((a, b) => (b.last_seen || 0) - (a.last_seen || 0)).map(player),
+    // Everyone who ever played: every guest ID (with or without an account later) plus accounts
+    // made without ever playing as a guest on that device.
+    everyone: n('SELECT COUNT(*) AS n FROM guests') + n('SELECT COUNT(*) AS n FROM users WHERE id NOT IN (SELECT user_id FROM guests WHERE user_id IS NOT NULL)'),
+    // Players and guests per platform (last known), active in 24 h / 7 / 30 days and all time.
+    platforms: [...PLATFORMS, null].map(pf => {
+      const is = pf ? 'platform = ?' : 'platform IS NULL', a = pf ? [pf] : [];
+      return {
+        platform: pf,
+        users: [1, 7, 30, 36500].map(d => n(`SELECT COUNT(*) AS n FROM users WHERE ${is} AND last_seen > ?`, ...a, since(d))),
+        guests: [1, 7, 30, 36500].map(d => n(`SELECT COUNT(*) AS n FROM guests WHERE user_id IS NULL AND ${is} AND last_seen > ?`, ...a, since(d))),
+      };
+    }),
+    // Ads for hints per platform: each kind in the last 30 days and all time.
+    adsByPlatform: [...PLATFORMS, null].map(pf => {
+      const is = pf ? 'platform = ?' : 'platform IS NULL', a = pf ? [pf] : [];
+      return { platform: pf, ...Object.fromEntries(AD_KINDS.map(k => [k, [30, 36500].map(d => n(`SELECT COUNT(*) AS n FROM ad_events WHERE kind = ? AND ${is} AND t > ?`, k, ...a, since(d)))])) };
+    }),
     recentGuests: db.prepare(`SELECT name, lang, first_seen AS firstSeen, last_seen AS lastSeen, visits, levels, stars, endless, daily
       FROM guests WHERE user_id IS NULL ORDER BY last_seen DESC LIMIT 15`).all(),
   };
@@ -604,13 +640,13 @@ async function route(req, res) {
     const name = String(b.name || '').slice(0, 40), lang = ['hr', 'en', 'it', 'de'].includes(b.lang) ? b.lang : null, now = Date.now();
     const old = db.prepare('SELECT last_seen FROM guests WHERE id = ?').get(b.id);
     if (!old) {
-      db.prepare('INSERT INTO guests (id, name, lang, first_seen, last_seen, levels, stars, endless, daily) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .run(b.id, name, lang, now, now, num(b.levels), num(b.stars), num(b.endless), num(b.daily));
+      db.prepare('INSERT INTO guests (id, name, lang, first_seen, last_seen, levels, stars, endless, daily, platform) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(b.id, name, lang, now, now, num(b.levels), num(b.stars), num(b.endless), num(b.daily), platformOf(req));
     } else {
       // A new visit = back after at least 30 minutes away.
       db.prepare(`UPDATE guests SET name = ?, lang = ?, last_seen = ?, visits = visits + ?,
-        levels = MAX(levels, ?), stars = MAX(stars, ?), endless = MAX(endless, ?), daily = MAX(daily, ?) WHERE id = ?`)
-        .run(name, lang, now, now - old.last_seen > 30 * 60e3 ? 1 : 0, num(b.levels), num(b.stars), num(b.endless), num(b.daily), b.id);
+        levels = MAX(levels, ?), stars = MAX(stars, ?), endless = MAX(endless, ?), daily = MAX(daily, ?), platform = COALESCE(?, platform) WHERE id = ?`)
+        .run(name, lang, now, now - old.last_seen > 30 * 60e3 ? 1 : 0, num(b.levels), num(b.stars), num(b.endless), num(b.daily), platformOf(req), b.id);
     }
     return send(res, 200, { ok: true });
   }
@@ -637,7 +673,7 @@ async function route(req, res) {
     const b = await readJson(req), u = userFrom(req);
     if (!AD_KINDS.includes(b.kind)) return send(res, 400, { error: 'Neispravan zahtjev.', code: 'bad_request' });
     const pid = u ? 'u' + u.id : typeof b.guest === 'string' && GUEST_ID.test(b.guest) ? 'g' + b.guest : null;
-    db.prepare('INSERT INTO ad_events (t, kind, pid) VALUES (?, ?, ?)').run(Date.now(), b.kind, pid);
+    db.prepare('INSERT INTO ad_events (t, kind, pid, platform) VALUES (?, ?, ?, ?)').run(Date.now(), b.kind, pid, platformOf(req));
     return send(res, 200, { ok: true });
   }
 

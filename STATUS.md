@@ -9,12 +9,12 @@
 - **Zadnje ažurirano:** 2026-11-26
 
 ## Zadnje isporučeno
+- 2026-11-26 Administracija: igrači i reklame po platformi, ukupno igralo, svi registrirani igrači
 - 2026-11-25 Poziv Android testerima vodi u Google Grupu topple-testers-rdd; Android build 197
 - 2026-11-24 Popravak: ponovni ili dvostruki dodir žarulje više ne troši dodatni savjet
 - 2026-11-24 Dnevni workflow „Store status”: stanje u App Storeu i na Google Playu zapisuje u store-status.json (grana store-status) za dashboard
 - 2026-11-24 Poziv Android igračima u pregledniku da postanu testeri za Google Play (nakon pobjede, najviše dvaput)
 - 2026-11-23 Uputa na 6. razini (izlaz u najdonjem redu), prema komentaru s Reddita
-- 2026-11-23 Administracija: težina razina po razdoblju (24 h, 7, 30 dana, od datuma)
 
 ## Čeka
 - iOS 1.6 (133) na Appleovom pregledu.
