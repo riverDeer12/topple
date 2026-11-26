@@ -165,6 +165,24 @@
 
     <div class="grid two">
       <section class="card">
+        <h2>Igrači po platformi</h2>
+        <div class="scroll"><table id="platforms"></table></div>
+        <p class="muted small" style="margin:12px 0 0">Gosti i prijavljeni igrači po platformi s koje su zadnji put igrali. „Nepoznato” su oni koji nisu igrali otkad se platforma bilježi (26. 11. 2026).</p>
+      </section>
+      <section class="card">
+        <h2>Reklame za savjete po platformi</h2>
+        <div class="scroll"><table id="adsPlatforms"></table></div>
+        <p class="muted small" style="margin:12px 0 0">Zadnjih 30 dana, u zagradi ukupno. Izbornik = otvoren izbornik savjeta (nema ih više), pogledano = reklama do kraja i savjet dobiven.</p>
+      </section>
+    </div>
+
+    <section class="card" style="margin-bottom:14px">
+      <h2>Svi registrirani igrači</h2>
+      <div class="scroll"><table id="allUsers"></table></div>
+    </section>
+
+    <div class="grid two">
+      <section class="card">
         <h2>Novi igrači</h2>
         <div class="scroll"><table id="recentUsers"></table></div>
       </section>
@@ -200,7 +218,9 @@ function ago(t) {
 }
 const date = t => t ? new Date(t).toLocaleDateString('hr-HR', { day: 'numeric', month: 'numeric', year: '2-digit' }) : '–';
 const shortDay = d => { const [, m, day] = d.split('-'); return `${+day}. ${+m}.`; };
-const METHOD = { password: 'lozinka', google: 'Google', both: 'lozinka + Google', device: 'samo uređaj' };
+const METHOD = { password: 'lozinka', google: 'Google', both: 'lozinka + Google', apple: 'Apple', device: 'samo uređaj' };
+const PLATFORM = { ios: 'iPhone / iPad', android: 'Android', web: 'Web', itch: 'itch.io', crazygames: 'CrazyGames' };
+const pfName = p => PLATFORM[p] || 'nepoznato';
 const LANG = { hr: 'hrvatski', en: 'engleski', it: 'talijanski', de: 'njemački', '?': 'nepoznat' };
 const skinName = k => (typeof ToppleI18n !== 'undefined' && ToppleI18n.S.hr['skin.' + k]) || k;
 
@@ -281,6 +301,7 @@ function render(s) {
   const T = s.totals, guestsAll = T.guests + T.converted, w1 = s.windows[0];
   const tile = (label, value, sub, live) => `<div class="card tile"><div class="label">${live ? '<span class="live"></span>' : ''}${label}</div><div class="value">${value}</div><div class="sub">${sub || '&nbsp;'}</div></div>`;
   $('tiles').innerHTML = [
+    tile('Ukupno igralo', num(s.everyone || 0), 'svi gosti i igrači otkad igra postoji'),
     tile('Trenutno igraju', num(s.online.users + s.online.guests), `${num(s.online.users)} prijavljenih · ${num(s.online.guests)} gostiju (15 min)`, true),
     tile('Registrirani igrači', num(T.users), `+${num(w1.newUsers)} u zadnja 24 h · ${num(T.plus || 0)} s Topple Plus`),
     tile('Gosti bez računa', num(T.guests), `+${num(w1.newGuests)} u zadnja 24 h`),
@@ -322,6 +343,16 @@ function render(s) {
     s.top.map((u, i) => [i + 1, esc(u.name) + pb(u), `<b>${u.top || '–'}</b>`, num(u.levels), num(u.stars), num(u.endless), num(u.daily), seen(u.lastSeen)]), 'Još nitko nije riješio razinu.');
   table($('recentUsers'), [['Igrač'], ['Račun od'], ['Prijava'], ['Razina', 'n'], ['Zadnji put']],
     s.recentUsers.map(u => [esc(u.name) + pb(u), date(u.createdAt), `<span class="badge">${METHOD[u.method]}</span>`, num(u.levels), seen(u.lastSeen)]), 'Još nema igrača.');
+  if (s.platforms) {
+    const sum = r => r.users.map((v, i) => v + r.guests[i]);
+    table($('platforms'), [['Platforma'], ['24 h', 'n'], ['7 dana', 'n'], ['30 dana', 'n'], ['Ukupno', 'n'], ['Od toga prijavljeni', 'n']],
+      s.platforms.filter(r => sum(r)[3]).map(r => { const t = sum(r); return [esc(pfName(r.platform)), num(t[0]), num(t[1]), num(t[2]), `<b>${num(t[3])}</b>`, num(r.users[3])]; }), 'Još nema podataka.');
+    const ap = (r, k) => `${num(r[k][0])} <span class="muted">(${num(r[k][1])})</span>`;
+    table($('adsPlatforms'), [['Platforma'], ['Izbornik', 'n'], ['Pogledano', 'n'], ['Prekinuto', 'n'], ['Nedostupno', 'n'], ['Probne', 'n']],
+      s.adsByPlatform.filter(r => r.shop[1] + r.viewed[1] + r.sim[1] + r.none[1] + r.dismissed[1]).map(r => [esc(pfName(r.platform)), ap(r, 'shop'), ap(r, 'viewed'), ap(r, 'dismissed'), ap(r, 'none'), ap(r, 'sim')]), 'Još nema podataka.');
+    table($('allUsers'), [['Igrač'], ['Platforma'], ['Prijava'], ['Račun od'], ['Najviša', 'n'], ['Razina', 'n'], ['★', 'n'], ['Beskonačne', 'n'], ['Dnevne', 'n'], ['Zadnji put']],
+      (s.allUsers || []).map(u => [esc(u.name) + pb(u), esc(pfName(u.platform)), `<span class="badge">${METHOD[u.method]}</span>`, date(u.createdAt), u.top || '–', num(u.levels), num(u.stars), num(u.endless), num(u.daily), seen(u.lastSeen)]), 'Još nema igrača.');
+  }
   table($('recentGuests'), [['Gost'], ['Jezik'], ['Prvi put'], ['Posjeta', 'n'], ['Razina', 'n'], ['Beskonačne', 'n'], ['Zadnji put']],
     s.recentGuests.map(g => [esc(g.name || '–'), esc(g.lang || '?'), date(g.firstSeen), num(g.visits), num(g.levels), num(g.endless), seen(g.lastSeen)]), 'Još nema gostiju.');
 }

@@ -146,6 +146,12 @@ function solution(level) {
   r = await call('/api/guest', { id: gid, name: 'Pospani Pingvin 17', lang: 'hr', levels: 4, stars: 10, endless: 1, daily: 0 }); assert.strictEqual(r.status, 200);
   r = await call('/api/guest', { id: gid, name: 'Pospani Pingvin 17', lang: 'hr', levels: 2, stars: 12 }); assert.strictEqual(r.status, 200);
   r = await call('/api/guest', { id: 'short' }); assert.strictEqual(r.status, 400);
+  // The platform comes from the request's origin: the iOS app's page is topple://app.
+  { const res = await fetch(base + '/api/guest', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'topple://app' }, body: JSON.stringify({ id: 'iosguest-0123456789abcdef', name: 'Gost', lang: 'en' }) });
+    assert.strictEqual(res.status, 200);
+    const gdb = require('../server/server.js').db;
+    assert.strictEqual(gdb.prepare("SELECT platform FROM guests WHERE id = 'iosguest-0123456789abcdef'").get()?.platform, 'ios');
+    gdb.prepare("DELETE FROM guests WHERE id = 'iosguest-0123456789abcdef'").run(); }
   const { db: sdb } = require('../server/server.js');
   let gr = sdb.prepare('SELECT * FROM guests WHERE id = ?').get(gid);
   assert.strictEqual(gr.levels, 4); assert.strictEqual(gr.stars, 12); assert.strictEqual(gr.visits, 1);
@@ -428,6 +434,7 @@ function solution(level) {
   assert.strictEqual(st.days[13].ads, 1); assert.strictEqual(st.days[13].adsSim, 1);
   assert.strictEqual(st.top[0].top, 10); assert.ok(st.recentUsers.length === 8);
   assert.ok(!JSON.stringify(st).includes('password_hash') && !JSON.stringify(st).includes('@'), 'no secrets or e-mails in admin stats');
+  assert.strictEqual(st.allUsers.length, 8); assert.ok(st.everyone >= 8); assert.ok(Array.isArray(st.platforms) && Array.isArray(st.adsByPlatform));
   r = await call('/api/admin/stats?since=' + (Date.now() + 864e5), null, adm); // only plays started from tomorrow: none
   assert.strictEqual(r.status, 200); assert.ok(r.body.difficulty.every(d => d.started === 0)); assert.strictEqual(r.body.totals.users, 8);
   r = await call('/api/admin/logout', {}, adm); r = await call('/api/admin/stats', null, adm); assert.strictEqual(r.status, 401);
