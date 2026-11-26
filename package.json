@@ -10,6 +10,7 @@
     "generate": "node tools/generate-levels.js && node tools/verify-levels.js",
     "puzzles": "node tools/generate-puzzles.js",
     "api": "node server/server.js",
+    "video": "node tools/make-video.js",
     "serve": "npx --yes http-server web -p 8080 -c-1"
   },
   "license": "UNLICENSED",
