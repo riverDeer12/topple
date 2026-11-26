@@ -5,7 +5,7 @@
 - **Projekt:** Topple
 - **Klijent:** Vlastiti proizvod
 - **Status:** Aktivan
-- **Verzija:** iOS 1.5 (1.6 na pregledu) · Android 1.0 (197) · web, itch.io
+- **Verzija:** iOS 1.5 (1.6 na pregledu) · Android 1.0 (202) · web, itch.io
 - **Zadnje ažurirano:** 2026-11-26
 
 ## Zadnje isporučeno
