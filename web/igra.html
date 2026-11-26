@@ -1033,6 +1033,7 @@ function win() {
   $('winStreak').hidden = st < 2;
   if (st >= 2) $('winStreak').textContent = t('streak.win', { n: st });
   lastWin = { mode: ctx.mode, key: ctx.key, moves: hist.length, opt: ctx.level.opt, timeMs };
+  askReview(ctx.mode === 'daily' ? st >= 3 : ctx.mode === 'campaign' && ctx.key >= 9 && s === 3);
   gameCenter();
   const fresh = SKINS.filter(x => skinUnlocked(x) && !unlockedBefore.includes(x.id));
   reportGuest();
@@ -1825,13 +1826,26 @@ function openAch() {
 }
 $('mAch').onclick = openAch;
 $('achClose').onclick = openMenu;
+// Store rating (iOS StoreKit, Google Play In-App Review) at a happy moment: a perfect solve from
+// level 10 on, or a daily streak of 3+. At most 3 asks, 60 days apart; the store itself decides
+// whether the prompt really shows.
+function askReview(happy) {
+  if (!APP || !happy) return;
+  const r = store.get('reviewAsked', { n: 0, at: 0 });
+  if (r.n >= 3 || Date.now() - r.at < 60 * 864e5) return;
+  store.set('reviewAsked', { n: r.n + 1, at: Date.now() });
+  setTimeout(() => native({ type: 'review' }), 2500);
+}
 // Share the result: the phone's share sheet when there is one, otherwise copy the text.
 function shareText(w) {
   const s = starsFor(w.moves, w.opt);
   const head = w.mode === 'daily' ? t('share.daily', { date: dailyLabel(w.key) }) : w.mode === 'endless' ? t('share.endless', { n: w.key }) : t('share.level', { n: w.key + 1 });
   const line = t('share.line', { stars: '⭐'.repeat(s) + '☆'.repeat(3 - s), n: w.moves, moves: potez(w.moves) }) + (w.mode === 'daily' ? ' · ' + fmtTime(w.timeMs) : '');
+  // Wordle-style squares: green for each move up to the target, yellow for each extra move.
+  const extra = Math.max(0, w.moves - w.opt), shown = Math.min(extra, 8);
+  const squares = '🟩'.repeat(Math.min(w.moves, w.opt)) + '🟨'.repeat(shown) + (extra > shown ? ' +' + (extra - shown) : '');
   const st = w.mode === 'daily' ? streaks().current : 0;
-  return [head, line, st >= 2 ? t('share.streak', { n: st }) : ''].filter(Boolean).join('\n');
+  return [head, line, squares, st >= 2 ? t('share.streak', { n: st }) : ''].filter(Boolean).join('\n');
 }
 $('share').onclick = async () => {
   if (!lastWin) return;

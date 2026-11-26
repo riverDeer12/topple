@@ -226,7 +226,9 @@ if (out.includes(null)) { console.log('Tražene razine su spremljene u cache. Po
 
 // Order changes from play data (/admin): pairs of 1-based level numbers swapped after generating.
 // 5 <-> 6 (2026-11-20): level 5 was solved by 64% with 3 attempts, level 6 by everyone.
-const SWAPS = [[5, 6]];
+// 9 <-> 21, 10 <-> 24 (2026-11-26): the end of chapter 1 (7 and 9 moves, 3 min, 11 attempts) was
+// harder than chapter 2's start; the easier stone-and-ice levels 21 and 24 take their place.
+const SWAPS = [[5, 6], [9, 21], [10, 24]];
 for (const [a, b] of SWAPS) if (out[a - 1] && out[b - 1]) [out[a - 1], out[b - 1]] = [out[b - 1], out[a - 1]];
 const body = out.map(l => '  ' + JSON.stringify(l)).join(',\n');
 fs.writeFileSync(path.join(__dirname, '../web/levels.js'),

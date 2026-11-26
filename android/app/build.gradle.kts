@@ -83,6 +83,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.1")
     // Offer a new version from Google Play inside the app (In-App Updates)
     implementation("com.google.android.play:app-update:2.1.0")
+    // Rating card from Google Play inside the app (In-App Review)
+    implementation("com.google.android.play:review:2.0.2")
     // Topple Plus (Google Play Billing)
     implementation("com.android.billingclient:billing:8.0.0")
     // Google Play Games Services: achievements and leaderboards

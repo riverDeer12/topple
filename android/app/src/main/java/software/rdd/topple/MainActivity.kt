@@ -162,6 +162,7 @@ class MainActivity : ComponentActivity() {
             }
             "gc" -> GamesServices.report(this, msg) // achievements and leaderboards (Google Play Games)
             "ad" -> Ads.handle(this, msg.optString("action", "status"))
+            "review" -> Review.ask(this)
             "update" -> if (msg.optString("action") == "install") Updates.install()
                 else if (Updates.ready) updateReady() else Updates.check(this, updateFlow) { updateReady() }
         }
