@@ -18,7 +18,6 @@
 
 ## Čeka
 - iOS 1.6 (133) na Appleovom pregledu.
-- itch.io: uploadati novi paket i promijeniti veličinu okvira na 960 × 600 (vlasnik).
 - Android: skupiti barem 12 testera koji ostanu u zatvorenom testiranju 14 dana zaredom, zatim Apply for production (vlasnik).
 - Obnoviti Apple Developer članarinu do 2026-12-09 (vlasnik).
 - CrazyGames odbio igru, ponovna prijava kasnije.
