@@ -5,11 +5,11 @@
 - **Projekt:** Topple
 - **Klijent:** Vlastiti proizvod
 - **Status:** Aktivan
-- **Verzija:** iOS 1.5 (1.6 na pregledu) · Android 1.0 (202) · web, itch.io
+- **Verzija:** iOS 1.5 (1.6 na pregledu) · Android 1.0 (206) · web, itch.io
 - **Zadnje ažurirano:** 2026-11-26
 
 ## Zadnje isporučeno
-- 2026-11-26 Lakši kraj 1. poglavlja (razine 9↔21 i 10↔24), molba za ocjenu u trgovini (iOS, Android), kvadratići u podijeljenom rezultatu
+- 2026-11-26 Lakši kraj 1. poglavlja (razine 9↔21 i 10↔24), molba za ocjenu u trgovini (iOS, Android), kvadratići u podijeljenom rezultatu; Android build 206
 - 2026-11-26 Administracija: igrači i reklame po platformi, ukupno igralo, svi registrirani igrači
 - 2026-11-25 Poziv Android testerima vodi u Google Grupu topple-testers-rdd; Android build 197
 - 2026-11-24 Popravak: ponovni ili dvostruki dodir žarulje više ne troši dodatni savjet
