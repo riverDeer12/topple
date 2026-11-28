@@ -1,0 +1,52 @@
+{
+  "checked": "2026-11-28T12:59:42.008Z",
+  "appStore": {
+    "bundle": "software.rdd.topple",
+    "appId": "6830289324",
+    "name": "Topple: Gravity Puzzle",
+    "live": {
+      "version": "1.6",
+      "state": "READY_FOR_DISTRIBUTION",
+      "created": "2026-11-25T13:23:42-08:00"
+    },
+    "inProgress": [],
+    "testflight": {
+      "version": "1.6",
+      "build": "133",
+      "uploaded": "2026-11-25T13:24:37-08:00",
+      "processing": "VALID"
+    }
+  },
+  "googlePlay": {
+    "package": "software.rdd.topple",
+    "tracks": [
+      {
+        "track": "alpha",
+        "releases": [
+          {
+            "name": "1.0",
+            "versionCodes": [
+              "206"
+            ],
+            "status": "completed",
+            "userFraction": null
+          }
+        ]
+      },
+      {
+        "track": "internal",
+        "releases": [
+          {
+            "name": "Initial release",
+            "versionCodes": [
+              "121"
+            ],
+            "status": "completed",
+            "userFraction": null
+          }
+        ]
+      }
+    ],
+    "production": false
+  }
+}
